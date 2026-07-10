@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "rls:check": "tsx --env-file=.env.local scripts/rls-check.ts"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
