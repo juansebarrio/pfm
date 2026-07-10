@@ -1,18 +1,23 @@
-import Link from "next/link";
-import { X } from "lucide-react";
+import { categoriasRecientes, mediosDePago } from "@/lib/datos/movimientos";
+import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { AltaRapida } from "./AltaRapida";
 
-export default function NuevoGasto() {
+// Alta rápida (03, DESIGN_AUDIT.md §1.5): pantalla completa sin tab bar.
+// El server junta medios y las categorías de AMBOS ámbitos de una vez,
+// así el cambio Hogar/Personal en el cliente es instantáneo, sin refetch.
+export default async function NuevoGasto() {
+  const sesion = await obtenerSesionHogar();
+  const [medios, categoriasHogar, categoriasPersonales] = await Promise.all([
+    mediosDePago(sesion),
+    categoriasRecientes(sesion, "hogar"),
+    categoriasRecientes(sesion, "personal"),
+  ]);
+
   return (
-    <div className="flex min-h-dvh flex-col px-5 pt-14">
-      <div className="flex items-center gap-3">
-        <Link href="/resumen" aria-label="Cerrar" className="hit-44">
-          <X className="size-[22px]" strokeWidth={2} aria-hidden />
-        </Link>
-        <h1 className="text-[16px] font-semibold">Nuevo gasto</h1>
-      </div>
-      <p className="mt-4 text-[13.5px] text-tinta-secundaria">
-        La alta rápida — la pantalla más usada — llega en la tanda 4.
-      </p>
-    </div>
+    <AltaRapida
+      medios={medios}
+      categoriasHogar={categoriasHogar}
+      categoriasPersonales={categoriasPersonales}
+    />
   );
 }

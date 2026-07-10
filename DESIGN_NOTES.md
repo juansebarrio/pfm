@@ -71,6 +71,24 @@ implementada: el importe "queda" va en ámbar cuando la partida está en atenci�
 
 ---
 
+### 1.9 Alta rápida sin campo de comercio
+El export de 03 no dibuja ningún input de texto: monto, medio, ciclo/cuotas,
+categorías y listo. Lo respetamos — la descripción del movimiento toma el nombre
+de la categoría (o "Gasto" sin categoría) y se podrá editar después. Sumar un
+campo de comercio opcional queda como **propuesta** (cambia el flujo de la
+pantalla más usada; el export prioriza velocidad).
+
+### 1.10 Armado del mes: redondeo y overrides
+El ajuste por inflación redondea cada partida a $ 25 (el export: 780.000 ×
+1,025 = 799.500 ✓) y se calcula con aritmética entera en décimas de punto.
+Editar un monto a mano lo fija (override): cambiar el % general recalcula solo
+las filas no tocadas; "Copiar sin ajuste" descarta ajuste y overrides.
+
+### 1.11 Onboarding sin fricción
+Un usuario nuevo sin hogar recibe automáticamente "Mi hogar" + las 15
+categorías sugeridas al primer ingreso (el nombre se edita en /hogar). El CTA
+de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.

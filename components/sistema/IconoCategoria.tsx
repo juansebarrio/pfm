@@ -47,17 +47,20 @@ const iconos: Record<string, LucideIcon> = {
 type Props = {
   nombre: string;
   className?: string;
-  /** ámbar cuando la partida tiene un aviso activo (DESIGN_NOTES.md §1.5) */
-  tono?: "normal" | "ambar";
+  /**
+   * ámbar cuando la partida tiene un aviso activo (DESIGN_NOTES.md §1.5);
+   * verde en la tile seleccionada del picker de categorías (03, §3.12)
+   */
+  tono?: "normal" | "ambar" | "verde";
 };
+
+const tonos = {
+  normal: "text-tinta-secundaria",
+  ambar: "text-ambar",
+  verde: "text-verde",
+} as const;
 
 export function IconoCategoria({ nombre, className = "size-[18px]", tono = "normal" }: Props) {
   const Icono = iconos[nombre] ?? Tag;
-  return (
-    <Icono
-      className={`${className} ${tono === "ambar" ? "text-ambar" : "text-tinta-secundaria"}`}
-      strokeWidth={1.5}
-      aria-hidden
-    />
-  );
+  return <Icono className={`${className} ${tonos[tono]}`} strokeWidth={1.5} aria-hidden />;
 }

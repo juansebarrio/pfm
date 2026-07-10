@@ -44,15 +44,25 @@ function verificar(condicion: boolean, mensaje: string) {
 
 async function limpiar() {
   console.log("Limpiando datos previos…");
-  const { data: hogares } = await admin.from("hogares").select("id").eq("nombre", "Coghlan");
-  for (const h of hogares ?? []) {
-    await admin.from("hogares").delete().eq("id", h.id);
-  }
   const { data: lista } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  for (const u of lista?.users ?? []) {
-    if (USUARIOS.some((s) => s.email === u.email)) {
-      await admin.auth.admin.deleteUser(u.id);
-    }
+  const usuariosSeed = (lista?.users ?? []).filter((u) =>
+    USUARIOS.some((s) => s.email === u.email),
+  );
+
+  // primero TODOS los hogares de los usuarios del seed (Coghlan y cualquier
+  // "Mi hogar" auto-creado por la app), después los usuarios
+  const idsUsuarios = usuariosSeed.map((u) => u.id);
+  const { data: hogares } = await admin
+    .from("hogares")
+    .select("id, nombre")
+    .or(`nombre.eq.Coghlan${idsUsuarios.length ? `,creado_por.in.(${idsUsuarios.join(",")})` : ""}`);
+  for (const h of hogares ?? []) {
+    const { error } = await admin.from("hogares").delete().eq("id", h.id);
+    if (error) fallar(`limpiando hogar ${h.nombre}: ${error.message}`);
+  }
+  for (const u of usuariosSeed) {
+    const { error } = await admin.auth.admin.deleteUser(u.id);
+    if (error) fallar(`limpiando usuario ${u.email}: ${JSON.stringify(error)}`);
   }
 }
 
@@ -242,7 +252,18 @@ async function main() {
     return p.id;
   };
 
-  const partidas: object[] = [];
+  // OJO: en un insert masivo de PostgREST todas las filas comparten claves;
+  // las que falten viajan como null y pisan los defaults → claves SIEMPRE completas.
+  type FilaPartida = {
+    presupuesto_id: string;
+    categoria_id: string;
+    asignado_centavos: number;
+    fija: boolean;
+    rollover: boolean;
+    activa: boolean;
+    nota: string | null;
+  };
+  const partidas: FilaPartida[] = [];
   for (const mes of ["2026-06-01", "2026-07-01"]) {
     for (const [nombre, asignado, extra] of asignadosHogar) {
       partidas.push({
@@ -251,18 +272,22 @@ async function main() {
         asignado_centavos: $(asignado),
         fija: extra.fija ?? false,
         rollover: extra.rollover ?? false,
+        activa: true,
+        nota: null,
       });
     }
   }
   // personales de Juanse: Gustos / Fotografía (rollover) / Regalos
   for (const mes of ["2026-05-01", "2026-06-01", "2026-07-01"]) {
+    const base = { presupuesto_id: presu(mes, "personal"), activa: true, nota: null, fija: false };
     partidas.push(
-      { presupuesto_id: presu(mes, "personal"), categoria_id: cat("Gustos"), asignado_centavos: $(120000) },
-      { presupuesto_id: presu(mes, "personal"), categoria_id: cat("Fotografía"), asignado_centavos: $(150000), rollover: true },
-      { presupuesto_id: presu(mes, "personal"), categoria_id: cat("Regalos"), asignado_centavos: $(60000) },
+      { ...base, categoria_id: cat("Gustos"), asignado_centavos: $(120000), rollover: false },
+      { ...base, categoria_id: cat("Fotografía"), asignado_centavos: $(150000), rollover: true },
+      { ...base, categoria_id: cat("Regalos"), asignado_centavos: $(60000), rollover: false },
     );
   }
-  await admin.from("partidas_presupuesto").insert(partidas);
+  const { error: errPartidas } = await admin.from("partidas_presupuesto").insert(partidas);
+  if (errPartidas) fallar(`insertando partidas: ${errPartidas.message}`);
 
   // ============================================================ compras en cuotas
   const { data: compras } = await admin
@@ -467,6 +492,11 @@ async function main() {
       .reduce((s, m) => s + m.importe_centavos, 0);
     verificar(suma === $(esperado), `partida ${nombre}: gastado $ ${esperado.toLocaleString("es-AR")}`);
   }
+
+  const { count: cuentaPartidas } = await admin
+    .from("partidas_presupuesto")
+    .select("id", { count: "exact", head: true });
+  verificar(cuentaPartidas === 39, `39 partidas insertadas (dio ${cuentaPartidas})`);
 
   const asignadoJulio = asignadosHogar.reduce((s, [, monto]) => s + $(monto), 0);
   verificar(asignadoJulio === $(2860000), "asignado julio hogar = $ 2.860.000");
