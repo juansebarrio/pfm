@@ -1,0 +1,33 @@
+{
+  "name": "Sobres",
+  "short_name": "Sobres",
+  "description": "PFM personal y familiar para Argentina: presupuesto por sobres, tarjetas con ciclos reales, cuotas y patrimonio.",
+  "id": "/",
+  "start_url": "/resumen",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F5F1",
+  "theme_color": "#1E6E52",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/iconos/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/iconos/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/iconos/icono-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

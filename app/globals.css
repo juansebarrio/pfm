@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/*
+ * Tokens del export de diseño (DESIGN_AUDIT.md §2).
+ * Modo claro en :root; modo oscuro por data-tema o prefers-color-scheme.
+ * Unificaciones aplicadas (§7.1): #F0EDE5/#F0EDE6→separador+pista,
+ * #E7F0EB/#EDF3EF→verde-suave, D8D4CB/D9D5CB/DDD9CF→rampa arena,
+ * tinta-terciaria oscurecida a AA, ámbar de texto chico a AA.
+ */
+:root {
+  --papel: #f7f5f1;
+  --superficie: #ffffff;
+  --tinta: #1a1917;
+  --tinta-secundaria: #6f6a63;
+  --tinta-terciaria: #76716a; /* export #9B958B, oscurecido a 4.5:1 */
+  --tinta-muda: #c9c4ba; /* decorativo: chevrons, dashed editable */
+  --tinta-deshabilitada: #a9a399; /* export #C9C4BA en "$ 0", legibilizado */
+  --verde: #1e6e52;
+  --verde-hover: #17553f;
+  --verde-suave: #e7f0eb;
+  --ambar: #a66a00;
+  --ambar-texto: #8f5b00; /* export #A66A00, AA en texto chico */
+  --fondo-estimada: #fbf6ec;
+  --borde-estimada: #c89a4d;
+  --rojo: #b3402e;
+  --azul: #3b5ba5;
+  --azul-suave: #eaeef7;
+  --borde: #e4e0d8;
+  --separador: #f0ede6;
+  --pista: #f0ede6;
+  --fondo-segmented: #ece8df;
+  --segmented-activo: #ffffff;
+  --toggle-apagado: #d8d4cb;
+  --barra-futura: #ddd9cf;
+  --borde-bandeja: #dcceb0;
+  --seleccion-texto: #d9e8e1;
+  --sombra-card: 0 1px 2px rgba(26, 25, 23, 0.04);
+  --sombra-thumb: 0 1px 2px rgba(26, 25, 23, 0.08);
+  --sombra-fab: 0 6px 14px rgba(30, 110, 82, 0.3);
+  --tab-bar-fondo: rgba(255, 255, 255, 0.97);
+  --footer-fondo: rgba(255, 255, 255, 0.98);
+}
+
+/*
+ * Oscuro (pantalla 10 del export + extrapolaciones DESIGN_NOTES.md §4,
+ * a validar en /sistema). Semánticos "aclarados"; cards sin sombra.
+ */
+[data-tema="oscuro"] {
+  --papel: #141312;
+  --superficie: #1e1c1a;
+  --tinta: #f2efe9;
+  --tinta-secundaria: #a39d93;
+  --tinta-terciaria: #7d776d;
+  --tinta-muda: #4a453f;
+  --tinta-deshabilitada: #5f594f;
+  --verde: #4fa37f;
+  --verde-hover: #63b491;
+  --verde-suave: #22352c;
+  --ambar: #c6913b;
+  --ambar-texto: #c6913b;
+  --fondo-estimada: #2a2419;
+  --borde-estimada: #8a6a33;
+  --rojo: #cc6b57;
+  --azul: #7e9bd6;
+  --azul-suave: #232c3d;
+  --borde: #34302b;
+  --separador: #2a2724;
+  --pista: #2e2b26;
+  --fondo-segmented: #242220;
+  --segmented-activo: #38342f;
+  --toggle-apagado: #3a3733;
+  --barra-futura: #3a3733;
+  --seleccion-texto: #2c4438;
+  --sombra-card: none;
+  --sombra-thumb: none;
+  --sombra-fab: 0 6px 14px rgba(79, 163, 127, 0.25);
+  --tab-bar-fondo: rgba(30, 28, 26, 0.97);
+  --footer-fondo: rgba(30, 28, 26, 0.98);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]):not([data-tema="oscuro"]) {
+    --papel: #141312;
+    --superficie: #1e1c1a;
+    --tinta: #f2efe9;
+    --tinta-secundaria: #a39d93;
+    --tinta-terciaria: #7d776d;
+    --tinta-muda: #4a453f;
+    --tinta-deshabilitada: #5f594f;
+    --verde: #4fa37f;
+    --verde-hover: #63b491;
+    --verde-suave: #22352c;
+    --ambar: #c6913b;
+    --ambar-texto: #c6913b;
+    --fondo-estimada: #2a2419;
+    --borde-estimada: #8a6a33;
+    --rojo: #cc6b57;
+    --azul: #7e9bd6;
+    --azul-suave: #232c3d;
+    --borde: #34302b;
+    --separador: #2a2724;
+    --pista: #2e2b26;
+    --fondo-segmented: #242220;
+    --segmented-activo: #38342f;
+    --toggle-apagado: #3a3733;
+    --barra-futura: #3a3733;
+    --seleccion-texto: #2c4438;
+    --sombra-card: none;
+    --sombra-thumb: none;
+    --sombra-fab: 0 6px 14px rgba(79, 163, 127, 0.25);
+    --tab-bar-fondo: rgba(30, 28, 26, 0.97);
+    --footer-fondo: rgba(30, 28, 26, 0.98);
+  }
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-papel: var(--papel);
+  --color-superficie: var(--superficie);
+  --color-tinta: var(--tinta);
+  --color-tinta-secundaria: var(--tinta-secundaria);
+  --color-tinta-terciaria: var(--tinta-terciaria);
+  --color-tinta-muda: var(--tinta-muda);
+  --color-tinta-deshabilitada: var(--tinta-deshabilitada);
+  --color-verde: var(--verde);
+  --color-verde-hover: var(--verde-hover);
+  --color-verde-suave: var(--verde-suave);
+  --color-ambar: var(--ambar);
+  --color-ambar-texto: var(--ambar-texto);
+  --color-fondo-estimada: var(--fondo-estimada);
+  --color-borde-estimada: var(--borde-estimada);
+  --color-rojo: var(--rojo);
+  --color-azul: var(--azul);
+  --color-azul-suave: var(--azul-suave);
+  --color-borde: var(--borde);
+  --color-separador: var(--separador);
+  --color-pista: var(--pista);
+  --color-fondo-segmented: var(--fondo-segmented);
+  --color-segmented-activo: var(--segmented-activo);
+  --color-toggle-apagado: var(--toggle-apagado);
+  --color-barra-futura: var(--barra-futura);
+  --color-borde-bandeja: var(--borde-bandeja);
+  --color-blanco: #ffffff;
+
+  --font-interfaz: var(--font-rubik), system-ui, sans-serif;
+  --font-cifras: var(--font-spline-mono), ui-monospace, monospace;
+
+  /* Radios del export (DESIGN_AUDIT.md §2.3) */
+  --radius-card: 14px;
+  --radius-cta: 12px;
+  --radius-chip: 10px;
+  --radius-chip-chico: 9px;
+  --radius-chip-mini: 8px;
+  --radius-tag: 4px;
+
+  --shadow-card: var(--sombra-card);
+  --shadow-thumb: var(--sombra-thumb);
+  --shadow-fab: var(--sombra-fab);
+}
+
+::selection {
+  background: var(--seleccion-texto);
+}
+
+html {
+  background: var(--papel);
+}
+
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--font-interfaz);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Toda cifra va en Spline Sans Mono (convención dura del export) */
+.cifra {
+  font-family: var(--font-cifras);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visible (mejora directa §7.1: el export no define estados de foco) */
+:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+/* Target táctil mínimo de 44px sin cambiar el dibujo (mejora directa §7.1) */
+.hit-44 {
+  position: relative;
+}
+.hit-44::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
