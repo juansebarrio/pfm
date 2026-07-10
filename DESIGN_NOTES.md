@@ -49,7 +49,25 @@ Coherente con el rayo ámbar del "Para atender" de 04.
 ### 1.6 Proyección lineal solo sobre partidas variables
 `gastado / días transcurridos × días del mes`, aplicada a partidas no-fijas y con
 gasto > 0. Las fijas pagadas al 100 % quedan "calmas" (regla anotada en el propio
-export). Una partida sin gastos no proyecta (caso Luz).
+export). Una partida sin gastos no proyecta (caso Luz). **Las partidas con rollover
+tampoco proyectan**: son pools de arrastre (Suscripciones, Fotografía), no ritmos
+diarios — proyectar un Netflix cobrado el día 3 daría atención absurda, y el export
+dibuja Suscripciones en verde.
+
+### 1.7 Los números de proyección del export están pintados
+"a este ritmo terminás **$ 31.200** arriba" (Supermercado) y "**$ 7.100** arriba"
+(Delivery) no salen de ninguna fórmula lineal con los datos dibujados (la fórmula
+del brief da $ 312.040 y $ 131.030). En conflicto funcional gana el brief: usamos
+la fórmula y los montos del copy difieren del export. Misma situación con
+**Restaurantes**: $ 45.000/$ 120.000 al día 10 proyecta $ 139.500 (> asignado), la
+app la muestra en atención aunque el export la pinte verde. La comparativa 1:1
+contempla estas tres divergencias derivadas.
+
+### 1.8 Regla del importe en ámbar
+El export muestra "queda $ 18.700" en ámbar (Delivery, 79 % gastado) pero
+"queda $ 251.600" en tinta (Supermercado, 52 %) sin enunciar la regla. Regla
+implementada: el importe "queda" va en ámbar cuando la partida está en atención
+**y** el gastado supera el 75 % del disponible.
 
 ---
 

@@ -7,7 +7,8 @@
  * #E7F0EB/#EDF3EF→verde-suave, D8D4CB/D9D5CB/DDD9CF→rampa arena,
  * tinta-terciaria oscurecida a AA, ámbar de texto chico a AA.
  */
-:root {
+:root,
+[data-tema="claro"] {
   --papel: #f7f5f1;
   --superficie: #ffffff;
   --tinta: #1a1917;
@@ -142,6 +143,7 @@
   --color-borde-bandeja: var(--borde-bandeja);
   --color-blanco: #ffffff;
 
+  --font-sans: var(--font-rubik), system-ui, sans-serif;
   --font-interfaz: var(--font-rubik), system-ui, sans-serif;
   --font-cifras: var(--font-spline-mono), ui-monospace, monospace;
 
@@ -169,13 +171,14 @@ html {
 body {
   background: var(--papel);
   color: var(--tinta);
-  font-family: var(--font-interfaz);
+  /* referencia directa a la var de next/font: @theme inline no emite runtime vars */
+  font-family: var(--font-rubik), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Toda cifra va en Spline Sans Mono (convención dura del export) */
 .cifra {
-  font-family: var(--font-cifras);
+  font-family: var(--font-spline-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
 }
 
