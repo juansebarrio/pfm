@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9E6DF;font-family:'Rubik',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1A1917}
+a{color:#1E6E52;text-decoration:none}
+a:hover{color:#17553F}
+::selection{background:#D9E8E1}
+</style>
+</helmet>
+<div style="min-height:100vh;background:{{ canvasBg }};padding:48px 56px 120px;display:flex;flex-direction:column;gap:64px;align-items:flex-start">
+
+<!-- ══════════ ENCABEZADO DEL CANVAS ══════════ -->
+<div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:28px;width:100%">
+  <div style="flex:none">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:10px;background:#1E6E52;display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#F7F5F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+      </div>
+      <div style="font:600 25px 'Rubik',sans-serif;letter-spacing:-.01em;color:#1A1917">Sobres</div>
+      <span style="font:600 9.5px 'Spline Sans Mono',monospace;letter-spacing:.07em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:3px 6px;background:#FFFFFF">NOMBRE PROVISORIO</span>
+    </div>
+    <div style="font:400 13px/1.5 'Rubik',sans-serif;color:#6F6A63;margin-top:9px;max-width:600px">PFM personal y familiar para Argentina. 10 pantallas mobile, 390 × 844, un solo dataset: hogar Coghlan, viernes 10 de julio de 2026. Dirección: libreta contable moderna — papel, tinta, números protagonistas.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:13px 18px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:6px">
+        <div style="width:15px;height:15px;border-radius:8px;background:#1A1917"></div>
+        <div style="width:15px;height:15px;border-radius:8px;background:#1E6E52"></div>
+        <div style="width:15px;height:15px;border-radius:8px;background:#A66A00"></div>
+        <div style="width:15px;height:15px;border-radius:8px;background:#B3402E"></div>
+        <div style="width:15px;height:15px;border-radius:8px;background:#3B5BA5"></div>
+        <div style="width:15px;height:15px;border-radius:8px;background:#F7F5F1;border:1px solid #E4E0D8"></div>
+      </div>
+      <div style="font:400 9.5px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.03em">tinta · ok · atención · excedido · info · papel</div>
+    </div>
+    <div style="width:1px;height:34px;background:#E4E0D8"></div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <div style="font:600 13px 'Rubik',sans-serif;color:#1A1917">Rubik 400–700</div>
+      <div style="font:500 12px 'Spline Sans Mono',monospace;color:#6F6A63">Spline Sans Mono · $ 1.234.567</div>
+    </div>
+    <div style="width:1px;height:34px;background:#E4E0D8"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;max-width:270px">
+      <span style="font:600 9px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px;background:#FFFFFF">HOGAR</span>
+      <span style="font:600 9px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px;background:#FFFFFF">PERSONAL</span>
+      <span style="font:600 9px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 6px;background:#FBF6EC">ESTIMADA</span>
+      <span style="font:600 9px 'Rubik',sans-serif;letter-spacing:.08em;color:#1E6E52;border:1px solid transparent;border-radius:4px;padding:2px 6px;background:#E7F0EB">CONFIRMADA</span>
+      <span style="font:600 9px 'Rubik',sans-serif;letter-spacing:.08em;color:#3B5BA5;border:1px solid transparent;border-radius:4px;padding:2px 6px;background:#EAEEF7">ROLLOVER</span>
+      <span style="font:600 9px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border:1px solid transparent;border-radius:4px;padding:2px 6px;background:#F1EEE8">CUOTA 4/12</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SECCIÓN 01 · PRESUPUESTO ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">01 · PRESUPUESTO — LA PANTALLA QUE DEFINE EL PRODUCTO</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- 01a Presupuesto -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">01a · Presupuesto del hogar, julio</div>
+      <div data-screen-label="01a Presupuesto" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            <span style="font:600 17px 'Rubik',sans-serif;color:#1A1917">julio 2026</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="margin:12px 20px 0;background:#ECE8DF;border-radius:11px;padding:2px;display:grid;grid-template-columns:1fr 1fr;flex:none">
+          <div style="background:#FFFFFF;border-radius:9px;text-align:center;padding:8px 0;font:600 13px 'Rubik',sans-serif;color:#1A1917;box-shadow:0 1px 2px rgba(26,25,23,.08)">Hogar</div>
+          <div style="text-align:center;padding:8px 0;font:500 13px 'Rubik',sans-serif;color:#6F6A63">Personal</div>
+        </div>
+        <div style="padding:20px 20px 4px;flex:none">
+          <div style="font:500 12px 'Rubik',sans-serif;color:#6F6A63">Disponible en julio</div>
+          <div style="font:500 40px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.02em;margin-top:3px">$ 539.200</div>
+          <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:7px">asignado $ 2.860.000 · gastado $ 2.320.800</div>
+          <div style="position:relative;margin-top:13px">
+            <div style="height:4px;border-radius:2px;background:#E7E3DA;overflow:hidden"><div style="width:81%;height:100%;border-radius:2px;background:#1A1917"></div></div>
+            <div style="position:absolute;left:32%;top:-3.5px;width:2px;height:11px;background:#1E6E52;border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63">81 % gastado</span>
+            <span style="font:500 10.5px 'Spline Sans Mono',monospace;color:#1E6E52">día 10 de 31 · quedan 21 días</span>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:12px 2px 7px">Vivienda</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Alquiler</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 780.000 de $ 780.000 · fijo</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10 12h4"></path><path d="M10 8h4"></path><path d="M14 21v-3a2 2 0 0 0-4 0v3"></path><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"></path><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Expensas</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 165.000 de $ 165.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:14px 2px 7px">Comida</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Supermercado</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 251.600</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:52%;height:100%;border-radius:2px;background:#A66A00"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 268.400 de $ 520.000</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#A66A00;margin-top:-2px">a este ritmo terminás $ 31.200 arriba</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path d="M12 17.5V14l-3-3 4-3 2 3h2"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Delivery</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#A66A00">$ 18.700</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:79%;height:100%;border-radius:2px;background:#A66A00"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 71.300 de $ 90.000</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#A66A00;margin-top:-2px">a este ritmo terminás $ 7.100 arriba</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Restaurantes</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 75.000</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:38%;height:100%;border-radius:2px;background:#1E6E52"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 45.000 de $ 120.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:14px 2px 7px">Ahorro</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"></path><path d="M16 10h.01"></path><path d="M2 8v1a2 2 0 0 0 2 2h1"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Ahorro e inversión</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">transferido</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 400.000 de $ 400.000 · a Broker</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ El color de cada partida sale de la proyección, no del % gastado: una fija pagada al 100 % se ve calma. La barra del mes marca el día 10 en verde.</div>
+      </sc-if>
+    </div>
+    <!-- 01b Presupuesto, lista scrolleada -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">01b · La misma pantalla, scrolleada</div>
+      <div data-screen-label="01b Presupuesto scroll" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 9px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E4E0D8;flex:none">
+          <span style="font:600 14px 'Rubik',sans-serif;color:#1A1917">julio 2026 · Hogar</span>
+          <span style="font:600 12px 'Spline Sans Mono',monospace;color:#1A1917">queda $ 539.200</span>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:10px 2px 6px">Ahorro</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"></path><path d="M16 10h.01"></path><path d="M2 8v1a2 2 0 0 0 2 2h1"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Ahorro e inversión</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">transferido</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 400.000 de $ 400.000 · a Broker</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:12px 2px 6px">Salud</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"></path><path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Prepaga</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 310.000 de $ 310.000 · fijo</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Farmacia</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 27.500</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:31%;height:100%;border-radius:2px;background:#1E6E52"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 12.500 de $ 40.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:12px 2px 6px">Servicios</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A66A00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Luz</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 45.000</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 0 de $ 45.000</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#A66A00">recurrente · vence el 18 jul</span>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Internet</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 38.000 de $ 38.000</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Celular</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1E6E52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:100%;height:100%;background:#1E6E52;opacity:.4"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 22.000 de $ 22.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:12px 2px 6px">Suscripciones</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m17 2-5 5-5-5"></path><rect width="20" height="15" x="2" y="7" rx="2"></rect></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Suscripciones</span>
+                <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#3B5BA5;border-radius:4px;padding:2px 5px;background:#EAEEF7;flex:none">ROLLOVER</span>
+                <span style="flex:1"></span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 27.600</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:75%;height:100%;border-radius:2px;background:#1E6E52"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 41.200 de $ 55.000</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#3B5BA5">arrastrás + $ 13.800 de junio</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding:16px 0 0;text-align:center">
+            <a href="#" style="font:500 13.5px 'Rubik',sans-serif;color:#1E6E52">Armar presupuesto de agosto →</a>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Al scrollear, el header se condensa: mes y disponible siempre a la vista. El rollover de Suscripciones suma al disponible de la partida.</div>
+      </sc-if>
+    </div>
+
+    <!-- 01c Estado vacío -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">01c · Primer uso, sin presupuesto</div>
+      <div data-screen-label="01c Presupuesto vacío" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            <span style="font:600 17px 'Rubik',sans-serif;color:#1A1917">julio 2026</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 44px 90px;text-align:center">
+          <div style="width:64px;height:64px;border-radius:32px;background:#E7F0EB;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+          </div>
+          <div style="font:600 19px 'Rubik',sans-serif;color:#1A1917;margin-top:20px">Armá tu primer presupuesto</div>
+          <div style="font:400 13.5px/1.55 'Rubik',sans-serif;color:#6F6A63;margin-top:10px;max-width:280px">Asignale un monto a cada partida del mes, como sobres de plata, y mirá cuánto queda a medida que cargás gastos.</div>
+          <div style="margin-top:24px;background:#1E6E52;color:#FFFFFF;font:600 14.5px 'Rubik',sans-serif;border-radius:12px;padding:14px 30px">Empezar con julio</div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ El método en una frase, sin tutorial. El CTA arma julio partiendo de partidas sugeridas.</div>
+      </sc-if>
+    </div>
+    <!--ROW-01-->
+  </div>
+</div>
+<!-- ══════════ SECCIÓN 02–03 · FLUJOS DE CARGA ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">02 · ARMADO DEL MES &nbsp;·&nbsp; 03 · ALTA RÁPIDA DE GASTO</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- 02 Armado del presupuesto -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">02 · Armado del presupuesto, listo en 5 minutos</div>
+      <div data-screen-label="02 Armado presupuesto agosto" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:10px 20px 0;flex:none">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <div style="font:600 22px 'Rubik',sans-serif;color:#1A1917;margin-top:10px">Presupuesto de agosto</div>
+          <div style="font:400 13px 'Rubik',sans-serif;color:#6F6A63;margin-top:3px">Partimos del de julio</div>
+        </div>
+        <div style="margin:14px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:13px 14px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1">
+              <div style="font:600 13.5px 'Rubik',sans-serif;color:#1A1917">Ajuste general por inflación</div>
+              <div style="font:400 11.5px/1.45 'Rubik',sans-serif;color:#6F6A63;margin-top:4px">Se aplica a todas las partidas; después ajustá las que quieras una por una.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;border:1.5px solid #1A1917;border-radius:10px;padding:9px 12px;background:#F7F5F1;flex:none">
+              <span style="font:600 19px 'Spline Sans Mono',monospace;color:#1A1917">+ 2,5 %</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+            </div>
+          </div>
+          <div style="margin-top:9px;padding-top:9px;border-top:1px solid #F0EDE6">
+            <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">Copiar sin ajuste</span>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="margin-top:14px;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Alquiler</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 780.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 799.500</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 19.500</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Expensas</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 165.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 169.125</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 4.125</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Luz</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 45.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 46.125</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 1.125</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#D8D4CB;display:flex;align-items:center;justify-content:flex-start;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#9B958B">Internet</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">desactivada este mes · la paga Vale</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#C9C4BA;display:inline-block">$ 0</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Celular</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 22.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 22.550</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 550</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Supermercado</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 520.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 533.000</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 13.000</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Delivery</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 90.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 92.250</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 2.250</div>
+              </div>
+            </div>
+            <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="width:38px;height:22px;border-radius:11px;background:#1E6E52;display:flex;align-items:center;justify-content:flex-end;padding:2px;flex:none"><div style="width:18px;height:18px;border-radius:9px;background:#FFFFFF"></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Restaurantes</div>
+                <div style="font:400 11px 'Spline Sans Mono',monospace;color:#9B958B;text-decoration:line-through;margin-top:2px">jul $ 120.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 14px 'Spline Sans Mono',monospace;color:#1A1917;border-bottom:1px dashed #C9C4BA;display:inline-block;padding-bottom:1px">$ 123.000</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">+ $ 3.000</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.98);border-top:1px solid #E4E0D8;padding:12px 20px 30px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <span style="font:400 12px 'Rubik',sans-serif;color:#6F6A63">Total agosto · 14 partidas activas</span>
+            <span style="font:600 17px 'Spline Sans Mono',monospace;color:#1A1917">$ 2.892.550</span>
+          </div>
+          <div style="margin-top:10px;background:#1E6E52;color:#FFFFFF;font:600 15px 'Rubik',sans-serif;border-radius:12px;padding:15px 0;text-align:center">Confirmar presupuesto</div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ El total se actualiza en vivo: $ 2.931.500 con todo activo, acá con Internet desactivada. El monto de julio queda tachado suave como referencia.</div>
+      </sc-if>
+    </div>
+
+    <!-- 03 Alta rápida de gasto -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">03 · Alta rápida — la pantalla más usada</div>
+      <div data-screen-label="03 Alta rápida de gasto" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <span style="font:600 16px 'Rubik',sans-serif;color:#1A1917;flex:1">Nuevo gasto</span>
+          <div style="background:#ECE8DF;border-radius:9px;padding:2px;display:flex">
+            <div style="background:#FFFFFF;border-radius:7px;padding:5px 12px;font:600 11.5px 'Rubik',sans-serif;color:#1A1917;box-shadow:0 1px 2px rgba(26,25,23,.08)">Hogar</div>
+            <div style="padding:5px 12px;font:500 11.5px 'Rubik',sans-serif;color:#6F6A63">Personal</div>
+          </div>
+        </div>
+        <div style="padding:20px 20px 6px;text-align:center;flex:none">
+          <div style="font:500 52px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.03em">$ 84.320</div>
+        </div>
+        <div style="padding:0 20px;display:flex;gap:7px;white-space:nowrap;overflow:hidden;flex:none">
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:10px;padding:10px 12px;font:500 12.5px 'Rubik',sans-serif;color:#1A1917;flex:none">Efectivo</div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:10px;padding:10px 12px;font:500 12.5px 'Rubik',sans-serif;color:#1A1917;flex:none">Galicia</div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:10px;padding:10px 12px;font:500 12.5px 'Rubik',sans-serif;color:#1A1917;flex:none">MP</div>
+          <div style="border:1px solid #1A1917;background:#1A1917;border-radius:10px;padding:10px 12px;font:600 12.5px 'Rubik',sans-serif;color:#F7F5F1;flex:none;display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#F7F5F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+            Visa •• 4321
+          </div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:10px;padding:10px 12px;font:500 12.5px 'Rubik',sans-serif;color:#1A1917;flex:none;display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+            MC •• 8810
+          </div>
+        </div>
+        <div style="margin:10px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:12px;padding:10px 12px;flex:none">
+          <div style="display:flex;align-items:center;gap:7px">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
+            <span style="font:400 12px 'Rubik',sans-serif;color:#6F6A63">Cae en el ciclo que cierra el <span style="font-weight:600;color:#1A1917">28 jul</span></span>
+            <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 5px;background:#FBF6EC">ESTIMADA</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:9px;border-top:1px solid #F0EDE6">
+            <span style="font:400 12px 'Rubik',sans-serif;color:#6F6A63;flex:1">Cuotas</span>
+            <div style="width:44px;padding:7px 0;text-align:center;border:1px solid #1A1917;background:#1A1917;color:#F7F5F1;border-radius:9px;font:600 13px 'Spline Sans Mono',monospace">1</div>
+            <div style="width:44px;padding:7px 0;text-align:center;border:1px solid #E4E0D8;background:#FFFFFF;color:#1A1917;border-radius:9px;font:500 13px 'Spline Sans Mono',monospace">3</div>
+            <div style="width:44px;padding:7px 0;text-align:center;border:1px solid #E4E0D8;background:#FFFFFF;color:#1A1917;border-radius:9px;font:500 13px 'Spline Sans Mono',monospace">6</div>
+            <div style="width:44px;padding:7px 0;text-align:center;border:1px solid #E4E0D8;background:#FFFFFF;color:#1A1917;border-radius:9px;font:500 13px 'Spline Sans Mono',monospace">12</div>
+          </div>
+        </div>
+        <div style="padding:12px 20px 0;flex:none">
+          <div style="font:400 12px 'Rubik',sans-serif;color:#6F6A63;margin-bottom:7px">¿En qué lo gastaste? · opcional</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px">
+            <div style="border:1.5px solid #1E6E52;background:#EDF3EF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+              <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Súper</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path d="M12 17.5V14l-3-3 4-3 2 3h2"></path></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Delivery</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Restaurantes</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0v-6.998a2 2 0 0 0-.59-1.42L18 5"></path><path d="M14 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"></path><path d="M2 21h13"></path><path d="M3 9h11"></path></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Nafta</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"></path><path d="M15 6v6"></path><path d="M2 12h19.6"></path><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"></path><circle cx="7" cy="18" r="2"></circle><path d="M9 18h5"></path><circle cx="16" cy="18" r="2"></circle></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">SUBE</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Farmacia</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2-5 5-5-5"></path><rect width="20" height="15" x="2" y="7" rx="2"></rect></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Suscripciones</span>
+            </div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:12px;padding:9px 2px;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"></path><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"></path><rect x="3" y="7" width="18" height="4" rx="1"></rect></svg>
+              <span style="font:500 10px 'Rubik',sans-serif;color:#1A1917">Regalos</span>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="padding:0 20px;flex:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">1</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">2</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">3</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">4</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">5</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">6</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">7</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">8</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">9</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">,</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center;font:500 22px 'Spline Sans Mono',monospace;color:#1A1917">0</div>
+            <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:10px;height:50px;display:flex;align-items:center;justify-content:center">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"></path><path d="m12 9 6 6"></path><path d="m18 9-6 6"></path></svg>
+            </div>
+          </div>
+          <div style="margin-top:10px;margin-bottom:26px;background:#1E6E52;color:#FFFFFF;font:600 15px 'Rubik',sans-serif;border-radius:12px;padding:15px 0;text-align:center">Listo</div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Con tarjeta seleccionada aparecen ciclo y cuotas; con otro medio, desaparecen. Sin categoría, el botón pasa a "Guardar sin categoría" y el gasto va a la bandeja.</div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+<!-- ══════════ SECCIÓN 04–05 · DÍA A DÍA ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">04 · RESUMEN (HOY) &nbsp;·&nbsp; 05 · MOVIMIENTOS + BANDEJA</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- 04 Resumen -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">04 · Resumen — el tab de apertura</div>
+      <div data-screen-label="04 Resumen" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:10px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;flex:none">
+          <div>
+            <div style="font:600 22px 'Rubik',sans-serif;color:#1A1917">Hola, Juanse</div>
+            <div style="font:400 12.5px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">viernes 10 de julio</div>
+          </div>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="margin:16px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:15px 16px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font:500 12px 'Rubik',sans-serif;color:#6F6A63">Disponible en julio · Hogar</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="font:500 34px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.02em;margin-top:4px">$ 539.200</div>
+          <div style="position:relative;margin-top:12px">
+            <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:81%;height:100%;border-radius:2px;background:#1A1917"></div></div>
+            <div style="position:absolute;left:32%;top:-3.5px;width:2px;height:11px;background:#1E6E52;border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63">81 % gastado</span>
+            <span style="font:500 10.5px 'Spline Sans Mono',monospace;color:#1E6E52">quedan 21 días</span>
+          </div>
+        </div>
+        <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:18px 22px 7px;flex:none">Para atender</div>
+        <div style="padding:0 20px;display:flex;flex-direction:column;gap:8px;flex:none">
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px">
+                <span style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Mastercard BBVA cierra en 3 días</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:3px">
+                <span style="font:400 11.5px 'Spline Sans Mono',monospace;color:#6F6A63">proyectado $ 152.700</span>
+                <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#1E6E52;border-radius:4px;padding:2px 5px;background:#E7F0EB">CONFIRMADA</span>
+              </div>
+            </div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#C9C4BA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A66A00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Vence Luz el 18 jul</div>
+              <div style="font:400 11.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:3px">$ 45.000 sugerido · recurrente</div>
+            </div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#C9C4BA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:11px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">3 movimientos sin categorizar</div>
+              <div style="font:400 11.5px 'Rubik',sans-serif;color:#6F6A63;margin-top:3px">Rappi, una transferencia y uno más</div>
+            </div>
+            <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52;flex:none">Categorizar</span>
+          </div>
+        </div>
+        <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:18px 22px 7px;flex:none">Últimos movimientos</div>
+        <div style="margin:0 20px;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="padding:11px 14px;display:flex;align-items:center;gap:11px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Coto</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Supermercado · Visa •• 4321</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 84.320</div>
+              <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+            </div>
+          </div>
+          <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Café Cuervo</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Gustos · Mercado Pago</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 6.800</div>
+              <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">PERSONAL</span>
+            </div>
+          </div>
+          <div style="padding:11px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0v-6.998a2 2 0 0 0-.59-1.42L18 5"></path><path d="M14 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"></path><path d="M2 21h13"></path><path d="M3 9h11"></path></svg>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">YPF</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Nafta · Mastercard •• 8810</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 45.000</div>
+              <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Corta a propósito: un número, lo que hay que atender y los últimos movimientos. Nada más.</div>
+      </sc-if>
+    </div>
+
+    <!-- 05 Movimientos -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">05 · Movimientos + bandeja de entrada</div>
+      <div data-screen-label="05 Movimientos" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <span style="font:600 22px 'Rubik',sans-serif;color:#1A1917">Movimientos</span>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="margin:12px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:8px;flex:none">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg>
+          <span style="font:400 13px 'Rubik',sans-serif;color:#9B958B">Buscar comercio o categoría</span>
+        </div>
+        <div style="margin:8px 20px 0;display:flex;gap:6px;white-space:nowrap;overflow:hidden;flex:none">
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:6px 10px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917;display:flex;align-items:center;gap:4px;flex:none">Cuenta <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:6px 10px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917;display:flex;align-items:center;gap:4px;flex:none">Categoría <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:6px 10px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917;display:flex;align-items:center;gap:4px;flex:none">Miembro <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></div>
+          <div style="border:1px solid #1A1917;background:#1A1917;border-radius:9px;padding:6px 10px;font:600 11.5px 'Rubik',sans-serif;color:#F7F5F1;flex:none">Hogar</div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:6px 10px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917;flex:none">Personal</div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="margin-top:10px;background:#FFFFFF;border:1px solid #DCCEB0;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:9px 14px 8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #F0EDE6">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#A66A00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+              <span style="font:600 13.5px 'Rubik',sans-serif;color:#1A1917;flex:1">Bandeja de entrada</span>
+              <span style="min-width:20px;height:20px;border-radius:10px;background:#A66A00;color:#FFFFFF;font:600 11px 'Spline Sans Mono',monospace;display:flex;align-items:center;justify-content:center;padding:0 6px">3</span>
+            </div>
+            <div style="padding:9px 14px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="flex:1;min-width:0">
+                  <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Rappi</div>
+                  <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">hoy · Visa •• 4321</div>
+                </div>
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 18.400</div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <div style="border:1.5px solid #1E6E52;background:#EDF3EF;border-radius:8px;padding:5px 9px;font:600 11px 'Rubik',sans-serif;color:#1E6E52;display:flex;align-items:center;gap:5px;flex:none">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path d="M12 17.5V14l-3-3 4-3 2 3h2"></path></svg>
+                  Delivery
+                </div>
+                <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:8px;padding:5px 9px;font:500 11px 'Rubik',sans-serif;color:#1A1917;flex:none">Restaurantes</div>
+                <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:8px;padding:5px 9px;font:500 11px 'Rubik',sans-serif;color:#1A1917;flex:none">Súper</div>
+                <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:8px;padding:5px 9px;font:500 11px 'Rubik',sans-serif;color:#6F6A63;flex:none">todas →</div>
+              </div>
+            </div>
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M17 7 7 17"></path><path d="M17 17H7V7"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Transferencia recibida</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">hoy · Galicia</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1E6E52">+ $ 120.000</div>
+            </div>
+            <div style="padding:9px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">MercadoLibre</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">ayer · Mastercard •• 8810</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 32.900</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:11px 2px 5px">Hoy</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Coto</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Supermercado · Visa •• 4321 · <span style="color:#A66A00">cierra 28 jul</span></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 84.320</div>
+                <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Café Cuervo</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Gustos · Mercado Pago</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 6.800</div>
+                <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">PERSONAL</span>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0v-6.998a2 2 0 0 0-.59-1.42L18 5"></path><path d="M14 21V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16"></path><path d="M2 21h13"></path><path d="M3 9h11"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">YPF</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Nafta · Mastercard •• 8810 · <span style="color:#A66A00">cierra 13 jul</span></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 45.000</div>
+                <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+              </div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:11px 2px 5px">Ayer</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"></path><path d="m8.5 8.5 7 7"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Farmacity</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Farmacia · Mercado Pago</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 8.900</div>
+                <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+              </div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:11px 2px 5px">8 jul</div>
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="m12.296 3.464 3.02 3.956"></path><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"></path><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="m6.18 5.276 3.1 3.899"></path></svg>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Cinemark Palermo</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Entretenimiento · Visa •• 4321 · <span style="color:#A66A00">cierra 28 jul</span></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 16.800</div>
+                <span style="font:600 8px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:1.5px 4px;display:inline-block;margin-top:3px">HOGAR</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Categorización en tanda: tocás un ítem de la bandeja y la grilla se abre inline; asignás y pasa al historial sin salir. Los gastos de tarjeta muestran a qué ciclo van.</div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+<!-- ══════════ SECCIÓN 06–07 · TARJETAS Y CUOTAS ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">06 · TARJETA, CICLO ACTUAL &nbsp;·&nbsp; 07 · CUOTAS ACTIVAS</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- 06 Tarjeta ciclo -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">06 · Tarjeta — la pantalla diferencial argentina</div>
+      <div data-screen-label="06 Tarjeta ciclo Visa" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+          <span style="font:600 17px 'Rubik',sans-serif;color:#1A1917;flex:1">Visa Galicia •• 4321</span>
+        </div>
+        <div style="padding:12px 20px 0;display:flex;align-items:center;justify-content:center;gap:10px;flex:none">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          <span style="font:600 13px 'Rubik',sans-serif;color:#1A1917">Ciclo actual · 29 jun – 28 jul</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#D8D4CB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+        </div>
+        <div style="margin:12px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:18px 18px 14px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="position:relative;height:16px">
+            <div style="position:absolute;left:0;right:0;top:6px;height:3px;border-radius:2px;background:#EDEAE2"></div>
+            <div style="position:absolute;left:0;top:6px;width:29%;height:3px;border-radius:2px;background:#1A1917"></div>
+            <div style="position:absolute;left:0;top:4px;width:7px;height:7px;border-radius:4px;background:#1A1917"></div>
+            <div style="position:absolute;left:29%;top:1px;width:13px;height:13px;border-radius:7px;background:#F7F5F1;border:3px solid #1A1917;transform:translateX(-6px)"></div>
+            <div style="position:absolute;left:72%;top:1px;width:13px;height:13px;border-radius:7px;background:#FBF6EC;border:1.5px dashed #A66A00;transform:translateX(-6px)"></div>
+            <div style="position:absolute;right:0;top:1px;width:13px;height:13px;border-radius:7px;background:#FBF6EC;border:1.5px dashed #A66A00"></div>
+          </div>
+          <div style="position:relative;height:15px;margin-top:4px">
+            <div style="position:absolute;left:0;top:0;font:400 10px 'Spline Sans Mono',monospace;color:#9B958B">29 jun</div>
+            <div style="position:absolute;left:29%;top:0;transform:translateX(-50%);font:600 10.5px 'Spline Sans Mono',monospace;color:#1A1917">hoy</div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:40px;margin-top:9px;padding-top:11px;border-top:1px solid #F0EDE6">
+            <div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#1A1917">cierre <span style="font-weight:600">28 jul</span></div>
+              <div style="margin-top:5px"><span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 5px;background:#FBF6EC">ESTIMADA</span></div>
+              <div style="font:500 11px 'Rubik',sans-serif;color:#1E6E52;margin-top:6px">confirmar fecha</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#1A1917">vence <span style="font-weight:600">6 ago</span></div>
+              <div style="margin-top:5px"><span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 5px;background:#FBF6EC">ESTIMADA</span></div>
+              <div style="font:500 11px 'Rubik',sans-serif;color:#1E6E52;margin-top:6px">confirmar fecha</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin:10px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font:500 12px 'Rubik',sans-serif;color:#6F6A63;flex:1">Resumen proyectado</span>
+            <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 5px;background:#FBF6EC">ESTIMADA</span>
+          </div>
+          <div style="font:500 30px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.02em;margin-top:4px">$ 840.450</div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font:400 12.5px 'Rubik',sans-serif;color:#6F6A63">Consumos del ciclo</span>
+              <span style="font:500 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 486.200</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font:400 12.5px 'Rubik',sans-serif;color:#6F6A63">Cuotas del mes</span>
+              <span style="font:500 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 296.250</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font:400 12.5px 'Rubik',sans-serif;color:#6F6A63;display:flex;align-items:center;gap:5px">Impuestos y cargos estimados
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+              </span>
+              <span style="font:500 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 58.000</span>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding-top:11px;border-top:1px solid #F0EDE6;display:flex;align-items:center;gap:9px">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+            <div style="flex:1">
+              <div style="font:500 13px 'Rubik',sans-serif;color:#1E6E52">Conciliar resumen</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">Cuando llegue el real, cargá el total y vemos la diferencia.</div>
+            </div>
+          </div>
+        </div>
+        <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:14px 22px 6px;flex:none">Consumos del ciclo · 18</div>
+        <div style="flex:1;overflow:hidden;padding:0 20px 12px">
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Coto</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">hoy · Supermercado</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 84.320</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Rappi</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">hoy · sin categorizar</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 18.400</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Aire acondicionado</span>
+                  <span style="font:600 8.5px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border-radius:4px;padding:2px 5px;background:#F1EEE8">CUOTA 4/12</span>
+                </div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">1 jul · Hogar</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 86.250</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Notebook</span>
+                  <span style="font:600 8.5px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border-radius:4px;padding:2px 5px;background:#F1EEE8">CUOTA 5/6</span>
+                </div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">1 jul · Hogar</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 210.000</div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Cinemark Palermo</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">8 jul · Entretenimiento</div>
+              </div>
+              <div style="font:600 13px 'Spline Sans Mono',monospace;color:#1A1917">$ 16.800</div>
+            </div>
+            <div style="padding:11px 14px;text-align:center;border-top:1px solid #F0EDE6">
+              <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">Ver los 18 consumos →</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Estimado y confirmado se leen distinto a un metro: punteado ámbar contra relleno verde. Si corregís la fecha de cierre, los consumos se reacomodan de ciclo solos.</div>
+      </sc-if>
+    </div>
+
+    <!-- 07 Cuotas activas -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">07 · Cuotas — el sueldo ya comprometido</div>
+      <div data-screen-label="07 Cuotas activas" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          <span style="font:600 17px 'Rubik',sans-serif;color:#1A1917;flex:1">Cuotas activas</span>
+        </div>
+        <div style="padding:18px 20px 4px;flex:none">
+          <div style="font:500 12px 'Rubik',sans-serif;color:#6F6A63">Comprometido por mes, ahora</div>
+          <div style="font:500 40px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.02em;margin-top:3px">$ 339.550</div>
+          <div style="font:400 11.5px 'Rubik',sans-serif;color:#6F6A63;margin-top:6px">3 compras en cuotas · Visa y Mastercard</div>
+        </div>
+        <div style="margin:14px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="font:500 12px 'Rubik',sans-serif;color:#6F6A63">Próximos 12 meses</div>
+          <div style="display:flex;align-items:flex-end;gap:5px;height:74px;margin-top:12px">
+            <div style="flex:1;height:64px;background:#1A1917;border-radius:3px 3px 0 0"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:17px;background:#1A1917;border-radius:3px 3px 0 0;opacity:.75"></div>
+            <div style="flex:1;height:3px;background:#DDD9CF;border-radius:2px"></div>
+            <div style="flex:1;height:3px;background:#DDD9CF;border-radius:2px"></div>
+            <div style="flex:1;height:3px;background:#DDD9CF;border-radius:2px"></div>
+            <div style="flex:1;height:3px;background:#DDD9CF;border-radius:2px"></div>
+            <div style="flex:1;height:3px;background:#DDD9CF;border-radius:2px"></div>
+          </div>
+          <div style="display:flex;gap:5px;margin-top:6px">
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">ago</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">sep</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">oct</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">nov</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">dic</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">ene</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">feb</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">mar</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">abr</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">may</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">jun</div>
+            <div style="flex:1;text-align:center;font:400 9px 'Spline Sans Mono',monospace;color:#6F6A63">jul</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:9px;padding-top:9px;border-top:1px solid #F0EDE6">
+            <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">ago $ 339.550 · desde sep $ 86.250</span>
+            <span style="font:500 11px 'Rubik',sans-serif;color:#1E6E52">en marzo quedás libre</span>
+          </div>
+        </div>
+        <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:16px 22px 6px;flex:none">Compras en cuotas</div>
+        <div style="flex:1;overflow:hidden;padding:0 20px 12px">
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Aire acondicionado</span>
+                <span style="font:600 8.5px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border-radius:4px;padding:2px 5px;background:#F1EEE8">CUOTA 4/12</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:33%;height:100%;border-radius:2px;background:#1A1917"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 86.250/mes · Visa •• 4321</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">termina feb 2027</span>
+              </div>
+            </div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Notebook</span>
+                <span style="font:600 8.5px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border-radius:4px;padding:2px 5px;background:#F1EEE8">CUOTA 5/6</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:83%;height:100%;border-radius:2px;background:#1A1917"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 210.000/mes · Visa •• 4321</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">termina ago 2026</span>
+              </div>
+            </div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:7px;border-top:1px solid #F0EDE6">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font:500 14px 'Rubik',sans-serif;color:#1A1917;flex:1">Zapatillas</span>
+                <span style="font:600 8.5px 'Spline Sans Mono',monospace;letter-spacing:.05em;color:#6F6A63;border-radius:4px;padding:2px 5px;background:#F1EEE8">CUOTA 2/3</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#F0EDE5;overflow:hidden"><div style="width:67%;height:100%;border-radius:2px;background:#1A1917"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span style="font:400 11px 'Spline Sans Mono',monospace;color:#6F6A63">$ 43.300/mes · Mastercard •• 8810</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#6F6A63">termina ago 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Responde una sola pregunta: cuánto de los próximos sueldos ya está comprometido, y cuándo se libera.</div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+<!-- ══════════ SECCIÓN 08–09 · PATRIMONIO Y HOGAR ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">08 · PATRIMONIO &nbsp;·&nbsp; 09 · HOGAR</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- 08 Patrimonio -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">08 · Patrimonio — el TC siempre visible</div>
+      <div data-screen-label="08 Patrimonio" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <span style="font:600 22px 'Rubik',sans-serif;color:#1A1917">Patrimonio</span>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="padding:10px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex:none">
+          <div>
+            <div style="font:500 12px 'Rubik',sans-serif;color:#6F6A63">Total del hogar</div>
+            <div style="font:500 28px 'Spline Sans Mono',monospace;color:#1A1917;letter-spacing:-.02em;margin-top:5px;white-space:nowrap">$ 47.400.000</div>
+            <div style="font:500 14px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:4px">≈ USD 32.200</div>
+          </div>
+          <div style="text-align:center;padding-top:8px">
+            <svg viewBox="0 0 108 40" width="108" height="40" fill="none"><polyline points="0,34 9,31 18,30 27,27 36,24 45,26 54,19 63,17 72,14 81,11 95,6 106,4" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="106" cy="4" r="2.5" fill="#1E6E52"></circle></svg>
+            <div style="font:400 9.5px 'Spline Sans Mono',monospace;color:#9B958B;margin-top:3px">ago 25 — jul 26</div>
+          </div>
+        </div>
+        <div style="padding:10px 20px 0;display:flex;align-items:center;gap:6px;flex:none">
+          <div style="border:1px solid #1A1917;background:#1A1917;border-radius:8px;padding:5px 11px;font:600 11.5px 'Rubik',sans-serif;color:#F7F5F1">MEP</div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:8px;padding:5px 11px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917">blue</div>
+          <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:8px;padding:5px 11px;font:500 11.5px 'Rubik',sans-serif;color:#1A1917">oficial</div>
+          <span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-left:4px">MEP $ 1.470 · hoy 10 jul</span>
+        </div>
+        <div style="margin:10px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:10px 14px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="font:500 12px 'Rubik',sans-serif;color:#6F6A63;margin-bottom:7px">Composición</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">Dólar MEP</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:100%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">29 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">CEDEARs</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:82%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">24 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">Dólar billete</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:63%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">19 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">FCI money market</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:37%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">11 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">Cripto</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:22%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">7 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">Plazo fijo</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:21%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">6 %</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font:400 10.5px 'Rubik',sans-serif;color:#1A1917;width:92px;flex:none">Cta. remunerada</span><div style="flex:1;height:6px;border-radius:3px;background:#F0EDE5"><div style="width:13%;height:100%;border-radius:3px;background:#1A1917"></div></div><span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;width:36px;text-align:right;flex:none">4 %</span></div>
+          </div>
+        </div>
+        <div style="font:600 12px 'Rubik',sans-serif;color:#6F6A63;margin:10px 22px 5px;flex:none">Tenencias</div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Dólar MEP</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">USD 9.500</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 13.965.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">al TC de hoy</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">CEDEARs</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">USD 7.800</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 11.466.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">valuado hoy</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Dólar billete</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">USD 6.000</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 8.820.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">al TC de hoy</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">FCI money market</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">Mercado Pago + Galicia</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 5.200.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">valuado hoy</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Cripto</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">USD 2.100</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 3.087.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">hace 3 días</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Plazo fijo</div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+                  <span style="font:400 10.5px 'Rubik',sans-serif;color:#A66A00">valuación de hace 39 días</span>
+                  <span style="font:500 10.5px 'Rubik',sans-serif;color:#1E6E52">· actualizar</span>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#A66A00">$ 3.000.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">1 jun</div>
+              </div>
+            </div>
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:11px;border-top:1px solid #F0EDE6">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 13.5px 'Rubik',sans-serif;color:#1A1917">Cuenta remunerada MP</div>
+                <div style="font:400 10.5px 'Spline Sans Mono',monospace;color:#6F6A63;margin-top:2px">rinde diario</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font:600 12.5px 'Spline Sans Mono',monospace;color:#1A1917">$ 1.850.000</div>
+                <div style="font:400 10px 'Rubik',sans-serif;color:#9B958B;margin-top:2px">valuado hoy</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ El TC usado siempre es visible: transparencia antes que magia. Valuaciones de más de 30 días en ámbar, con acción de actualizar en la fila.</div>
+      </sc-if>
+    </div>
+
+    <!-- 08b Patrimonio vacío -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">08b · Patrimonio, sin tenencias</div>
+      <div data-screen-label="08b Patrimonio vacío" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <span style="font:600 22px 'Rubik',sans-serif;color:#1A1917">Patrimonio</span>
+          <div style="width:34px;height:34px;border-radius:17px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 44px 90px;text-align:center">
+          <div style="width:64px;height:64px;border-radius:32px;background:#E7F0EB;display:flex;align-items:center;justify-content:center">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1E6E52" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+          </div>
+          <div style="font:600 19px 'Rubik',sans-serif;color:#1A1917;margin-top:20px">Cargá tu primera tenencia</div>
+          <div style="font:400 13.5px/1.55 'Rubik',sans-serif;color:#6F6A63;margin-top:10px;max-width:280px">Anotá lo que tienen y actualizá la valuación cuando quieras. El total sale solo.</div>
+          <div style="margin-top:24px;background:#1E6E52;color:#FFFFFF;font:600 14.5px 'Rubik',sans-serif;border-radius:12px;padding:14px 30px">Cargar tenencia</div>
+          <div style="display:flex;gap:7px;margin-top:16px">
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:7px 12px;font:500 12px 'Rubik',sans-serif;color:#1A1917">Dólar billete</div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:7px 12px;font:500 12px 'Rubik',sans-serif;color:#1A1917">Plazo fijo</div>
+            <div style="border:1px solid #E4E0D8;background:#FFFFFF;border-radius:9px;padding:7px 12px;font:500 12px 'Rubik',sans-serif;color:#1A1917">FCI</div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid #E4E0D8;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#1E6E52;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(30,110,82,.3)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#6F6A63">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#1E6E52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#1E6E52">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+    </div>
+
+    <!-- 09 Hogar -->
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">09 · Hogar — miembros y visibilidad</div>
+      <div data-screen-label="09 Hogar" style="width:390px;height:844px;background:#F7F5F1;border:1px solid #D9D5CB;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.06)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#1A1917">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:6px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:8px;background:#1A1917;border-radius:1px"></div><div style="width:3px;height:10px;background:#1A1917;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1A1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(26,25,23,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#1A1917;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1A1917" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          <span style="font:600 17px 'Rubik',sans-serif;color:#1A1917;flex:1">Hogar</span>
+        </div>
+        <div style="margin:14px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="padding:14px 16px;display:flex;align-items:center;gap:11px;border-bottom:1px solid #F0EDE6">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            <div style="flex:1">
+              <div style="font:600 16px 'Rubik',sans-serif;color:#1A1917">Coghlan</div>
+              <div style="font:400 11.5px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">2 miembros · 1 invitación pendiente</div>
+            </div>
+          </div>
+          <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:18px;background:#1A1917;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 14px 'Rubik',sans-serif;flex:none">J</div>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Juanse</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">vos</div>
+            </div>
+            <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px">ADMINISTRADOR</span>
+          </div>
+          <div style="padding:12px 16px;display:flex;align-items:center;gap:12px;border-top:1px solid #F0EDE6">
+            <div style="width:36px;height:36px;border-radius:18px;background:#6F6A63;color:#F7F5F1;display:flex;align-items:center;justify-content:center;font:600 14px 'Rubik',sans-serif;flex:none">V</div>
+            <div style="flex:1;min-width:0">
+              <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">Vale</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">adulta del hogar</div>
+            </div>
+            <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px">MIEMBRO</span>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid #F0EDE6">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:36px;height:36px;border-radius:18px;border:1.5px dashed #C89A4D;color:#A66A00;display:flex;align-items:center;justify-content:center;font:600 14px 'Rubik',sans-serif;flex:none;background:#FBF6EC">S</div>
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px 'Rubik',sans-serif;color:#1A1917">sofi.rios@gmail.com</div>
+                <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;margin-top:2px">invitada hace 5 días · sin responder</div>
+              </div>
+              <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#A66A00;border:1px dashed #C89A4D;border-radius:4px;padding:2px 6px;background:#FBF6EC">PENDIENTE</span>
+            </div>
+            <div style="display:flex;gap:16px;margin-top:10px;padding-left:48px">
+              <span style="font:500 12.5px 'Rubik',sans-serif;color:#1E6E52">Reenviar</span>
+              <span style="font:500 12.5px 'Rubik',sans-serif;color:#B3402E">Revocar</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin:12px 20px 0;flex:none">
+          <div style="background:#1E6E52;color:#FFFFFF;font:600 14.5px 'Rubik',sans-serif;border-radius:12px;padding:14px 0;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+            Invitar al hogar
+          </div>
+          <div style="font:400 11px 'Rubik',sans-serif;color:#6F6A63;text-align:center;margin-top:7px">Por email. La persona elige su clave al entrar.</div>
+        </div>
+        <div style="margin:18px 20px 0;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(26,25,23,.04);flex:none">
+          <div style="display:flex;align-items:flex-start;gap:11px">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#6F6A63" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <div style="font:500 13.5px/1.5 'Rubik',sans-serif;color:#1A1917">Lo personal es tuyo. Lo compartido lo ven los adultos del hogar.</div>
+          </div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;padding-left:28px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px;background:#FFFFFF;flex:none">HOGAR</span>
+              <span style="font:400 12px 'Rubik',sans-serif;color:#6F6A63">presupuesto y movimientos compartidos: los ven Juanse y Vale</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="font:600 8.5px 'Rubik',sans-serif;letter-spacing:.08em;color:#6F6A63;border:1px solid #E4E0D8;border-radius:4px;padding:2px 6px;background:#FFFFFF;flex:none">PERSONAL</span>
+              <span style="font:400 12px 'Rubik',sans-serif;color:#6F6A63">tus partidas privadas: solo las ves vos</span>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#1A1917;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ La invitación pendiente usa el mismo lenguaje punteado ámbar que las fechas estimadas: todavía no es un hecho.</div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+<!-- ══════════ SECCIÓN 10 · MODO OSCURO ══════════ -->
+<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">10 · PRESUPUESTO EN MODO OSCURO — VALIDACIÓN DE TOKENS</div>
+  <div style="display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+      <div style="font:600 11px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.05em">10 · La pantalla 01a exacta, tokens oscuros</div>
+      <div data-screen-label="10 Presupuesto modo oscuro" style="width:390px;height:844px;background:#141312;border:1px solid #3A3733;border-radius:34px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Rubik',sans-serif;box-shadow:0 2px 12px rgba(26,25,23,.2)">
+        <div style="height:47px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:12px 27px 0 31px">
+          <div style="font:600 15px 'Rubik',sans-serif;color:#F2EFE9">9:41</div>
+          <div style="display:flex;align-items:center;gap:7px">
+            <div style="display:flex;align-items:flex-end;gap:1.5px"><div style="width:3px;height:4px;background:#F2EFE9;border-radius:1px"></div><div style="width:3px;height:6px;background:#F2EFE9;border-radius:1px"></div><div style="width:3px;height:8px;background:#F2EFE9;border-radius:1px"></div><div style="width:3px;height:10px;background:#F2EFE9;border-radius:1px"></div></div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#F2EFE9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>
+            <div style="width:25px;height:12px;border:1px solid rgba(242,239,233,.4);border-radius:4px;padding:1.5px"><div style="width:72%;height:100%;background:#F2EFE9;border-radius:2px"></div></div>
+          </div>
+        </div>
+        <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between;flex:none">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+            <span style="font:600 17px 'Rubik',sans-serif;color:#F2EFE9">julio 2026</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </div>
+          <div style="width:34px;height:34px;border-radius:17px;background:#F2EFE9;color:#141312;display:flex;align-items:center;justify-content:center;font:600 13px 'Rubik',sans-serif">J</div>
+        </div>
+        <div style="margin:12px 20px 0;background:#242220;border-radius:11px;padding:2px;display:grid;grid-template-columns:1fr 1fr;flex:none">
+          <div style="background:#38342F;border-radius:9px;text-align:center;padding:8px 0;font:600 13px 'Rubik',sans-serif;color:#F2EFE9">Hogar</div>
+          <div style="text-align:center;padding:8px 0;font:500 13px 'Rubik',sans-serif;color:#A39D93">Personal</div>
+        </div>
+        <div style="padding:20px 20px 4px;flex:none">
+          <div style="font:500 12px 'Rubik',sans-serif;color:#A39D93">Disponible en julio</div>
+          <div style="font:500 40px 'Spline Sans Mono',monospace;color:#F2EFE9;letter-spacing:-.02em;margin-top:3px">$ 539.200</div>
+          <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93;margin-top:7px">asignado $ 2.860.000 · gastado $ 2.320.800</div>
+          <div style="position:relative;margin-top:13px">
+            <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:81%;height:100%;border-radius:2px;background:#F2EFE9"></div></div>
+            <div style="position:absolute;left:32%;top:-3.5px;width:2px;height:11px;background:#4FA37F;border-radius:1px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font:400 10.5px 'Spline Sans Mono',monospace;color:#A39D93">81 % gastado</span>
+            <span style="font:500 10.5px 'Spline Sans Mono',monospace;color:#4FA37F">día 10 de 31 · quedan 21 días</span>
+          </div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 20px">
+          <div style="font:600 12px 'Rubik',sans-serif;color:#A39D93;margin:12px 2px 7px">Vivienda</div>
+          <div style="background:#1E1C1A;border:1px solid #34302B;border-radius:14px">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Alquiler</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4FA37F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#4FA37F">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:100%;height:100%;background:#4FA37F;opacity:.45"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 780.000 de $ 780.000 · fijo</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2A2724">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M10 12h4"></path><path d="M10 8h4"></path><path d="M14 21v-3a2 2 0 0 0-4 0v3"></path><path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"></path><path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Expensas</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4FA37F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#4FA37F">pagado</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:100%;height:100%;background:#4FA37F;opacity:.45"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 165.000 de $ 165.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#A39D93;margin:14px 2px 7px">Comida</div>
+          <div style="background:#1E1C1A;border:1px solid #34302B;border-radius:14px">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="8" cy="21" r="1"></circle><circle cx="19" cy="21" r="1"></circle><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Supermercado</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#A39D93">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#F2EFE9">$ 251.600</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:52%;height:100%;border-radius:2px;background:#C6913B"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 268.400 de $ 520.000</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#C6913B;margin-top:-2px">a este ritmo terminás $ 31.200 arriba</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2A2724">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="18.5" cy="17.5" r="3.5"></circle><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="15" cy="5" r="1"></circle><path d="M12 17.5V14l-3-3 4-3 2 3h2"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Delivery</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#A39D93">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#C6913B">$ 18.700</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:79%;height:100%;border-radius:2px;background:#C6913B"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 71.300 de $ 90.000</div>
+              <div style="font:400 11px 'Rubik',sans-serif;color:#C6913B;margin-top:-2px">a este ritmo terminás $ 7.100 arriba</div>
+            </div>
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #2A2724">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Restaurantes</span>
+                <span style="font:400 11px 'Rubik',sans-serif;color:#A39D93">queda</span>
+                <span style="font:600 13px 'Spline Sans Mono',monospace;color:#F2EFE9">$ 75.000</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:38%;height:100%;border-radius:2px;background:#4FA37F"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 45.000 de $ 120.000</div>
+            </div>
+          </div>
+          <div style="font:600 12px 'Rubik',sans-serif;color:#A39D93;margin:14px 2px 7px">Ahorro</div>
+          <div style="background:#1E1C1A;border:1px solid #34302B;border-radius:14px">
+            <div style="padding:11px 14px;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"></path><path d="M16 10h.01"></path><path d="M2 8v1a2 2 0 0 0 2 2h1"></path></svg>
+                <span style="font:500 14px 'Rubik',sans-serif;color:#F2EFE9;flex:1">Ahorro e inversión</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4FA37F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                <span style="font:500 12.5px 'Rubik',sans-serif;color:#4FA37F">transferido</span>
+              </div>
+              <div style="height:4px;border-radius:2px;background:#2E2B26;overflow:hidden"><div style="width:100%;height:100%;background:#4FA37F;opacity:.45"></div></div>
+              <div style="font:400 11px 'Spline Sans Mono',monospace;color:#A39D93">$ 400.000 de $ 400.000 · a Broker</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:rgba(30,28,26,.97);border-top:1px solid #34302B;padding:9px 10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;align-items:start">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"></path><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#A39D93">Resumen</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#4FA37F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"></path><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"></path></svg>
+            <span style="font:600 10px 'Rubik',sans-serif;color:#4FA37F">Presupuesto</span>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <div style="width:52px;height:52px;border-radius:26px;background:#4FA37F;display:flex;align-items:center;justify-content:center;margin-top:-24px;box-shadow:0 6px 14px rgba(79,163,127,.25)">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#141312" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#A39D93">Movimientos</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="#A39D93" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+            <span style="font:500 10px 'Rubik',sans-serif;color:#A39D93">Patrimonio</span>
+          </div>
+        </div>
+        <div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#F2EFE9;opacity:.85"></div>
+      </div>
+      <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:390px;font:400 11.5px/1.5 'Rubik',sans-serif;color:#6F6A63">↳ Tokens oscuros: fondo #141312, superficie #1E1C1A, acento #4FA37F, semánticos aclarados. El + central pasa a ícono tinta sobre verde claro.</div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ mostrarNotas }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:340px;background:#FFFFFF;border:1px solid #E4E0D8;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,25,23,.04)">
+        <div style="font:600 12px 'Spline Sans Mono',monospace;color:#6F6A63;letter-spacing:.06em">FUERA DE ALCANCE, ANOTADO</div>
+        <div style="font:400 12px/1.65 'Rubik',sans-serif;color:#6F6A63;margin-top:10px">
+          Espacios que el documento no define y quedan para una próxima pasada: el formulario de conciliación abierto (06), la vista Personal del presupuesto con las partidas de Juanse, la gestión de cuentas y el alta de tenencia. No se inventaron funcionalidades para llenarlos.
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+<!--END-ROOT-->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;notas&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Canvas&quot;},&quot;fondo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;papel&quot;,&quot;blanco&quot;,&quot;gris&quot;],&quot;default&quot;:&quot;papel&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Canvas&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const fondos = { papel: '#E9E6DF', blanco: '#F4F2EE', gris: '#DEDCD6' };
+    return {
+      mostrarNotas: this.props.notas ?? true,
+      canvasBg: fondos[this.props.fondo] ?? '#E9E6DF'
+    };
+  }
+}
+</script>
+</body>
+</html>
