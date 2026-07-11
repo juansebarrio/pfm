@@ -133,28 +133,28 @@ de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.
 
-- [ ] **Unificación de near-duplicates de color**: `#F0EDE5`/`#F0EDE6` → un solo token
+- [x] **Unificación de near-duplicates de color**: `#F0EDE5`/`#F0EDE6` → un solo token
   `crema-2`; ídem pares menores de la rampa detectados en la auditoría.
-- [ ] **Ámbar AA en claro**: `#A66A00` (4.48:1 sobre blanco) → `#8F5B00` para texto
+- [x] **Ámbar AA en claro**: `#A66A00` (4.48:1 sobre blanco) → `#8F5B00` para texto
   chico; el ámbar original queda para íconos/badges con fondo.
-- [ ] **Terciario AA**: `#9B958B` (2.97:1) → oscurecer a ~`#76716A` en textos
+- [x] **Terciario AA**: `#9B958B` (2.97:1) → oscurecer a ~`#76716A` en textos
   informativos reales (placeholders, metadata de frescura, tachados).
-- [ ] **`$ 0` desactivado legible**: `#C9C4BA` (1.74:1) → `#A9A399`.
-- [ ] **Targets táctiles 44 px**: hit-area invisible en back/cerrar, chevrons, links
+- [x] **`$ 0` desactivado legible**: `#C9C4BA` (1.74:1) → `#A9A399`.
+- [x] **Targets táctiles 44 px**: hit-area invisible en back/cerrar, chevrons, links
   chicos (`confirmar fecha`, `· actualizar`, `Reenviar/Revocar`), chips y filtros.
-- [ ] **Estados de foco visibles**: anillo 2px `#1E6E52` (claro) / `#4FA37F` (dark)
+- [x] **Estados de foco visibles**: anillo 2px `#1E6E52` (claro) / `#4FA37F` (dark)
   offset 2px en todo lo interactivo; estados pressed sobrios.
-- [ ] **Labels accesibles**: aria-label en FAB `+`, backspace del teclado, chevrons de
+- [x] **Labels accesibles**: aria-label en FAB `+`, backspace del teclado, chevrons de
   mes/ciclo, lápices de edición; barras de progreso con valor aria.
-- [ ] **Escala única de tags**: 8.5px / ls .08em / padding 2px 5px / radio 4px para
+- [x] **Escala única de tags**: 8.5px / ls .08em / padding 2px 5px / radio 4px para
   todos los badges (hoy conviven 8/8.5/9px).
-- [ ] **Naming único de tarjetas**: `Visa •• 4321` / `Mastercard •• 8810`; banco solo
+- [x] **Naming único de tarjetas**: `Visa •• 4321` / `Mastercard •• 8810`; banco solo
   en el título del detalle (corrige `MC •• 8810` y `Mastercard BBVA`).
-- [ ] **Guión de rango unificado**: en-dash con espacios (`29 jun – 28 jul`).
-- [ ] **Fade de scroll en carruseles**: medios de pago (03) y filtros (05) muestran el
+- [x] **Guión de rango unificado**: en-dash con espacios (`29 jun – 28 jul`).
+- [x] **Fade de scroll en carruseles**: medios de pago (03) y filtros (05) muestran el
   chip cortado con fade en lugar de corte seco.
-- [ ] **CTA primario único**: radio 12, padding vertical 15, Rubik 600 15px.
-- [ ] **Sombra/opacidad dark documentadas**: dark sin sombras de card; opacidad de
+- [x] **CTA primario único**: radio 12, padding vertical 15, Rubik 600 15px.
+- [x] **Sombra/opacidad dark documentadas**: dark sin sombras de card; opacidad de
   barra pagada unificada en .4.
 
 ## 3. Propuestas que esperan el ok de Juanse (NO aplicadas)

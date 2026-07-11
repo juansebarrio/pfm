@@ -13,6 +13,7 @@ import { obtenerHogar } from "@/lib/datos/hogar";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { HUSO, diasEntre, hoyBA } from "@/lib/dominio/fechas";
 import { AccionesInvitacion } from "./AccionesInvitacion";
+import { CambiadorTema } from "./CambiadorTema";
 import { Invitar } from "./Invitar";
 
 function inicial(texto: string): string {
@@ -126,6 +127,9 @@ export default async function Hogar() {
           />
         </Link>
       </Card>
+
+      {/* Tema claro/oscuro/auto persistido (tanda 8) */}
+      <CambiadorTema />
 
       <div className="mt-4">
         <Invitar />
