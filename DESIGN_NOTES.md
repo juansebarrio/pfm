@@ -89,6 +89,21 @@ Un usuario nuevo sin hogar recibe automáticamente "Mi hogar" + las 15
 categorías sugeridas al primer ingreso (el nombre se edita en /hogar). El CTA
 de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
 
+### 1.12 Tarjetas: decisiones de la tanda 5
+- **Hitos confirmados en el timeline**: el export solo dibuja el estado estimado
+  (punteado ámbar); confirmado = borde sólido tinta sobre superficie ("ya es un
+  hecho"), coherente con el lenguaje del sistema.
+- **Confirmar fechas**: una sola hoja confirma/corrige cierre y vencimiento
+  juntos (el estado `estimado/confirmado` es del ciclo). Si la fecha cambia, la
+  función SQL reasigna los consumos sola.
+- **Card de pago visible** cuando el ciclo está cerrado/conciliado, el cierre ya
+  pasó, o vence en ≤ 7 días (umbral propio, no declarado por el export).
+- **Diferencia de conciliación**: verde si |diferencia| ≤ 5 % del proyectado,
+  ámbar si es mayor (el export pide "verde si la diferencia es chica" sin
+  cuantificar).
+- **Orden de compras en 07**: por cuota mensual descendente (el export lista el
+  Aire primero; derivamos por peso, decisión anotada).
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.
