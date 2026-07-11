@@ -152,6 +152,27 @@ reales; todos arreglados. Los de fondo:
   categoría (si no, quedaba inalcanzable); `/gasto/nuevo` sin medios ofrece
   salida a /cuentas en vez de ser un callejón mudo.
 
+### 1.15 Detalle y borrado de movimientos (feature post-brief)
+El export no dibujaba interacción sobre las filas de movimiento; se agregó a
+pedido, siguiendo el sistema:
+- **Tap** en una fila del historial → abre el detalle en hoja inferior
+  (importe, categoría, medio, fecha larga, ámbito, ciclo, cuota, nota) con la
+  acción de borrado al pie.
+- **Swipe a la izquierda** → revela un panel rojo "Borrar". `touch-action:
+  pan-y` deja intacto el scroll vertical; solo se intercepta el arrastre
+  horizontal. `setPointerCapture` va en try/catch por si el entorno no lo
+  permite.
+- **Borrar una cuota borra la compra completa** (todas sus hermanas, vía
+  `on delete cascade` de `compras_en_cuotas`): una cuota suelta rompería la
+  serie. El detalle lo aclara ("Borrar la compra · N cuotas") antes de
+  confirmar.
+- Borrado **optimista** con reversión y mensaje si el server falla.
+- La bandeja conserva su gesto propio (tap = categorizar inline); el swipe/tap
+  de detalle vive en el historial categorizado.
+- Las cuotas del seed no tienen categoría (no pisan partidas), así que no
+  aparecen en el historial; una compra en cuotas cargada por el usuario **exige
+  categoría** (guard de alta rápida) y por eso sí es visible y borrable ahí.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.

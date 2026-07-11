@@ -147,6 +147,51 @@ export async function categorizarMovimiento(entrada: unknown): Promise<Resultado
   return { ok: true };
 }
 
+const esquemaBorrar = z.object({ movimientoId: z.uuid() });
+
+/**
+ * Borrar un movimiento. Si es una cuota (compra_id), borra la COMPRA completa
+ * — una cuota suelta rompería la serie; el on-delete-cascade limpia las hijas.
+ * RLS de movimientos/compras garantiza que solo se toca lo propio o compartido.
+ */
+export async function borrarMovimiento(entrada: unknown): Promise<ResultadoAccion> {
+  const parseo = esquemaBorrar.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+
+  const sesion = await obtenerSesionHogar();
+  const { data: mov } = await sesion.supabase
+    .from("movimientos")
+    .select("id, compra_id, tarjeta_id")
+    .eq("id", parseo.data.movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+
+  if (mov.compra_id) {
+    const { error } = await sesion.supabase
+      .from("compras_en_cuotas")
+      .delete()
+      .eq("id", mov.compra_id)
+      .eq("hogar_id", sesion.hogarId);
+    if (error) return { ok: false, error: "No pudimos borrar la compra" };
+  } else {
+    const { error, data } = await sesion.supabase
+      .from("movimientos")
+      .delete()
+      .eq("id", mov.id)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error || !data?.length) return { ok: false, error: "No pudimos borrar el movimiento" };
+  }
+
+  revalidatePath("/movimientos");
+  revalidatePath("/resumen");
+  revalidatePath("/presupuesto");
+  revalidatePath("/cuotas");
+  if (mov.tarjeta_id) revalidatePath(`/tarjetas/${mov.tarjeta_id}`);
+  return { ok: true };
+}
+
 const esquemaRecurrente = z.object({
   recurrenteId: z.uuid(),
   mes: z.string().regex(/^\d{4}-\d{2}-01$/),

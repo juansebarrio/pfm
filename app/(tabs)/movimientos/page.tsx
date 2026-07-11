@@ -1,7 +1,4 @@
 import Link from "next/link";
-import { Fragment } from "react";
-import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
-import { FilaMovimiento } from "@/components/sistema/FilaMovimiento";
 import {
   bandejaDeEntrada,
   categoriasDelHogar,
@@ -13,6 +10,7 @@ import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { etiquetaDia, hoyBA } from "@/lib/dominio/fechas";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
 import { Filtros } from "./Filtros";
+import { Historial } from "./Historial";
 import { miembrosDelHogar, movimientosFiltrados } from "./datos";
 
 // Pantalla 05 — Movimientos + bandeja (DESIGN_AUDIT.md §1.7, §3.7/3.8).
@@ -134,30 +132,7 @@ export default async function PaginaMovimientos({
         </div>
       )}
 
-      {dias.map((dia) => (
-        <Fragment key={dia.fecha}>
-          <EncabezadoSeccion>{etiquetaDia(dia.fecha, hoy)}</EncabezadoSeccion>
-          <Card className="divide-y divide-separador">
-            {dia.movimientos.map((m) => (
-              <FilaMovimiento
-                key={m.id}
-                descripcion={m.descripcion}
-                icono={m.categoria?.icono}
-                metadata={[m.categoria?.nombre, m.medio].filter(Boolean).join(" · ")}
-                metadataCiclo={m.cierreCiclo ?? undefined}
-                importeCentavos={m.importeCentavos}
-                esIngreso={m.tipo === "ingreso"}
-                ambito={m.visibilidad === "compartido" ? "hogar" : "personal"}
-                badgeCuota={
-                  m.esCuota && m.nCuota && m.nCuotasTotal
-                    ? `Cuota ${m.nCuota}/${m.nCuotasTotal}`
-                    : undefined
-                }
-              />
-            ))}
-          </Card>
-        </Fragment>
-      ))}
+      <Historial dias={dias} hoy={hoy} />
 
       {historial.length === 0 && (
         <p className="mt-8 text-center text-[13.5px] leading-[1.55] text-tinta-secundaria">

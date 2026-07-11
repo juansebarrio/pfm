@@ -10,7 +10,7 @@ import { formatearDiaCorto } from "@/lib/dominio/fechas";
 
 const CAMPOS = `
   id, tipo, descripcion, importe_centavos, fecha, creado_el, visibilidad, user_id,
-  n_cuota, compra_id,
+  n_cuota, compra_id, nota,
   categorias(id, nombre, icono),
   cuentas!movimientos_cuenta_id_fkey(nombre),
   tarjetas(nombre, red, ultimos4),
@@ -29,6 +29,7 @@ type FilaCruda = {
   user_id: string;
   n_cuota: number | null;
   compra_id: string | null;
+  nota: string | null;
   categorias: { id: string; nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; red: string; ultimos4: string } | null;
@@ -62,6 +63,8 @@ function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
     esCuota: fila.compra_id !== null,
     nCuota: fila.n_cuota,
     nCuotasTotal: fila.compras_en_cuotas?.n_cuotas ?? null,
+    compraId: fila.compra_id,
+    nota: fila.nota,
   };
 }
 
