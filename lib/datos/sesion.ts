@@ -40,11 +40,14 @@ export async function obtenerSesionHogar(): Promise<SesionHogar> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // hogar activo = el último al que te sumaste: así, quien acepta una
+  // invitación después de haber recibido su hogar automático aterriza en el
+  // hogar compartido (decisión anotada, DESIGN_NOTES.md)
   const { data: miembro } = await supabase
     .from("miembros_hogar")
     .select("hogar_id, rol, nombre")
     .eq("user_id", user.id)
-    .order("creado_el", { ascending: true })
+    .order("creado_el", { ascending: false })
     .limit(1)
     .maybeSingle();
 

@@ -8,13 +8,16 @@ type Props = {
   accion: (estado: EstadoAuth, formulario: FormData) => Promise<EstadoAuth>;
   textoCta: string;
   textoCtaPendiente: string;
+  /** ruta interna a la que volver tras autenticarse (p. ej. una invitación) */
+  volver?: string;
 };
 
-export function FormularioAuth({ accion, textoCta, textoCtaPendiente }: Props) {
+export function FormularioAuth({ accion, textoCta, textoCtaPendiente, volver }: Props) {
   const [estado, despachar, pendiente] = useActionState(accion, {});
 
   return (
     <form action={despachar} className="flex flex-col gap-3">
+      {volver && <input type="hidden" name="volver" value={volver} />}
       <label className="flex flex-col gap-1.5">
         <span className="text-xs font-medium text-tinta-secundaria">Email</span>
         <input

@@ -12,6 +12,14 @@ const esquemaCredenciales = z.object({
     .max(72, "La contraseña no puede superar 72 caracteres"),
 });
 
+/** Ruta interna de retorno (p. ej. /invitacion/<token>); nada externo. */
+function volverSeguro(formulario: FormData): string {
+  const volver = formulario.get("volver");
+  return typeof volver === "string" && /^\/[a-zA-Z0-9\-_/]*$/.test(volver)
+    ? volver
+    : "/resumen";
+}
+
 export type EstadoAuth = {
   error?: string;
   aviso?: string;
@@ -43,7 +51,7 @@ export async function iniciarSesion(
     return { error: "No pudimos iniciar sesión. Probá de nuevo." };
   }
 
-  redirect("/resumen");
+  redirect(volverSeguro(formulario));
 }
 
 export async function registrarse(
@@ -79,7 +87,7 @@ export async function registrarse(
     };
   }
 
-  redirect("/resumen");
+  redirect(volverSeguro(formulario));
 }
 
 export async function cerrarSesion() {

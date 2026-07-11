@@ -104,6 +104,16 @@ de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
 - **Orden de compras en 07**: por cuota mensual descendente (el export lista el
   Aire primero; derivamos por peso, decisión anotada).
 
+### 1.13 Hogar: decisiones de la tanda 6
+- **Hogar activo = el último al que te sumaste**: quien acepta una invitación
+  después de haber recibido su hogar automático aterriza en el hogar compartido.
+- **"Cerrar sesión"** al pie de /hogar: el export no lo dibuja; necesario para
+  operar con dos usuarios. Sobrio, texto rojo.
+- La página de invitación (`/invitacion/[token]`) es un hueco no dibujado:
+  construida con el sistema (estado vacío + card), sin inventar de más.
+- El login/registro aceptan `?volver=` (ruta interna validada) para retomar la
+  invitación después de autenticarse.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.
