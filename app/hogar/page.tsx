@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
-import { ChevronLeft, Lock, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Users, Wallet } from "lucide-react";
 import { cerrarSesion } from "@/app/(auth)/acciones";
 import { Badge } from "@/components/sistema/Badge";
 import { Card } from "@/components/sistema/Card";
@@ -112,6 +112,19 @@ export default async function Hogar() {
             <AccionesInvitacion invitacionId={inv.id} email={inv.email} />
           </div>
         ))}
+      </Card>
+
+      {/* Card-fila de navegación a la gestión de cuentas y tarjetas */}
+      <Card className="mt-4">
+        <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
+          <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+          <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-tinta-terciaria"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
       </Card>
 
       <div className="mt-4">

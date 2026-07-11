@@ -114,6 +114,21 @@ de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
 - El login/registro aceptan `?volver=` (ruta interna validada) para retomar la
   invitación después de autenticarse.
 
+### 1.14 Patrimonio y cuentas: decisiones de la tanda 7
+- **Los cuatro huecos del export quedaron construidos** siguiendo el sistema:
+  conciliación (tanda 5), vista Personal (verificada con el rollover de
+  Fotografía), alta/edición de tenencia (hoja con lista cerrada de instrumentos
+  y conversión en vivo que siempre dice qué TC usó) y gestión de cuentas
+  (/cuentas detrás del avatar → /hogar → "Cuentas y tarjetas").
+- Tocar el **chip de TC activo** abre la hoja de carga manual del valor del día;
+  tocar otro chip cambia la fuente. Los chips sin valor cargado van
+  deshabilitados.
+- **"Guardar foto del mes"** es manual (upsert por día); el job automático
+  (Trigger.dev) queda en fase siguiente.
+- Cuentas y tarjetas **se desactivan, nunca se borran**; las inactivas quedan
+  atenuadas al final con badge "inactiva". Reactivar queda como extensión
+  pendiente si hace falta.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.
