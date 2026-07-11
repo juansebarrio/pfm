@@ -251,6 +251,18 @@ Detalle original en `DESIGN_AUDIT.md` §7.2. Estado final de cada una:
 Sigue pendiente de diseño (no de código): sumar un campo de comercio opcional al
 alta rápida (§1.9) — no se aplica porque cambia el flujo de la pantalla más usada.
 
+### 1.18 Modo oscuro por defecto (decisión de producto)
+El default de la app pasó a ser **oscuro** (`:root` en globals.css). El claro
+solo aplica cuando el usuario lo elige (`[data-tema="claro"]`). Detalles:
+- Orden en el CSS: el bloque oscuro (`:root`) va primero y el claro después,
+  porque tienen la misma especificidad y el claro debe ganarle al `:root`
+  cuando el toggle setea `data-tema="claro"` en el `<html>`.
+- Se quitó el "Auto" (seguir el SO) del toggle de /hogar: ahora es Oscuro /
+  Claro, con Oscuro por defecto. Seguir el SO ya no aplica: el default es fijo.
+- `theme-color` del navegador fijado en `#141312` para acompañar el default.
+- `--borde-bandeja` pasó a tener valor propio en oscuro (`#4d4028`); antes se
+  heredaba del bloque claro por accidente.
+
 ## 4. Extrapolaciones de dark mode (pantalla 10 solo valida 01a)
 Los tokens dark de chips/estados no dibujados se derivan así y se validan en
 `/sistema`: semánticos "aclarados" siguiendo los dos ejemplos del export

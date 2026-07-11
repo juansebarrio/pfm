@@ -2,12 +2,49 @@
 
 /*
  * Tokens del export de diseño (DESIGN_AUDIT.md §2).
- * Modo claro en :root; modo oscuro por data-tema o prefers-color-scheme.
- * Unificaciones aplicadas (§7.1): #F0EDE5/#F0EDE6→separador+pista,
- * #E7F0EB/#EDF3EF→verde-suave, D8D4CB/D9D5CB/DDD9CF→rampa arena,
- * tinta-terciaria oscurecida a AA, ámbar de texto chico a AA.
+ * DEFAULT = modo oscuro (:root, primero); el claro solo aplica con
+ * data-tema="claro". El orden importa: :root y [data-tema="claro"] tienen la
+ * misma especificidad, así que el claro DEBE ir después para ganarle al :root
+ * cuando el toggle setea data-tema="claro" en el <html>.
+ * Unificaciones (§7.1): #F0EDE5/#F0EDE6→separador+pista, #E7F0EB/#EDF3EF→
+ * verde-suave, tinta-terciaria y ámbar de texto chico oscurecidos a AA.
  */
 :root,
+[data-tema="oscuro"] {
+  --papel: #141312;
+  --superficie: #1e1c1a;
+  --tinta: #f2efe9;
+  --tinta-secundaria: #a39d93;
+  --tinta-terciaria: #7d776d;
+  --tinta-muda: #4a453f;
+  --tinta-deshabilitada: #5f594f;
+  --verde: #4fa37f;
+  --verde-hover: #63b491;
+  --verde-suave: #1a2a21;
+  --ambar: #c6913b;
+  --ambar-texto: #c6913b;
+  --fondo-estimada: #2a2419;
+  --borde-estimada: #8a6a33;
+  --rojo: #cc6b57;
+  --azul: #7e9bd6;
+  --azul-suave: #232c3d;
+  --borde: #34302b;
+  --separador: #2a2724;
+  --pista: #2e2b26;
+  --fondo-segmented: #242220;
+  --segmented-activo: #38342f;
+  --toggle-apagado: #3a3733;
+  --barra-futura: #3a3733;
+  --borde-bandeja: #4d4028; /* hairline cálido de la bandeja, versión oscura */
+  --seleccion-texto: #2c4438;
+  --sombra-card: none;
+  --sombra-thumb: none;
+  --sombra-fab: 0 6px 14px rgba(79, 163, 127, 0.25);
+  --tab-bar-fondo: rgba(30, 28, 26, 0.97);
+  --footer-fondo: rgba(30, 28, 26, 0.98);
+}
+
+/* Claro: solo cuando el usuario lo elige (debe ir DESPUÉS del bloque oscuro). */
 [data-tema="claro"] {
   --papel: #f7f5f1;
   --superficie: #ffffff;
@@ -40,78 +77,6 @@
   --sombra-fab: 0 6px 14px rgba(30, 110, 82, 0.3);
   --tab-bar-fondo: rgba(255, 255, 255, 0.97);
   --footer-fondo: rgba(255, 255, 255, 0.98);
-}
-
-/*
- * Oscuro (pantalla 10 del export + extrapolaciones DESIGN_NOTES.md §4,
- * a validar en /sistema). Semánticos "aclarados"; cards sin sombra.
- */
-[data-tema="oscuro"] {
-  --papel: #141312;
-  --superficie: #1e1c1a;
-  --tinta: #f2efe9;
-  --tinta-secundaria: #a39d93;
-  --tinta-terciaria: #7d776d;
-  --tinta-muda: #4a453f;
-  --tinta-deshabilitada: #5f594f;
-  --verde: #4fa37f;
-  --verde-hover: #63b491;
-  --verde-suave: #1a2a21;
-  --ambar: #c6913b;
-  --ambar-texto: #c6913b;
-  --fondo-estimada: #2a2419;
-  --borde-estimada: #8a6a33;
-  --rojo: #cc6b57;
-  --azul: #7e9bd6;
-  --azul-suave: #232c3d;
-  --borde: #34302b;
-  --separador: #2a2724;
-  --pista: #2e2b26;
-  --fondo-segmented: #242220;
-  --segmented-activo: #38342f;
-  --toggle-apagado: #3a3733;
-  --barra-futura: #3a3733;
-  --seleccion-texto: #2c4438;
-  --sombra-card: none;
-  --sombra-thumb: none;
-  --sombra-fab: 0 6px 14px rgba(79, 163, 127, 0.25);
-  --tab-bar-fondo: rgba(30, 28, 26, 0.97);
-  --footer-fondo: rgba(30, 28, 26, 0.98);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]):not([data-tema="oscuro"]) {
-    --papel: #141312;
-    --superficie: #1e1c1a;
-    --tinta: #f2efe9;
-    --tinta-secundaria: #a39d93;
-    --tinta-terciaria: #7d776d;
-    --tinta-muda: #4a453f;
-    --tinta-deshabilitada: #5f594f;
-    --verde: #4fa37f;
-    --verde-hover: #63b491;
-    --verde-suave: #1a2a21;
-    --ambar: #c6913b;
-    --ambar-texto: #c6913b;
-    --fondo-estimada: #2a2419;
-    --borde-estimada: #8a6a33;
-    --rojo: #cc6b57;
-    --azul: #7e9bd6;
-    --azul-suave: #232c3d;
-    --borde: #34302b;
-    --separador: #2a2724;
-    --pista: #2e2b26;
-    --fondo-segmented: #242220;
-    --segmented-activo: #38342f;
-    --toggle-apagado: #3a3733;
-    --barra-futura: #3a3733;
-    --seleccion-texto: #2c4438;
-    --sombra-card: none;
-    --sombra-thumb: none;
-    --sombra-fab: 0 6px 14px rgba(79, 163, 127, 0.25);
-    --tab-bar-fondo: rgba(30, 28, 26, 0.97);
-    --footer-fondo: rgba(30, 28, 26, 0.98);
-  }
 }
 
 @theme inline {

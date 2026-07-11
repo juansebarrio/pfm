@@ -28,10 +28,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1E6E52" },
-    { media: "(prefers-color-scheme: dark)", color: "#141312" },
-  ],
+  // el default de la app es oscuro (globals.css :root); el chrome del navegador
+  // acompaña con el fondo oscuro
+  themeColor: "#141312",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

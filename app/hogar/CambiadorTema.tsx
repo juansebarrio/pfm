@@ -1,39 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Moon, Sun, SunMoon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Card } from "@/components/sistema/Card";
 import { Chip } from "@/components/sistema/Chip";
 
-// Modo oscuro (tanda 8): respeta prefers-color-scheme por defecto ("auto") y
-// el toggle manual persiste en localStorage("tema"). El script del layout raíz
-// aplica data-tema antes del primer paint para evitar flash.
+// Tema de la app. El DEFAULT es oscuro (:root en globals.css); el toggle deja
+// pasar a claro y persiste la elección en localStorage("tema"). El script del
+// layout raíz aplica data-tema antes del primer paint para evitar flash.
 
-type Tema = "auto" | "claro" | "oscuro";
+type Tema = "claro" | "oscuro";
 
 const OPCIONES: Array<{ valor: Tema; etiqueta: string; Icono: typeof Sun }> = [
-  { valor: "auto", etiqueta: "Auto", Icono: SunMoon },
-  { valor: "claro", etiqueta: "Claro", Icono: Sun },
   { valor: "oscuro", etiqueta: "Oscuro", Icono: Moon },
+  { valor: "claro", etiqueta: "Claro", Icono: Sun },
 ];
 
 export function CambiadorTema() {
-  const [tema, setTema] = useState<Tema>("auto");
+  // sin elección guardada, el default es oscuro
+  const [tema, setTema] = useState<Tema>("oscuro");
 
   useEffect(() => {
     const guardado = window.localStorage.getItem("tema");
-    if (guardado === "claro" || guardado === "oscuro") setTema(guardado);
+    setTema(guardado === "claro" ? "claro" : "oscuro");
   }, []);
 
   function elegir(nuevo: Tema) {
     setTema(nuevo);
-    if (nuevo === "auto") {
-      window.localStorage.removeItem("tema");
-      delete document.documentElement.dataset.tema;
-    } else {
-      window.localStorage.setItem("tema", nuevo);
-      document.documentElement.dataset.tema = nuevo;
-    }
+    window.localStorage.setItem("tema", nuevo);
+    document.documentElement.dataset.tema = nuevo;
   }
 
   return (
