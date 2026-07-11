@@ -25,6 +25,31 @@ export type EstadoAuth = {
   aviso?: string;
 };
 
+/**
+ * Entrar a la demo saltando las credenciales. Solo activa cuando
+ * NEXT_PUBLIC_DEMO === "true" (se setea únicamente en producción). El usuario y
+ * la contraseña de la demo viven en variables de servidor (DEMO_EMAIL /
+ * DEMO_PASSWORD): nunca llegan al bundle del cliente.
+ */
+export async function entrarDemo(): Promise<EstadoAuth> {
+  if (process.env.NEXT_PUBLIC_DEMO !== "true") {
+    return { error: "La demo no está disponible acá." };
+  }
+  const email = process.env.DEMO_EMAIL;
+  const password = process.env.DEMO_PASSWORD;
+  if (!email || !password) {
+    return { error: "La demo no está configurada." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    return { error: "No pudimos entrar a la demo. Probá de nuevo." };
+  }
+
+  redirect("/resumen");
+}
+
 export async function iniciarSesion(
   _estadoAnterior: EstadoAuth,
   formulario: FormData,

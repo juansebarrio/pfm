@@ -3,7 +3,7 @@ import { EncabezadoAuth } from "../EncabezadoAuth";
 import { FormularioAuth, PieAuth } from "../FormularioAuth";
 import { registrarse } from "../acciones";
 
-export const metadata: Metadata = { title: "Crear cuenta — Sobres" };
+export const metadata: Metadata = { title: "Crear cuenta — Fin de mes" };
 
 export default async function Registro({
   searchParams,

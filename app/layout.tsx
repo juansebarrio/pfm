@@ -16,14 +16,14 @@ const splineSansMono = Spline_Sans_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sobres",
+  title: "Fin de mes",
   description:
-    "PFM personal y familiar para Argentina: presupuesto por sobres, tarjetas con ciclos reales, cuotas y patrimonio.",
+    "PFM personal y familiar para Argentina: presupuesto por partidas, tarjetas con ciclos reales, cuotas y patrimonio.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Sobres",
+    title: "Fin de mes",
   },
 };
 

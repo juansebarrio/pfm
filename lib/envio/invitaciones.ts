@@ -27,11 +27,11 @@ export async function enviarEmailInvitacion(entrada: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Sobres <invitaciones@resend.dev>",
+      from: "Fin de mes <invitaciones@resend.dev>",
       to: [entrada.email],
-      subject: `${entrada.nombreInvita} te invita al hogar ${entrada.nombreHogar} en Sobres`,
+      subject: `${entrada.nombreInvita} te invita al hogar ${entrada.nombreHogar} en Fin de mes`,
       text: [
-        `${entrada.nombreInvita} te invitó a compartir el presupuesto del hogar ${entrada.nombreHogar} en Sobres.`,
+        `${entrada.nombreInvita} te invitó a compartir el presupuesto del hogar ${entrada.nombreHogar} en Fin de mes.`,
         "",
         `Entrá con este link (vence en 14 días): ${entrada.link}`,
         "",

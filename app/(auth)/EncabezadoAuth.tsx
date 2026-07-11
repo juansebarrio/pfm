@@ -8,7 +8,7 @@ export function EncabezadoAuth({ subtitulo }: { subtitulo: string }) {
           <Mail className="size-5 text-papel" strokeWidth={2} aria-hidden />
         </div>
         <span className="text-[25px] font-semibold tracking-[-0.01em]">
-          Sobres
+          Fin de mes
         </span>
         <span className="cifra rounded-tag border border-borde bg-superficie px-[5px] py-[2px] text-[9.5px] font-semibold tracking-[0.07em] text-tinta-secundaria">
           NOMBRE PROVISORIO

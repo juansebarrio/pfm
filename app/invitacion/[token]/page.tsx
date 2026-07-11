@@ -5,7 +5,7 @@ import { Card } from "@/components/sistema/Card";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { AceptarInvitacion } from "./AceptarInvitacion";
 
-export const metadata: Metadata = { title: "Invitación — Sobres" };
+export const metadata: Metadata = { title: "Invitación — Fin de mes" };
 
 // Ruta pública del token (tanda 6): "Por email. La persona elige su clave al
 // entrar." Estados: inválida/vencida, sin sesión (login/registro con retorno),
@@ -87,7 +87,7 @@ export default async function PaginaInvitacion({
       {!valida && (
         <p className="text-center">
           <Link href="/login" className="text-[13.5px] font-medium text-verde">
-            Ir a Sobres →
+            Ir a Fin de mes →
           </Link>
         </p>
       )}

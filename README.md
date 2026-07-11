@@ -1,4 +1,4 @@
-# Sobres
+# Fin de mes
 
 PFM personal y familiar para Argentina (nombre provisorio, pendiente de INPI).
 Presupuesto mensual por partidas en dos ámbitos (hogar compartido y personal

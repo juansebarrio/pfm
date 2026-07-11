@@ -1,7 +1,7 @@
 {
-  "name": "Sobres",
-  "short_name": "Sobres",
-  "description": "PFM personal y familiar para Argentina: presupuesto por sobres, tarjetas con ciclos reales, cuotas y patrimonio.",
+  "name": "Fin de mes",
+  "short_name": "Fin de mes",
+  "description": "PFM personal y familiar para Argentina: presupuesto por partidas, tarjetas con ciclos reales, cuotas y patrimonio.",
   "id": "/",
   "start_url": "/resumen",
   "scope": "/",
