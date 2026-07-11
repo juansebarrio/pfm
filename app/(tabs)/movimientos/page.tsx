@@ -41,6 +41,10 @@ function comoMedio(
   return { tipo, id };
 }
 
+function comoTipo(valor: string | undefined): "gasto" | "ingreso" | undefined {
+  return valor === "gasto" || valor === "ingreso" ? valor : undefined;
+}
+
 const soloChip = ({ id, nombre, icono }: { id: string; nombre: string; icono: string }) =>
   ({ id, nombre, icono }) satisfies CategoriaChip;
 
@@ -55,6 +59,7 @@ export default async function PaginaMovimientos({
   const medio = comoMedio(uno(parametros.medio));
   const categoriaId = comoUuid(uno(parametros.categoria));
   const miembroId = comoUuid(uno(parametros.miembro));
+  const tipo = comoTipo(uno(parametros.tipo));
 
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
@@ -62,7 +67,7 @@ export default async function PaginaMovimientos({
   const [bandeja, historial, categorias, medios, miembros, recientesHogar, recientesPersonal] =
     await Promise.all([
       bandejaDeEntrada(sesion),
-      movimientosFiltrados(sesion, { buscar: q, ambito, categoriaId, miembroId, medio }),
+      movimientosFiltrados(sesion, { buscar: q, ambito, categoriaId, miembroId, medio, tipo }),
       categoriasDelHogar(sesion),
       mediosDePago(sesion),
       miembrosDelHogar(sesion),
@@ -87,7 +92,7 @@ export default async function PaginaMovimientos({
     else dias.push({ fecha: m.fecha, movimientos: [m] });
   }
 
-  const hayFiltros = Boolean(q || ambito || medio || categoriaId || miembroId);
+  const hayFiltros = Boolean(q || ambito || medio || categoriaId || miembroId || tipo);
   const inicial = (sesion.nombreMiembro[0] ?? "?").toUpperCase();
 
   return (
@@ -110,13 +115,16 @@ export default async function PaginaMovimientos({
           medio={medio ? `${medio.tipo}:${medio.id}` : null}
           categoria={categoriaId ?? null}
           miembro={miembroId ?? null}
+          tipo={tipo ?? null}
           medios={medios.map((m) => ({ valor: `${m.tipo}:${m.id}`, etiqueta: m.etiqueta }))}
           categorias={categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre }))}
           miembros={miembros.map((m) => ({ valor: m.userId, etiqueta: m.nombre }))}
         />
       </div>
 
-      {itemsBandeja.length > 0 && (
+      {/* la bandeja se corre al filtrar por tipo: el historial ya muestra todo
+          ese tipo (incluido lo sin categorizar) y así no se duplica */}
+      {itemsBandeja.length > 0 && !tipo && (
         <div className="mt-4">
           <Bandeja
             items={itemsBandeja}

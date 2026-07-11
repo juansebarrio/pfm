@@ -75,9 +75,11 @@ export type FiltrosHistorial = {
   /** user_id del miembro (lo personal ajeno igual no llega: RLS) */
   miembroId?: string;
   medio?: { tipo: "cuenta" | "tarjeta"; id: string };
+  /** filtrar solo gastos o solo ingresos (por defecto, ambos) */
+  tipo?: "gasto" | "ingreso";
 };
 
-/** Historial categorizado con los filtros de la pantalla 05, más nuevo primero. */
+/** Historial con los filtros de la pantalla 05, más nuevo primero. */
 export async function movimientosFiltrados(
   sesion: SesionHogar,
   filtros: FiltrosHistorial = {},
@@ -86,11 +88,15 @@ export async function movimientosFiltrados(
     .from("movimientos")
     .select(CAMPOS)
     .eq("hogar_id", sesion.hogarId)
-    .not("categoria_id", "is", null)
     .in("tipo", ["gasto", "ingreso"])
     .order("fecha", { ascending: false })
     .order("creado_el", { ascending: false })
     .limit(60);
+  // Por defecto el historial es lo ya categorizado (lo sin categorizar vive en
+  // la bandeja). Pero al filtrar por tipo el usuario pide "mostrame todo esto":
+  // los ingresos no se categorizan (las categorías son partidas de gasto), así
+  // que sin esta excepción "Solo ingresos" daría siempre vacío.
+  if (!filtros.tipo) consulta = consulta.not("categoria_id", "is", null);
   if (filtros.buscar) {
     consulta = consulta.ilike("descripcion", `%${filtros.buscar}%`);
   }
@@ -99,6 +105,7 @@ export async function movimientosFiltrados(
     consulta = consulta.eq("visibilidad", "personal").eq("user_id", sesion.userId);
   if (filtros.categoriaId) consulta = consulta.eq("categoria_id", filtros.categoriaId);
   if (filtros.miembroId) consulta = consulta.eq("user_id", filtros.miembroId);
+  if (filtros.tipo) consulta = consulta.eq("tipo", filtros.tipo);
   if (filtros.medio?.tipo === "cuenta") consulta = consulta.eq("cuenta_id", filtros.medio.id);
   if (filtros.medio?.tipo === "tarjeta") consulta = consulta.eq("tarjeta_id", filtros.medio.id);
   const { data } = await consulta;

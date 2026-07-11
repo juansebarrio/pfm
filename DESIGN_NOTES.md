@@ -173,6 +173,17 @@ pedido, siguiendo el sistema:
   aparecen en el historial; una compra en cuotas cargada por el usuario **exige
   categoría** (guard de alta rápida) y por eso sí es visible y borrable ahí.
 
+### 1.16 Filtro por tipo en movimientos (feature post-brief)
+Se agregó un chip "Tipo" en la fila de filtros de 05 (misma mecánica que
+Cuenta/Categoría/Miembro): "Gastos e ingresos" (reset) · "Solo gastos" · "Solo
+ingresos". Decisiones:
+- Al filtrar por tipo el historial muestra **todos** los movimientos de ese tipo,
+  incluidos los sin categorizar — porque los ingresos no se categorizan (las
+  categorías son partidas de gasto) y, sin esto, "Solo ingresos" daría siempre
+  vacío. Sin filtro de tipo, el historial sigue siendo solo lo categorizado.
+- La **bandeja se oculta** cuando el filtro de tipo está activo: el historial ya
+  lista todo ese tipo y así no se duplica el ingreso que estaría en la bandeja.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.

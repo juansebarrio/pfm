@@ -19,12 +19,20 @@ type Props = {
   medio: string | null;
   categoria: string | null;
   miembro: string | null;
+  tipo: "gasto" | "ingreso" | null;
   medios: Opcion[];
   categorias: Opcion[];
   miembros: Opcion[];
 };
 
-type HojaAbierta = "medio" | "categoria" | "miembro" | null;
+type HojaAbierta = "medio" | "categoria" | "miembro" | "tipo" | null;
+
+// Opciones fijas del filtro por tipo (gasto/ingreso). El historial ya excluye
+// transferencias y pagos de resumen, así que acá solo estos dos.
+const OPCIONES_TIPO: Opcion[] = [
+  { valor: "gasto", etiqueta: "Solo gastos" },
+  { valor: "ingreso", etiqueta: "Solo ingresos" },
+];
 
 export function Filtros({
   q,
@@ -32,6 +40,7 @@ export function Filtros({
   medio,
   categoria,
   miembro,
+  tipo,
   medios,
   categorias,
   miembros,
@@ -80,6 +89,13 @@ export function Filtros({
       opciones: miembros,
       actual: miembro,
       todas: "Todos los miembros",
+    },
+    tipo: {
+      titulo: "Tipo",
+      parametro: "tipo",
+      opciones: OPCIONES_TIPO,
+      actual: tipo,
+      todas: "Gastos e ingresos",
     },
   } as const;
   const hojaActiva = hoja ? hojas[hoja] : null;
@@ -141,6 +157,10 @@ export function Filtros({
           className="hit-44"
         >
           {etiquetaDe(miembros, miembro, "Miembro")}
+          <ChevronDown className="size-3" strokeWidth={1.5} aria-hidden />
+        </Chip>
+        <Chip seleccionado={tipo !== null} onClick={() => setHoja("tipo")} className="hit-44">
+          {etiquetaDe(OPCIONES_TIPO, tipo, "Tipo")}
           <ChevronDown className="size-3" strokeWidth={1.5} aria-hidden />
         </Chip>
         <Chip
