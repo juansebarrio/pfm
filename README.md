@@ -35,8 +35,13 @@ supabase db push   # con el proyecto linkeado
 pnpm seed          # reproduce el dataset del export: hogar Coghlan, julio 2026
 ```
 
-Usuarios de prueba que crea el seed: ver la salida del comando (Juanse y Vale,
-con contraseñas impresas en consola al crearlos).
+El seed se autoverifica contra 30+ números del export y es idempotente (borra
+y recrea). Usuarios de prueba:
+
+- `juanse@sobres.local` / `coghlan-juanse-2026` (administrador)
+- `vale@sobres.local` / `coghlan-vale-2026` (miembro)
+
+Ojo: correr el seed invalida las sesiones abiertas (recrea los usuarios).
 
 ## Verificaciones
 
@@ -46,6 +51,19 @@ pnpm lint          # eslint
 pnpm test          # vitest: plata en centavos, ciclos, cuotas, proyección
 pnpm rls:check     # verifica aislamiento RLS entre hogares y entre miembros
 ```
+
+## Comparativa contra el export
+
+`docs/comparativa/` tiene una captura por pantalla (390×844, claro y oscuro)
+tomada del build de producción con el seed cargado, para comparar 1:1 contra
+`design/Sobres - Pantallas.dc.html`. Se regeneran con la app corriendo:
+
+```bash
+pnpm tsx --env-file=.env.local scripts/capturas.ts
+```
+
+Las divergencias derivadas (proyección, cuota 5/12) están anotadas en
+`DESIGN_NOTES.md` §1.
 
 ## PWA
 
