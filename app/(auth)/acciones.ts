@@ -50,6 +50,35 @@ export async function entrarDemo(): Promise<EstadoAuth> {
   redirect("/resumen");
 }
 
+/**
+ * Login con Google (scopes básicos: email + perfil, acá NO se pide Gmail).
+ * signInWithOAuth devuelve la URL de consentimiento y redirigimos ahí; Google
+ * vuelve a /auth/callback, que canjea el código por la sesión. Si el email ya
+ * existe como cuenta de email+contraseña verificada, Supabase vincula ambas.
+ */
+export async function entrarConGoogle(volver?: string): Promise<EstadoAuth> {
+  if (process.env.NEXT_PUBLIC_GOOGLE !== "true") {
+    return { error: "Entrar con Google no está habilitado." };
+  }
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const destino =
+    typeof volver === "string" && /^\/[a-zA-Z0-9\-_/]*$/.test(volver)
+      ? volver
+      : "/resumen";
+
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${base}/auth/callback?volver=${encodeURIComponent(destino)}`,
+    },
+  });
+  if (error || !data.url) {
+    return { error: "No pudimos iniciar con Google. Probá de nuevo." };
+  }
+  redirect(data.url);
+}
+
 export async function iniciarSesion(
   _estadoAnterior: EstadoAuth,
   formulario: FormData,

@@ -5,15 +5,30 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { ConexionGmail } from "./ConexionGmail";
 import { SeccionCuentas, type CuentaFila } from "./HojaCuenta";
 import { SeccionTarjetas, type TarjetaFila } from "./HojaTarjeta";
+
+// mensajes de la vuelta del OAuth de conectar Gmail (?gmail=...)
+const AVISOS_GMAIL: Record<string, string> = {
+  "sin-permiso":
+    "Google no dio el permiso de lectura. Probá de nuevo y aceptá el acceso a Gmail.",
+  error: "No pudimos guardar la conexión. Probá de nuevo.",
+};
 
 /** Activas primero; dentro de cada grupo conserva el orden por creado_el. */
 function activasPrimero<T extends { activa: boolean }>(filas: T[]): T[] {
   return [...filas].sort((a, b) => Number(b.activa) - Number(a.activa));
 }
 
-export default async function Cuentas() {
+export default async function Cuentas({
+  searchParams,
+}: {
+  searchParams: Promise<{ gmail?: string }>;
+}) {
+  const { gmail } = await searchParams;
+  const conGoogle = process.env.NEXT_PUBLIC_GOOGLE === "true";
+
   const sesion = await obtenerSesionHogar();
   const [{ data: cuentas }, { data: tarjetas }] = await Promise.all([
     sesion.supabase
@@ -27,6 +42,24 @@ export default async function Cuentas() {
       .eq("hogar_id", sesion.hogarId)
       .order("creado_el", { ascending: true }),
   ]);
+
+  // las tablas de Gmail solo se consultan con el flag activo: sin él (y sin la
+  // migración aplicada) tocarlas rompería la página. Columnas explícitas: el
+  // token cifrado no es legible para el cliente.
+  const [{ data: conexion }, { count: pendientes }] = conGoogle
+    ? await Promise.all([
+        sesion.supabase
+          .from("conexiones_gmail")
+          .select("email_gmail, ultima_sincronizacion")
+          .eq("user_id", sesion.userId)
+          .maybeSingle(),
+        sesion.supabase
+          .from("sugerencias_correo")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", sesion.userId)
+          .eq("estado", "pendiente"),
+      ])
+    : [{ data: null }, { count: 0 }];
 
   const filasCuentas: CuentaFila[] = activasPrimero(
     (cuentas ?? []).map((c) => ({
@@ -64,6 +97,20 @@ export default async function Cuentas() {
 
       <SeccionCuentas cuentas={filasCuentas} />
       <SeccionTarjetas tarjetas={filasTarjetas} />
+      {conGoogle && (
+        <ConexionGmail
+          conexion={
+            conexion
+              ? {
+                  email: conexion.email_gmail,
+                  ultimaSincronizacion: conexion.ultima_sincronizacion,
+                }
+              : null
+          }
+          pendientes={pendientes ?? 0}
+          aviso={gmail ? (AVISOS_GMAIL[gmail] ?? null) : null}
+        />
+      )}
     </div>
   );
 }

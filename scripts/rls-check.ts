@@ -196,6 +196,38 @@ async function main() {
     .eq("hogar_id", norte!.id);
   esperar(nombreBeto === null, "Beto sí puede editar su propio nombre");
 
+  console.log("\n4) Conexión Gmail y sugerencias del correo (privadas del usuario):");
+  await admin.from("conexiones_gmail").insert({
+    user_id: ANA, email_gmail: "ana@gmail.com", refresh_token_cifrado: "iv.tag.datos-de-prueba",
+  });
+  const { data: sugAna } = await admin.from("sugerencias_correo").insert({
+    hogar_id: norte!.id, user_id: ANA, gmail_id: "mail-rls-1", remitente: "Banco <avisos@banco.com>",
+    fecha: "2026-07-10", tipo: "gasto", importe_centavos: 123400, comercio: "Kiosco de Ana",
+  }).select().single();
+
+  // ni Beto (mismo hogar) ni Carla (otro hogar) ven lo del correo de Ana
+  const { data: conexBeto } = await beto.from("conexiones_gmail").select("id, email_gmail");
+  esperar((conexBeto ?? []).length === 0, "Beto NO ve la conexión Gmail de Ana");
+  const { data: sugBeto } = await beto.from("sugerencias_correo").select("*");
+  esperar((sugBeto ?? []).length === 0, "Beto NO ve las sugerencias de correo de Ana");
+  const { data: sugCarla } = await carla.from("sugerencias_correo").select("*");
+  esperar((sugCarla ?? []).length === 0, "Carla NO ve las sugerencias de correo de Ana");
+
+  // la dueña ve su conexión, pero NO puede leer el token cifrado (revoke de columna)
+  const { data: conexAna } = await ana.from("conexiones_gmail").select("id, email_gmail");
+  esperar((conexAna ?? []).length === 1, "Ana sí ve su propia conexión (sin token)");
+  const { error: tokenAna } = await ana.from("conexiones_gmail").select("refresh_token_cifrado");
+  esperar(tokenAna !== null, "Ni siquiera Ana puede LEER el refresh token cifrado");
+  const { data: sugDeAna } = await ana.from("sugerencias_correo").select("*");
+  esperar((sugDeAna ?? []).length === 1, "Ana sí ve su propia sugerencia");
+
+  // Beto no puede aceptar/tocar la sugerencia de Ana
+  const { data: updSugBeto } = await beto.from("sugerencias_correo")
+    .update({ estado: "aceptada" })
+    .eq("id", sugAna!.id)
+    .select();
+  esperar((updSugBeto ?? []).length === 0, "Beto no puede aceptar la sugerencia de Ana");
+
   await limpiar();
 
   if (fallas > 0) {

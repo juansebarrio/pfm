@@ -76,3 +76,8 @@ export function etiquetaDia(fecha: string, hoy: string): string {
 export function diasEntre(a: string, b: string): number {
   return Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
 }
+
+/** Epoch ms (p. ej. internalDate de Gmail) → YYYY-MM-DD en Buenos Aires. */
+export function fechaDesdeMs(ms: number): string {
+  return format(new TZDate(ms, HUSO), "yyyy-MM-dd");
+}

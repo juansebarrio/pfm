@@ -2,6 +2,7 @@ import "server-only";
 import { bandejaDeEntrada, type MovimientoLista } from "@/lib/datos/movimientos";
 import { sugerenciasRecurrentes } from "@/lib/datos/presupuesto";
 import type { SesionHogar } from "@/lib/datos/sesion";
+import { nombreDeRemitente } from "@/lib/dominio/correo";
 import { formatearImporte } from "@/lib/dominio/dinero";
 import { diasEntre, formatearDiaCorto, mesDe } from "@/lib/dominio/fechas";
 
@@ -14,7 +15,7 @@ const DIAS_AVISO_RECURRENTE = 10; // el export avisa Luz (18 jul) el día 10: ve
 
 export type Aviso = {
   id: string;
-  tipo: "cierre" | "vencimiento" | "recurrente" | "bandeja";
+  tipo: "cierre" | "vencimiento" | "recurrente" | "bandeja" | "correo";
   titulo: string;
   meta: string;
   /** la meta lleva plata → va en mono (.cifra) */
@@ -111,14 +112,37 @@ function resumenBandeja(items: MovimientoLista[]): string {
   return `${fragmentos.slice(0, -1).join(", ")} y ${fragmentos[fragmentos.length - 1]}`;
 }
 
+/** Sugerencias del correo pendientes DEL USUARIO (privadas, no del hogar). */
+async function sugerenciasDeCorreo(
+  sesion: SesionHogar,
+): Promise<{ cantidad: number; muestra: string[] }> {
+  const { data, count } = await sesion.supabase
+    .from("sugerencias_correo")
+    .select("comercio, remitente", { count: "exact" })
+    .eq("user_id", sesion.userId)
+    .eq("estado", "pendiente")
+    .order("fecha", { ascending: false })
+    .limit(2);
+  return {
+    cantidad: count ?? 0,
+    // sin comercio parseado, el remitente ("BBVA", "Mercado Pago") es mejor
+    // fallback que un genérico repetido ("un movimiento y un movimiento")
+    muestra: (data ?? []).map((s) => s.comercio ?? nombreDeRemitente(s.remitente)),
+  };
+}
+
 export async function avisosParaAtender(
   sesion: SesionHogar,
   hoy: string,
 ): Promise<Aviso[]> {
-  const [tarjetas, recurrentes, bandeja] = await Promise.all([
+  // las sugerencias del correo solo se consultan con el flag de Google activo:
+  // sin él (y sin la migración) tocar sugerencias_correo rompería el resumen
+  const conGoogle = process.env.NEXT_PUBLIC_GOOGLE === "true";
+  const [tarjetas, recurrentes, bandeja, correo] = await Promise.all([
     tarjetasConCiclos(sesion),
     sugerenciasRecurrentes(sesion, mesDe(hoy)),
     bandejaDeEntrada(sesion),
+    conGoogle ? sugerenciasDeCorreo(sesion) : Promise.resolve({ cantidad: 0, muestra: [] }),
   ]);
 
   type Candidato = { tarjeta: TarjetaFila; ciclo: CicloFila };
@@ -202,6 +226,25 @@ export async function avisosParaAtender(
       metaCifra: false,
       href: "/movimientos",
       accion: "Categorizar",
+    });
+  }
+
+  if (correo.cantidad > 0) {
+    const resto = correo.cantidad - correo.muestra.length;
+    avisos.push({
+      id: "correo",
+      tipo: "correo",
+      titulo:
+        correo.cantidad === 1
+          ? "1 movimiento sugerido desde tu correo"
+          : `${correo.cantidad} movimientos sugeridos desde tu correo`,
+      meta:
+        resto > 0
+          ? `${correo.muestra.join(", ")} y ${resto === 1 ? "uno" : resto} más`
+          : correo.muestra.join(" y "),
+      metaCifra: false,
+      href: "/sugerencias",
+      accion: "Revisar",
     });
   }
 

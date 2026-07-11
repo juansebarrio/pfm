@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const RUTAS_PUBLICAS = ["/login", "/registro", "/invitacion"];
+// /auth: vuelta del OAuth de Google (el código se canjea ahí, aún sin sesión)
+const RUTAS_PUBLICAS = ["/login", "/registro", "/invitacion", "/auth"];
 
 function esRutaPublica(pathname: string) {
   return RUTAS_PUBLICAS.some(

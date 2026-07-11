@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BotonDemo } from "../BotonDemo";
+import { BotonGoogle } from "../BotonGoogle";
 import { EncabezadoAuth } from "../EncabezadoAuth";
 import { FormularioAuth, PieAuth } from "../FormularioAuth";
 import { iniciarSesion } from "../acciones";
@@ -23,6 +24,8 @@ export default async function Login({
         textoCtaPendiente="Entrando…"
         volver={volver}
       />
+      {/* con el proyecto de Google configurado: entrar sin contraseña */}
+      {process.env.NEXT_PUBLIC_GOOGLE === "true" && <BotonGoogle volver={volver} />}
       <PieAuth
         pregunta="¿Primera vez?"
         href={`/registro${sufijo}`}

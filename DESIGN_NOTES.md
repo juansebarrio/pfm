@@ -251,6 +251,20 @@ Detalle original en `DESIGN_AUDIT.md` §7.2. Estado final de cada una:
 Sigue pendiente de diseño (no de código): sumar un campo de comercio opcional al
 alta rápida (§1.9) — no se aplica porque cambia el flujo de la pantalla más usada.
 
+### 1.19 Google: login + sugerencias desde Gmail (opción A)
+Feature post-brief pedida por Juanse. Dos partes: "Continuar con Google"
+(login/registro) y una conexión a Gmail (scope `gmail.readonly`) que lee los
+últimos 50 mails y convierte avisos de consumo en sugerencias (tabla
+`sugerencias_correo`, personales por RLS de user_id — el hogar no ve tu
+casilla). Aceptar crea el movimiento con la fecha del mail; descartar registra
+el `gmail_id` para no re-sugerir. El refresh token va cifrado (AES-256-GCM,
+`GMAIL_TOKEN_KEY`) y la columna tiene el SELECT revocado para authenticated:
+solo el server con secret key la lee. Todo detrás de `NEXT_PUBLIC_GOOGLE=true`;
+la configuración manual de Google Cloud + Supabase está en docs/GMAIL.md
+(app en modo Testing: refresh tokens vencen a los 7 días — límite conocido).
+Parser heurístico en `lib/dominio/correo.ts` (solo ARS; exige frase
+transaccional + importe; filtra marketing) con fixtures en el test.
+
 ### 1.18 Modo oscuro por defecto (decisión de producto)
 El default de la app pasó a ser **oscuro** (`:root` en globals.css). El claro
 solo aplica cuando el usuario lo elige (`[data-tema="claro"]`). Detalles:

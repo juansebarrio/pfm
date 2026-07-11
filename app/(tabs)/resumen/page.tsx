@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ChevronRight, CreditCard, Inbox, Zap, type LucideIcon } from "lucide-react";
+import { CalendarClock, ChevronRight, CreditCard, Inbox, Mail, Zap, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/sistema/Badge";
 import { BarraAvance } from "@/components/sistema/BarraAvance";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
@@ -27,6 +27,7 @@ const iconosAviso: Record<Aviso["tipo"], LucideIcon> = {
   vencimiento: CalendarClock,
   recurrente: Zap,
   bandeja: Inbox,
+  correo: Mail,
 };
 
 export default async function Resumen() {
