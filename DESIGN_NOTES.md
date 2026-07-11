@@ -192,8 +192,9 @@ dos, sin romper el flujo rápido (van debajo de la grilla de recientes, opcional
   case-insensitive: si el nombre ya existe lo reusa, si no crea la categoría en
   el grupo "Otros" (ícono `tag`). Escribir a mano y elegir un tile son
   mutuamente exclusivos.
-- **"Comentario (opcional)"** → se guarda en `movimientos.nota` y se ve en el
-  detalle del movimiento.
+- **"Comentario (opcional)"** → se guarda en `movimientos.nota` y se ve —y se
+  edita— en el detalle del movimiento (campo con "Guardar" que aparece solo
+  cuando el texto cambia; vaciar el campo borra la nota).
 - El guard de "cuotas exigen categoría" ahora se satisface también con la
   categoría escrita a mano. Inputs a 16px para evitar el zoom de iOS.
 

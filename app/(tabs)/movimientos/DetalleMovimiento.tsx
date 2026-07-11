@@ -1,6 +1,9 @@
 "use client";
 
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { actualizarNota } from "@/app/acciones/movimientos";
 import { Badge } from "@/components/sistema/Badge";
 import { HojaInferior } from "@/components/sistema/HojaInferior";
 import { IconoCategoria } from "@/components/sistema/IconoCategoria";
@@ -9,7 +12,8 @@ import type { MovimientoLista } from "@/lib/datos/movimientos";
 import { formatearDiaLargo } from "@/lib/dominio/fechas";
 
 // Detalle de un movimiento en hoja inferior (feature nueva). Muestra todo lo
-// que hay y ofrece el borrado; si es una cuota, aclara que borra la compra.
+// que hay, deja editar el comentario y ofrece el borrado; si es una cuota,
+// aclara que borra la compra.
 
 const NOMBRE_TIPO: Record<MovimientoLista["tipo"], string | null> = {
   gasto: null, // es lo esperado, no hace falta rotularlo
@@ -95,8 +99,10 @@ export function DetalleMovimiento({
               </Fila>
             )}
             {tipo && <Fila etiqueta="Tipo">{tipo}</Fila>}
-            {m.nota && <Fila etiqueta="Nota">{m.nota}</Fila>}
           </dl>
+
+          {/* comentario editable; key por movimiento para resetear el borrador */}
+          <EditorNota key={m.id} movimientoId={m.id} notaInicial={m.nota} />
 
           {m.esCuota && (
             <p className="mt-2.5 text-[11.5px] leading-[1.5] text-tinta-secundaria">
@@ -118,5 +124,72 @@ export function DetalleMovimiento({
         </div>
       )}
     </HojaInferior>
+  );
+}
+
+// Campo de comentario del detalle: mismo input que el alta rápida. El botón
+// "Guardar" aparece solo cuando el texto difiere de lo guardado; al confirmar
+// muestra "Guardado ✓" y refresca la lista de fondo.
+function EditorNota({
+  movimientoId,
+  notaInicial,
+}: {
+  movimientoId: string;
+  notaInicial: string | null;
+}) {
+  const router = useRouter();
+  const [pendiente, iniciarTransicion] = useTransition();
+  const [texto, setTexto] = useState(notaInicial ?? "");
+  const [guardada, setGuardada] = useState(notaInicial ?? "");
+  const [confirmado, setConfirmado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cambio = texto.trim() !== guardada.trim();
+
+  function guardar() {
+    if (!cambio || pendiente) return;
+    setError(null);
+    iniciarTransicion(async () => {
+      const r = await actualizarNota({ movimientoId, nota: texto.trim() });
+      if (r.ok) {
+        setGuardada(texto);
+        setConfirmado(true);
+        setTimeout(() => setConfirmado(false), 2000);
+        router.refresh();
+      } else {
+        setError(r.error);
+      }
+    });
+  }
+
+  return (
+    <div className="mt-3">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          maxLength={200}
+          placeholder="Comentario (opcional)"
+          aria-label="Comentario del movimiento"
+          className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
+        />
+        {(cambio || confirmado) && (
+          <button
+            type="button"
+            onClick={guardar}
+            disabled={pendiente || !cambio}
+            className="hit-44 shrink-0 text-[13px] font-semibold text-verde disabled:opacity-60"
+          >
+            {pendiente ? "Guardando…" : confirmado ? "Guardado ✓" : "Guardar"}
+          </button>
+        )}
+      </div>
+      {error && (
+        <p role="alert" className="mt-1.5 text-[12px] font-medium text-rojo">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

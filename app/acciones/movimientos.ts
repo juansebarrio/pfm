@@ -200,6 +200,29 @@ export async function categorizarMovimiento(entrada: unknown): Promise<Resultado
   return { ok: true };
 }
 
+const esquemaNota = z.object({
+  movimientoId: z.uuid(),
+  nota: z.string().trim().max(200),
+});
+
+/** Editar el comentario de un movimiento desde su detalle. Vacío = sin nota. */
+export async function actualizarNota(entrada: unknown): Promise<ResultadoAccion> {
+  const parseo = esquemaNota.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Comentario inválido" };
+
+  const sesion = await obtenerSesionHogar();
+  const { error, data } = await sesion.supabase
+    .from("movimientos")
+    .update({ nota: parseo.data.nota || null })
+    .eq("id", parseo.data.movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .select("id");
+  if (error || !data?.length) return { ok: false, error: "No pudimos guardar el comentario" };
+
+  revalidatePath("/movimientos");
+  return { ok: true };
+}
+
 const esquemaBorrar = z.object({ movimientoId: z.uuid() });
 
 /**
