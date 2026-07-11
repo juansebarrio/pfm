@@ -12,9 +12,12 @@ const esquemaGasto = z.object({
   medioTipo: z.enum(["cuenta", "tarjeta"]),
   medioId: z.uuid(),
   categoriaId: z.uuid().nullable(),
+  // categoría escrita a mano: se reusa si ya existe (por nombre) o se crea
+  categoriaNombre: z.string().trim().min(1).max(40).optional(),
   ambito: z.enum(["hogar", "personal"]),
   cuotas: z.union([z.literal(1), z.literal(3), z.literal(6), z.literal(12)]),
   descripcion: z.string().trim().max(80).optional(),
+  nota: z.string().trim().max(200).optional(),
 });
 
 export type ResultadoAccion = { ok: true } | { ok: false; error: string };
@@ -22,6 +25,46 @@ export type ResultadoAccion = { ok: true } | { ok: false; error: string };
 /** La fecha con la que se asigna el ciclo nunca es anterior a la compra real. */
 function fechaParaCiclo(fechaDevengado: string, fechaCompra: string): string {
   return fechaDevengado > fechaCompra ? fechaDevengado : fechaCompra;
+}
+
+/**
+ * Resuelve una categoría escrita a mano: si ya existe una con ese nombre en el
+ * ámbito (sin distinguir mayúsculas) la reusa; si no, la crea en el grupo
+ * "Otros". Evita duplicar "Nafta" / "nafta". Devuelve null si no pudo.
+ */
+async function encontrarOCrearCategoria(
+  sesion: Awaited<ReturnType<typeof obtenerSesionHogar>>,
+  nombre: string,
+  ambito: "hogar" | "personal",
+): Promise<string | null> {
+  const patron = nombre.replace(/[\\%_]/g, (m) => `\\${m}`);
+  let consulta = sesion.supabase
+    .from("categorias")
+    .select("id, nombre")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("ambito", ambito)
+    .ilike("nombre", patron);
+  if (ambito === "personal") consulta = consulta.eq("user_id", sesion.userId);
+  const { data: candidatas } = await consulta;
+  const existente = (candidatas ?? []).find(
+    (c) => c.nombre.toLowerCase() === nombre.toLowerCase(),
+  );
+  if (existente) return existente.id;
+
+  const { data: nueva } = await sesion.supabase
+    .from("categorias")
+    .insert({
+      hogar_id: sesion.hogarId,
+      user_id: ambito === "personal" ? sesion.userId : null,
+      grupo: "Otros",
+      nombre,
+      ambito,
+      icono: "tag",
+      orden: 999,
+    })
+    .select("id")
+    .single();
+  return nueva?.id ?? null;
 }
 
 /** Alta rápida (03). El gasto aparece al instante: optimistic UI del lado cliente. */
@@ -33,14 +76,22 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
   const visibilidad = datos.ambito === "hogar" ? "compartido" : "personal";
+  const nota = datos.nota ?? null;
 
-  // nombre de la categoría como descripción por defecto (03 no tiene campo de texto)
+  // categoría efectiva: el id elegido, o el nombre escrito a mano resuelto
+  let categoriaId = datos.categoriaId;
+  if (!categoriaId && datos.categoriaNombre) {
+    categoriaId = await encontrarOCrearCategoria(sesion, datos.categoriaNombre, datos.ambito);
+    if (!categoriaId) return { ok: false, error: "No pudimos crear la categoría" };
+  }
+
+  // nombre de la categoría como descripción por defecto (03 no tiene comercio)
   let descripcion = datos.descripcion;
-  if (!descripcion && datos.categoriaId) {
+  if (!descripcion && categoriaId) {
     const { data: cat } = await sesion.supabase
       .from("categorias")
       .select("nombre")
-      .eq("id", datos.categoriaId)
+      .eq("id", categoriaId)
       .single();
     descripcion = cat?.nombre;
   }
@@ -52,7 +103,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
     }
     // sin categoría, las cuotas hijas quedarían fuera de la bandeja (se filtra
     // por compra_id) y del historial categorizable: no habría cómo asignarlas
-    if (!datos.categoriaId) {
+    if (!categoriaId) {
       return { ok: false, error: "Elegí una categoría para una compra en cuotas" };
     }
     const { data: compra, error: errCompra } = await sesion.supabase
@@ -88,8 +139,9 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
           datos.medioId,
           fechaParaCiclo(c.fecha, hoy),
         ),
-        categoria_id: datos.categoriaId,
+        categoria_id: categoriaId,
         visibilidad,
+        nota,
         compra_id: compra.id,
         n_cuota: c.n,
       });
@@ -110,8 +162,9 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
         datos.medioTipo === "tarjeta"
           ? await asegurarCicloParaFecha(sesion, datos.medioId, hoy)
           : null,
-      categoria_id: datos.categoriaId,
+      categoria_id: categoriaId,
       visibilidad,
+      nota,
     });
     if (error) return { ok: false, error: "No pudimos guardar el gasto" };
   }

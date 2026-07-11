@@ -184,6 +184,19 @@ ingresos". Decisiones:
 - La **bandeja se oculta** cuando el filtro de tipo está activo: el historial ya
   lista todo ese tipo y así no se duplica el ingreso que estaría en la bandeja.
 
+### 1.17 Categoría a mano y comentario en el alta rápida (feature post-brief)
+El export de 03 no tenía campos de texto (decisión §1.9). A pedido se sumaron
+dos, sin romper el flujo rápido (van debajo de la grilla de recientes, opcionales):
+- **"Otra categoría (escribila)"**: al tipear, sugiere las categorías existentes
+  del ámbito (tap para elegir). Al guardar, el server hace *find-or-create*
+  case-insensitive: si el nombre ya existe lo reusa, si no crea la categoría en
+  el grupo "Otros" (ícono `tag`). Escribir a mano y elegir un tile son
+  mutuamente exclusivos.
+- **"Comentario (opcional)"** → se guarda en `movimientos.nota` y se ve en el
+  detalle del movimiento.
+- El guard de "cuotas exigen categoría" ahora se satisface también con la
+  categoría escrita a mano. Inputs a 16px para evitar el zoom de iOS.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.

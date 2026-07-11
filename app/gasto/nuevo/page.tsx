@@ -1,4 +1,8 @@
-import { categoriasRecientes, mediosDePago } from "@/lib/datos/movimientos";
+import {
+  categoriasDelHogar,
+  categoriasRecientes,
+  mediosDePago,
+} from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { AltaRapida } from "./AltaRapida";
 
@@ -7,17 +11,20 @@ import { AltaRapida } from "./AltaRapida";
 // así el cambio Hogar/Personal en el cliente es instantáneo, sin refetch.
 export default async function NuevoGasto() {
   const sesion = await obtenerSesionHogar();
-  const [medios, categoriasHogar, categoriasPersonales] = await Promise.all([
+  const [medios, recientesHogar, recientesPersonal, todas] = await Promise.all([
     mediosDePago(sesion),
     categoriasRecientes(sesion, "hogar"),
     categoriasRecientes(sesion, "personal"),
+    categoriasDelHogar(sesion),
   ]);
 
   return (
     <AltaRapida
       medios={medios}
-      categoriasHogar={categoriasHogar}
-      categoriasPersonales={categoriasPersonales}
+      categoriasHogar={recientesHogar}
+      categoriasPersonales={recientesPersonal}
+      todasHogar={todas.filter((c) => c.ambito === "hogar")}
+      todasPersonales={todas.filter((c) => c.ambito === "personal")}
     />
   );
 }

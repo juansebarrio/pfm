@@ -33,15 +33,25 @@ type Props = {
   medios: MedioDePago[];
   categoriasHogar: CategoriaSimple[];
   categoriasPersonales: CategoriaSimple[];
+  todasHogar: CategoriaSimple[];
+  todasPersonales: CategoriaSimple[];
 };
 
-export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Props) {
+export function AltaRapida({
+  medios,
+  categoriasHogar,
+  categoriasPersonales,
+  todasHogar,
+  todasPersonales,
+}: Props) {
   const router = useRouter();
   const [pendiente, iniciarTransicion] = useTransition();
 
   const [ambito, setAmbito] = useState<Ambito>("hogar");
   const [medioId, setMedioId] = useState<string | null>(medios[0]?.id ?? null);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [categoriaTexto, setCategoriaTexto] = useState("");
+  const [nota, setNota] = useState("");
   const [cuotas, setCuotas] = useState<Cuotas>(1);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +71,16 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
   const enteroCentavos = Number(entero || "0") * 100;
   const centavos = enteroCentavos + (decimales ? Number(decimales.padEnd(2, "0")) : 0);
   const categorias = ambito === "hogar" ? categoriasHogar : categoriasPersonales;
+  const todas = ambito === "hogar" ? todasHogar : todasPersonales;
+
+  // categoría a mano: sugerencias entre las existentes del ámbito
+  const textoNorm = categoriaTexto.trim().toLowerCase();
+  const sugerencias = textoNorm
+    ? todas.filter((c) => c.nombre.toLowerCase().includes(textoNorm)).slice(0, 4)
+    : [];
+  const hayExacta = todas.some((c) => c.nombre.toLowerCase() === textoNorm);
+  // hay categoría elegida (tile) o escrita a mano
+  const hayCategoria = categoriaId !== null || textoNorm !== "";
 
   // updates funcionales: taps consecutivos en el mismo tick no se pisan
   function tocarDigito(digito: string) {
@@ -90,6 +110,7 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
   function elegirAmbito(a: Ambito) {
     setAmbito(a);
     setCategoriaId(null); // la categoría pertenece al ámbito
+    setCategoriaTexto("");
     window.localStorage.setItem(CLAVE_AMBITO, a);
   }
 
@@ -99,8 +120,20 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
     window.localStorage.setItem(CLAVE_MEDIO, m.id);
   }
 
+  // elegir un tile o una sugerencia y escribir a mano son mutuamente exclusivos
   function alternarCategoria(id: string) {
     setCategoriaId(categoriaId === id ? null : id);
+    setCategoriaTexto("");
+  }
+
+  function escribirCategoria(v: string) {
+    setCategoriaTexto(v);
+    if (v.trim() !== "") setCategoriaId(null);
+  }
+
+  function elegirSugerencia(c: CategoriaSimple) {
+    setCategoriaId(c.id);
+    setCategoriaTexto("");
   }
 
   function guardar() {
@@ -112,8 +145,10 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
         medioTipo: medio.tipo,
         medioId: medio.id,
         categoriaId,
+        categoriaNombre: categoriaId ? undefined : categoriaTexto.trim() || undefined,
         ambito,
         cuotas: medio.tipo === "tarjeta" ? cuotas : 1,
+        nota: nota.trim() || undefined,
       });
       if (resultado.ok) {
         router.push("/movimientos");
@@ -243,10 +278,11 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
         </div>
       )}
 
-      {/* Picker de categorías recientes del ámbito activo (§3.12) */}
-      {categorias.length > 0 && (
-        <section className="mt-5">
-          <p className="text-[12px] text-tinta-secundaria">¿En qué lo gastaste? · opcional</p>
+      {/* Categoría (§3.12): grilla de recientes + escribir a mano + comentario */}
+      <section className="mt-5">
+        <p className="text-[12px] text-tinta-secundaria">¿En qué lo gastaste? · opcional</p>
+
+        {categorias.length > 0 && (
           <div className="mt-2 grid grid-cols-4 gap-[7px]">
             {categorias.map((c) => {
               const seleccionada = c.id === categoriaId;
@@ -274,8 +310,44 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
               );
             })}
           </div>
-        </section>
-      )}
+        )}
+
+        {/* escribir la categoría a mano: busca entre las tuyas o crea una nueva */}
+        <input
+          type="text"
+          value={categoriaTexto}
+          onChange={(e) => escribirCategoria(e.target.value)}
+          maxLength={40}
+          placeholder="Otra categoría (escribila)"
+          aria-label="Escribir otra categoría"
+          className="mt-2 h-11 w-full rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
+        />
+        {categoriaTexto.trim() !== "" && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {sugerencias.map((c) => (
+              <Chip key={c.id} escala="mini" onClick={() => elegirSugerencia(c)}>
+                {c.nombre}
+              </Chip>
+            ))}
+            {!hayExacta && (
+              <span className="self-center text-[11.5px] text-tinta-secundaria">
+                Se crea la categoría «{categoriaTexto.trim()}»
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* comentario libre → nota del movimiento */}
+        <input
+          type="text"
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+          maxLength={200}
+          placeholder="Comentario (opcional)"
+          aria-label="Comentario"
+          className="mt-3 h-11 w-full rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
+        />
+      </section>
 
       {/* Teclado + CTA en flujo (no absolute, §3.15), pegados abajo */}
       <div className="mt-auto pt-5">
@@ -286,7 +358,7 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
         )}
         {/* una compra en cuotas SIN categoría quedaría fuera de la bandeja y del
             historial categorizable: se exige elegir categoría cuando hay cuotas */}
-        {cuotas > 1 && !categoriaId && (
+        {cuotas > 1 && !hayCategoria && (
           <p className="mb-2 text-center text-[11.5px] text-tinta-secundaria">
             Elegí una categoría para guardar una compra en cuotas.
           </p>
@@ -294,10 +366,10 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
         <TecladoNumerico onDigito={tocarDigito} onComa={tocarComa} onBorrar={tocarBorrar} />
         <BotonPrimario
           className="mt-3 mb-[max(26px,env(safe-area-inset-bottom))]"
-          disabled={centavos <= 0 || !medio || pendiente || (cuotas > 1 && !categoriaId)}
+          disabled={centavos <= 0 || !medio || pendiente || (cuotas > 1 && !hayCategoria)}
           onClick={guardar}
         >
-          {pendiente ? "Guardando…" : categoriaId ? "Listo" : "Guardar sin categoría"}
+          {pendiente ? "Guardando…" : hayCategoria ? "Listo" : "Guardar sin categoría"}
         </BotonPrimario>
       </div>
     </div>
