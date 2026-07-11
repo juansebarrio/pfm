@@ -73,6 +73,26 @@ async function consumosPorCiclo(
   return mapa;
 }
 
+/** Suma de pagos de resumen (pago_resumen) aplicados a cada ciclo. */
+async function pagosPorCiclo(
+  sesion: SesionHogar,
+  cicloIds: string[],
+): Promise<Map<string, number>> {
+  const mapa = new Map<string, number>();
+  if (cicloIds.length === 0) return mapa;
+  const { data } = await sesion.supabase
+    .from("movimientos")
+    .select("ciclo_id, importe_centavos")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("tipo", "pago_resumen")
+    .in("ciclo_id", cicloIds);
+  const filas = (data ?? []) as Array<{ ciclo_id: string; importe_centavos: number }>;
+  for (const m of filas) {
+    mapa.set(m.ciclo_id, (mapa.get(m.ciclo_id) ?? 0) + m.importe_centavos);
+  }
+  return mapa;
+}
+
 function fraseCierre(dias: number): string {
   if (dias === 0) return "cierra hoy";
   if (dias === 1) return "cierra mañana";
@@ -124,8 +144,10 @@ export async function avisosParaAtender(
       .map((v) => v.ciclo.id),
   ];
   const consumos = await consumosPorCiclo(sesion, [...new Set(idsConProyectado)]);
+  const pagos = await pagosPorCiclo(sesion, [...new Set(vencimientos.map((v) => v.ciclo.id))]);
   const proyectado = (c: Candidato) =>
     (consumos.get(c.ciclo.id) ?? 0) + c.tarjeta.impuestos_estimados_centavos;
+  const totalAPagar = (c: Candidato) => c.ciclo.total_real_centavos ?? proyectado(c);
 
   const avisos: Aviso[] = [];
 
@@ -142,6 +164,8 @@ export async function avisosParaAtender(
   }
 
   for (const v of vencimientos) {
+    // si ya se pagó (total o más), el resumen dejó de estar pendiente: sin aviso
+    if ((pagos.get(v.ciclo.id) ?? 0) >= totalAPagar(v)) continue;
     const total = v.ciclo.total_real_centavos;
     avisos.push({
       id: `vencimiento-${v.ciclo.id}`,

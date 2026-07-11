@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
-import { asignarCiclo } from "@/lib/dominio/ciclos";
+import { asegurarCicloParaFecha } from "@/lib/datos/ciclos-servidor";
 import { generarCuotas } from "@/lib/dominio/cuotas";
 import { hoyBA } from "@/lib/dominio/fechas";
 
@@ -19,19 +19,9 @@ const esquemaGasto = z.object({
 
 export type ResultadoAccion = { ok: true } | { ok: false; error: string };
 
-async function cicloParaFecha(
-  sesion: Awaited<ReturnType<typeof obtenerSesionHogar>>,
-  tarjetaId: string,
-  fecha: string,
-): Promise<string | null> {
-  const { data: ciclos } = await sesion.supabase
-    .from("ciclos_tarjeta")
-    .select("id, fecha_cierre")
-    .eq("tarjeta_id", tarjetaId);
-  return asignarCiclo(
-    fecha,
-    (ciclos ?? []).map((c) => ({ id: c.id, fechaCierre: c.fecha_cierre })),
-  );
+/** La fecha con la que se asigna el ciclo nunca es anterior a la compra real. */
+function fechaParaCiclo(fechaDevengado: string, fechaCompra: string): string {
+  return fechaDevengado > fechaCompra ? fechaDevengado : fechaCompra;
 }
 
 /** Alta rápida (03). El gasto aparece al instante: optimistic UI del lado cliente. */
@@ -60,6 +50,11 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
     if (datos.medioTipo !== "tarjeta") {
       return { ok: false, error: "Las cuotas son solo con tarjeta" };
     }
+    // sin categoría, las cuotas hijas quedarían fuera de la bandeja (se filtra
+    // por compra_id) y del historial categorizable: no habría cómo asignarlas
+    if (!datos.categoriaId) {
+      return { ok: false, error: "Elegí una categoría para una compra en cuotas" };
+    }
     const { data: compra, error: errCompra } = await sesion.supabase
       .from("compras_en_cuotas")
       .insert({
@@ -78,6 +73,8 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
 
     const hijos = [];
     for (const c of generarCuotas(datos.importeCentavos, datos.cuotas, hoy)) {
+      // la cuota devenga el día 1, pero para el ciclo de tarjeta manda la fecha
+      // real de compra: así la cuota 1 no cae en un resumen que cerró antes
       hijos.push({
         hogar_id: sesion.hogarId,
         user_id: sesion.userId,
@@ -86,7 +83,11 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
         importe_centavos: c.importeCentavos,
         fecha: c.fecha,
         tarjeta_id: datos.medioId,
-        ciclo_id: await cicloParaFecha(sesion, datos.medioId, c.fecha),
+        ciclo_id: await asegurarCicloParaFecha(
+          sesion,
+          datos.medioId,
+          fechaParaCiclo(c.fecha, hoy),
+        ),
         categoria_id: datos.categoriaId,
         visibilidad,
         compra_id: compra.id,
@@ -107,7 +108,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
       tarjeta_id: datos.medioTipo === "tarjeta" ? datos.medioId : null,
       ciclo_id:
         datos.medioTipo === "tarjeta"
-          ? await cicloParaFecha(sesion, datos.medioId, hoy)
+          ? await asegurarCicloParaFecha(sesion, datos.medioId, hoy)
           : null,
       categoria_id: datos.categoriaId,
       visibilidad,
@@ -175,6 +176,10 @@ export async function confirmarRecurrente(entrada: unknown): Promise<ResultadoAc
     fecha,
     cuenta_id: recurrente.cuenta_id,
     tarjeta_id: recurrente.tarjeta_id,
+    // un recurrente de tarjeta también debe caer en su ciclo
+    ciclo_id: recurrente.tarjeta_id
+      ? await asegurarCicloParaFecha(sesion, recurrente.tarjeta_id, fecha)
+      : null,
     categoria_id: recurrente.categoria_id,
     visibilidad: recurrente.visibilidad,
   });

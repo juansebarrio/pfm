@@ -23,7 +23,7 @@ export default async function Cuentas() {
       .order("creado_el", { ascending: true }),
     sesion.supabase
       .from("tarjetas")
-      .select("id, nombre, banco, red, ultimos4, visibilidad, activa")
+      .select("id, nombre, banco, red, ultimos4, visibilidad, activa, dia_cierre, ciclos_tarjeta(id)")
       .eq("hogar_id", sesion.hogarId)
       .order("creado_el", { ascending: true }),
   ]);
@@ -48,6 +48,8 @@ export default async function Cuentas() {
       ultimos4: t.ultimos4,
       visibilidad: t.visibilidad,
       activa: t.activa,
+      diaCierre: t.dia_cierre,
+      tieneCiclos: (t.ciclos_tarjeta as unknown as unknown[] | null)?.length ? true : false,
     })),
   );
 

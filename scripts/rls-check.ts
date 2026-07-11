@@ -183,6 +183,19 @@ async function main() {
   });
   esperar(invBeto !== null, "Beto (miembro, no admin) no puede invitar al hogar");
 
+  // el miembro no puede auto-ascenderse a administrador (trigger de rol)
+  const { error: ascensoBeto } = await beto.from("miembros_hogar")
+    .update({ rol: "administrador" })
+    .eq("user_id", BETO)
+    .eq("hogar_id", norte!.id);
+  esperar(ascensoBeto !== null, "Beto no puede auto-ascenderse a administrador");
+  // pero sí puede editar su propio nombre (rol intacto)
+  const { error: nombreBeto } = await beto.from("miembros_hogar")
+    .update({ nombre: "Betito" })
+    .eq("user_id", BETO)
+    .eq("hogar_id", norte!.id);
+  esperar(nombreBeto === null, "Beto sí puede editar su propio nombre");
+
   await limpiar();
 
   if (fallas > 0) {

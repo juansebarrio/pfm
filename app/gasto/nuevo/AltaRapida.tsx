@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, CreditCard, X } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, CreditCard, Wallet, X } from "lucide-react";
 import { crearGasto } from "@/app/acciones/movimientos";
 import { Badge } from "@/components/sistema/Badge";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
 import { Chip } from "@/components/sistema/Chip";
+import { EstadoVacio } from "@/components/sistema/EstadoVacio";
 import { IconoCategoria } from "@/components/sistema/IconoCategoria";
 import { Importe } from "@/components/sistema/Importe";
 import { TecladoNumerico } from "@/components/sistema/TecladoNumerico";
@@ -121,21 +123,49 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
     });
   }
 
+  const cabecera = (
+    <header className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => router.back()}
+        aria-label="Cerrar"
+        className="hit-44 text-tinta"
+      >
+        <X className="size-[22px]" strokeWidth={2} aria-hidden />
+      </button>
+      <h1 className="flex-1 text-[16px] font-semibold">Nuevo gasto</h1>
+      {medios.length > 0 && <SegmentedMini valor={ambito} onCambio={elegirAmbito} />}
+    </header>
+  );
+
+  // sin ningún medio de pago (usuario nuevo, o todo desactivado) no se puede
+  // cargar un gasto: en vez de un callejón mudo, se explica y se ofrece salida
+  if (medios.length === 0) {
+    return (
+      <div className="flex min-h-dvh flex-col px-5 pt-14">
+        {cabecera}
+        <div className="flex flex-1 flex-col justify-center">
+          <EstadoVacio
+            Icono={Wallet}
+            titulo="Primero, una cuenta o tarjeta"
+            cuerpo="Para cargar gastos necesitás al menos un medio de pago. Creá una cuenta o tarjeta y volvé."
+            cta={
+              <Link
+                href="/cuentas"
+                className="inline-block rounded-cta bg-verde px-[30px] py-3.5 text-[14.5px] font-semibold text-papel"
+              >
+                Ir a cuentas y tarjetas
+              </Link>
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-dvh flex-col px-5 pt-14">
-      {/* Header modal compacto (§3.17.4): X + título 16px + segmented mini */}
-      <header className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Cerrar"
-          className="hit-44 text-tinta"
-        >
-          <X className="size-[22px]" strokeWidth={2} aria-hidden />
-        </button>
-        <h1 className="flex-1 text-[16px] font-semibold">Nuevo gasto</h1>
-        <SegmentedMini valor={ambito} onCambio={elegirAmbito} />
-      </header>
+      {cabecera}
 
       {/* Monto protagonista: 52px, la tipografía más grande del sistema */}
       <div className="mt-7 text-center" aria-live="polite">
@@ -254,10 +284,17 @@ export function AltaRapida({ medios, categoriasHogar, categoriasPersonales }: Pr
             {error}
           </p>
         )}
+        {/* una compra en cuotas SIN categoría quedaría fuera de la bandeja y del
+            historial categorizable: se exige elegir categoría cuando hay cuotas */}
+        {cuotas > 1 && !categoriaId && (
+          <p className="mb-2 text-center text-[11.5px] text-tinta-secundaria">
+            Elegí una categoría para guardar una compra en cuotas.
+          </p>
+        )}
         <TecladoNumerico onDigito={tocarDigito} onComa={tocarComa} onBorrar={tocarBorrar} />
         <BotonPrimario
           className="mt-3 mb-[max(26px,env(safe-area-inset-bottom))]"
-          disabled={centavos <= 0 || !medio || pendiente}
+          disabled={centavos <= 0 || !medio || pendiente || (cuotas > 1 && !categoriaId)}
           onClick={guardar}
         >
           {pendiente ? "Guardando…" : categoriaId ? "Listo" : "Guardar sin categoría"}

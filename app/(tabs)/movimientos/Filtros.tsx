@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { Chip } from "@/components/sistema/Chip";
 import { HojaInferior } from "@/components/sistema/HojaInferior";
@@ -41,6 +41,13 @@ export function Filtros({
   const parametros = useSearchParams();
   const [texto, setTexto] = useState(q);
   const [hoja, setHoja] = useState<HojaAbierta>(null);
+
+  // resincroniza el input cuando la búsqueda cambia desde afuera (back/forward,
+  // tocar la tab Movimientos que vuelve a /movimientos sin q): sin esto el input
+  // quedaba mostrando el término viejo aunque la lista ya no estuviera filtrada
+  useEffect(() => {
+    setTexto(q);
+  }, [q]);
 
   function actualizar(cambios: Record<string, string | null>) {
     const siguientes = new URLSearchParams(parametros.toString());

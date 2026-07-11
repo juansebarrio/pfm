@@ -38,7 +38,9 @@ export function CardPartida(p: DatosPartida) {
   const disponible = p.asignadoCentavos + (p.rolloverCentavos ?? 0);
   const queda = disponible - p.gastadoCentavos;
   const pagada = p.fija && p.gastadoCentavos >= p.asignadoCentavos && p.estado === "ok";
-  const progreso = disponible > 0 ? p.gastadoCentavos / p.asignadoCentavos : 0;
+  // guarda sobre el MISMO denominador que la división: una partida rollover con
+  // asignado $0 y arrastre > 0 tenía disponible > 0 pero asignado 0 → Infinity
+  const progreso = p.asignadoCentavos > 0 ? p.gastadoCentavos / p.asignadoCentavos : 0;
   const tieneAviso = Boolean(p.avisoRecurrente);
   // importe ámbar: atención + gastado ≥ 75 % del disponible (DESIGN_NOTES.md §1.8)
   const importeAmbar = p.estado === "atencion" && p.gastadoCentavos >= disponible * 0.75;

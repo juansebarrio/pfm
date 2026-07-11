@@ -190,7 +190,9 @@ export async function cuotasDelHogar(sesion: SesionHogar): Promise<{
     activas.push({
       id: c.id,
       descripcion: c.descripcion,
-      cuotaMensualCentavos: hijasDeCompra[0].importe_centavos,
+      // la cuota base es el importe recurrente ("$ X/mes"); la PRIMERA carga el
+      // resto del redondeo, así que se usa la última (o cualquiera salvo la 1.ª)
+      cuotaMensualCentavos: ultima.importe_centavos,
       nCuotas: c.n_cuotas,
       cuotaActual: delMes?.n_cuota ?? 0,
       tarjetaEtiqueta: `${red} •• ${tarjeta?.ultimos4 ?? ""}`,

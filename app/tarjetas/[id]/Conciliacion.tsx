@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import { ChevronRight, RefreshCw } from "lucide-react";
 import { conciliarResumen } from "@/app/acciones/tarjetas";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
 import { HojaInferior } from "@/components/sistema/HojaInferior";
@@ -51,6 +51,8 @@ export function Conciliacion({ cicloId, proyectadoCentavos }: Props) {
 
   return (
     <>
+      {/* Mejora aplicada (propuesta §3.3, ok de Juanse): la acción clave del
+          diferencial argentino con affordance clara — chevron de fila accionable */}
       <button
         type="button"
         onClick={abrir}
@@ -58,7 +60,8 @@ export function Conciliacion({ cicloId, proyectadoCentavos }: Props) {
       >
         <span className="flex items-center gap-2">
           <RefreshCw className="size-[15px] shrink-0 text-verde" strokeWidth={1.5} aria-hidden />
-          <span className="text-[13px] font-medium text-verde">Conciliar resumen</span>
+          <span className="flex-1 text-[13px] font-medium text-verde">Conciliar resumen</span>
+          <ChevronRight className="size-4 shrink-0 text-tinta-muda" strokeWidth={1.5} aria-hidden />
         </span>
         <span className="mt-1 block text-[11px] text-tinta-secundaria">
           Cuando llegue el real, cargá el total y vemos la diferencia.

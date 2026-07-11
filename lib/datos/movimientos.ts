@@ -1,5 +1,5 @@
 import "server-only";
-import { formatearDiaCorto } from "@/lib/dominio/fechas";
+import { formatearDiaCorto, hoyBA } from "@/lib/dominio/fechas";
 import type { SesionHogar } from "./sesion";
 
 export type MovimientoLista = {
@@ -193,9 +193,13 @@ export async function mediosDePago(sesion: SesionHogar): Promise<MedioDePago[]> 
     etiqueta: c.nombre === "Mercado Pago" ? "MP" : c.nombre,
   }));
 
+  const hoy = hoyBA();
   for (const t of tarjetas ?? []) {
+    // el ciclo que muestra la alta rápida tiene que ser el MISMO al que caerá
+    // el gasto de hoy: el primer cierre >= hoy (espeja asignarCiclo), no el
+    // primer "abierto" a secas (que podría ser uno cuyo cierre ya pasó)
     const abierto = (t.ciclos_tarjeta ?? [])
-      .filter((c: { estado: string }) => c.estado === "abierto")
+      .filter((c: { fecha_cierre: string }) => c.fecha_cierre >= hoy)
       .sort((a: { fecha_cierre: string }, b: { fecha_cierre: string }) =>
         a.fecha_cierre.localeCompare(b.fecha_cierre),
       )[0];

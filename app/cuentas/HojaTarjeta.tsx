@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard } from "lucide-react";
-import { desactivarMedio, guardarTarjeta } from "@/app/acciones/cuentas";
+import { desactivarMedio, guardarTarjeta, reactivarMedio } from "@/app/acciones/cuentas";
 import { Badge } from "@/components/sistema/Badge";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
@@ -24,6 +24,8 @@ export type TarjetaFila = {
   ultimos4: string;
   visibilidad: "personal" | "compartido";
   activa: boolean;
+  diaCierre: number | null;
+  tieneCiclos: boolean;
 };
 
 const REDES: Array<{ valor: RedTarjeta; etiqueta: string }> = [
@@ -139,9 +141,18 @@ function FormTarjeta({
   const [visibilidad, setVisibilidad] = useState<"personal" | "compartido">(
     tarjeta?.visibilidad ?? "compartido",
   );
+  const [diaCierre, setDiaCierre] = useState(
+    tarjeta?.diaCierre != null ? String(tarjeta.diaCierre) : "",
+  );
   const [error, setError] = useState<string | null>(null);
 
-  const valida = nombre.trim() !== "" && banco.trim() !== "" && ultimos4.length === 4;
+  // el día de cierre solo se pide al dar de alta o si la tarjeta todavía no
+  // tiene ningún ciclo (sin él no hay de dónde generar los resúmenes)
+  const pideDiaCierre = !tarjeta || !tarjeta.tieneCiclos;
+  const diaCierreNum = diaCierre === "" ? null : Number(diaCierre);
+  const diaValido = diaCierreNum === null ? !pideDiaCierre : diaCierreNum >= 1 && diaCierreNum <= 28;
+  const valida =
+    nombre.trim() !== "" && banco.trim() !== "" && ultimos4.length === 4 && diaValido;
 
   function enviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -155,6 +166,7 @@ function FormTarjeta({
         red,
         ultimos4,
         visibilidad,
+        diaCierre: diaCierreNum,
       });
       if (!r.ok) {
         setError(r.error);
@@ -165,11 +177,12 @@ function FormTarjeta({
     });
   }
 
-  function desactivar() {
+  function alternarActiva() {
     if (!tarjeta || pendiente) return;
     setError(null);
     iniciarTransicion(async () => {
-      const r = await desactivarMedio({ id: tarjeta.id, tabla: "tarjetas" });
+      const accion = tarjeta.activa ? desactivarMedio : reactivarMedio;
+      const r = await accion({ id: tarjeta.id, tabla: "tarjetas" });
       if (!r.ok) {
         setError(r.error);
         return;
@@ -235,6 +248,26 @@ function FormTarjeta({
         />
       </label>
 
+      {pideDiaCierre && (
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[12px] font-medium text-tinta-secundaria">
+            Día de cierre del resumen
+          </span>
+          <input
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={2}
+            value={diaCierre}
+            onChange={(e) => setDiaCierre(e.target.value.replace(/\D/g, "").slice(0, 2))}
+            placeholder="28"
+            className={`cifra ${claseInput}`}
+          />
+          <span className="text-[11px] text-tinta-secundaria">
+            Del 1 al 28. Con esto armamos los ciclos; después podés ajustar cada fecha.
+          </span>
+        </label>
+      )}
+
       <fieldset>
         <legend className="text-[12px] font-medium text-tinta-secundaria">Visibilidad</legend>
         <div className="mt-1.5 flex gap-2">
@@ -270,14 +303,18 @@ function FormTarjeta({
         <div className="text-center">
           <button
             type="button"
-            onClick={desactivar}
+            onClick={alternarActiva}
             disabled={pendiente}
-            className="hit-44 text-[13px] font-medium text-rojo disabled:opacity-60"
+            className={`hit-44 text-[13px] font-medium disabled:opacity-60 ${
+              tarjeta.activa ? "text-rojo" : "text-verde"
+            }`}
           >
-            Desactivar
+            {tarjeta.activa ? "Desactivar" : "Reactivar"}
           </button>
           <p className="mt-1 text-[11px] text-tinta-secundaria">
-            Sin borrado: deja de aparecer para elegir, el historial queda.
+            {tarjeta.activa
+              ? "Sin borrado: deja de aparecer para elegir, el historial queda."
+              : "Vuelve a aparecer para elegir en toda la app."}
           </p>
         </div>
       )}

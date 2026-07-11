@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Banknote, Landmark, TrendingUp, Wallet } from "lucide-react";
-import { desactivarMedio, guardarCuenta } from "@/app/acciones/cuentas";
+import { desactivarMedio, guardarCuenta, reactivarMedio } from "@/app/acciones/cuentas";
 import { Badge } from "@/components/sistema/Badge";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
@@ -174,11 +174,12 @@ function FormCuenta({
     });
   }
 
-  function desactivar() {
+  function alternarActiva() {
     if (!cuenta || pendiente) return;
     setError(null);
     iniciarTransicion(async () => {
-      const r = await desactivarMedio({ id: cuenta.id, tabla: "cuentas" });
+      const accion = cuenta.activa ? desactivarMedio : reactivarMedio;
+      const r = await accion({ id: cuenta.id, tabla: "cuentas" });
       if (!r.ok) {
         setError(r.error);
         return;
@@ -265,14 +266,18 @@ function FormCuenta({
         <div className="text-center">
           <button
             type="button"
-            onClick={desactivar}
+            onClick={alternarActiva}
             disabled={pendiente}
-            className="hit-44 text-[13px] font-medium text-rojo disabled:opacity-60"
+            className={`hit-44 text-[13px] font-medium disabled:opacity-60 ${
+              cuenta.activa ? "text-rojo" : "text-verde"
+            }`}
           >
-            Desactivar
+            {cuenta.activa ? "Desactivar" : "Reactivar"}
           </button>
           <p className="mt-1 text-[11px] text-tinta-secundaria">
-            Sin borrado: deja de aparecer para elegir, el historial queda.
+            {cuenta.activa
+              ? "Sin borrado: deja de aparecer para elegir, el historial queda."
+              : "Vuelve a aparecer para elegir en toda la app."}
           </p>
         </div>
       )}

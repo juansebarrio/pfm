@@ -63,7 +63,13 @@ function textoFrescura(t: {
   instrumento: string;
   moneda: string;
   fechaValuacion: string;
+  hayTc: boolean;
 }, hoy: string): { frescura: string; vieja: boolean } {
+  // una tenencia en USD sin TC cargado no se puede valuar: se marca en ámbar
+  // ("sin TC cargado") en vez de mostrar $ 0 "al TC de hoy" como si fuera real
+  if (t.moneda === "USD" && !t.hayTc) {
+    return { frescura: "sin TC cargado", vieja: true };
+  }
   const dias = diasEntre(t.fechaValuacion, hoy);
   if (dias > 30) return { frescura: `valuación de hace ${dias} días`, vieja: true };
   if (CONVERTIBLES_AL_TC.has(t.instrumento)) return { frescura: "al TC de hoy", vieja: false };
@@ -110,7 +116,12 @@ export async function obtenerPatrimonio(
       fechaValuacion: t.fecha_valuacion,
       valorArsCentavos: valorArs,
       ...textoFrescura(
-        { instrumento: t.instrumento, moneda: t.moneda, fechaValuacion: t.fecha_valuacion },
+        {
+          instrumento: t.instrumento,
+          moneda: t.moneda,
+          fechaValuacion: t.fecha_valuacion,
+          hayTc: tcActivo !== null,
+        },
         hoy,
       ),
     };

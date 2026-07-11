@@ -2,10 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { obtenerSesionHogar, type SesionHogar } from "@/lib/datos/sesion";
 import { proponerCicloSiguiente } from "@/lib/dominio/ciclos";
 import { hoyBA } from "@/lib/dominio/fechas";
 import type { ResultadoAccion } from "./movimientos";
+
+/**
+ * Trae un ciclo validando que su tarjeta pertenezca al hogar ACTIVO de la
+ * sesión. La RLS ya impide ver ciclos de hogares ajenos, pero un usuario
+ * miembro de varios hogares podría, con el hogar A activo, operar sobre un
+ * ciclo del hogar B (también suyo) y generar un movimiento inconsistente.
+ */
+async function cicloDelHogarActivo(sesion: SesionHogar, cicloId: string) {
+  const { data } = await sesion.supabase
+    .from("ciclos_tarjeta")
+    .select("id, tarjeta_id, fecha_cierre, estado, total_real_centavos, tarjetas!inner(hogar_id, nombre)")
+    .eq("id", cicloId)
+    .eq("tarjetas.hogar_id", sesion.hogarId)
+    .maybeSingle();
+  return data;
+}
 
 const esquemaConfirmarFecha = z.object({
   cicloId: z.uuid(),
@@ -29,14 +45,8 @@ export async function confirmarFechasCiclo(entrada: unknown): Promise<ResultadoA
   }
 
   const sesion = await obtenerSesionHogar();
-  const { data: ciclo } = await sesion.supabase
-    .from("ciclos_tarjeta")
-    .select("id, tarjeta_id, fecha_cierre, tarjetas(hogar_id)")
-    .eq("id", datos.cicloId)
-    .single();
+  const ciclo = await cicloDelHogarActivo(sesion, datos.cicloId);
   if (!ciclo) return { ok: false, error: "Ciclo inexistente" };
-
-  const cierreCambio = ciclo.fecha_cierre !== datos.fechaCierre;
 
   const { error: errUpdate } = await sesion.supabase
     .from("ciclos_tarjeta")
@@ -65,13 +75,14 @@ export async function confirmarFechasCiclo(entrada: unknown): Promise<ResultadoA
     });
   }
 
-  if (cierreCambio) {
-    const { error: errReasignar } = await sesion.supabase.rpc(
-      "reasignar_consumos_tarjeta",
-      { tarjeta: ciclo.tarjeta_id },
-    );
-    if (errReasignar) return { ok: false, error: "No pudimos reasignar los consumos" };
-  }
+  // Reasignar SIEMPRE: la función es idempotente (solo cambia filas cuyo ciclo
+  // calculado difiere) y así rescata los consumos/cuotas que estaban con
+  // ciclo_id null porque su fecha caía después del último cierre conocido.
+  const { error: errReasignar } = await sesion.supabase.rpc(
+    "reasignar_consumos_tarjeta",
+    { tarjeta: ciclo.tarjeta_id },
+  );
+  if (errReasignar) return { ok: false, error: "No pudimos reasignar los consumos" };
 
   revalidatePath(`/tarjetas/${ciclo.tarjeta_id}`);
   revalidatePath("/resumen");
@@ -93,17 +104,19 @@ export async function conciliarResumen(entrada: unknown): Promise<ResultadoAccio
   if (!parseo.success) return { ok: false, error: "Total inválido" };
 
   const sesion = await obtenerSesionHogar();
-  const { data, error } = await sesion.supabase
+  const ciclo = await cicloDelHogarActivo(sesion, parseo.data.cicloId);
+  if (!ciclo) return { ok: false, error: "Ciclo inexistente" };
+
+  const { error } = await sesion.supabase
     .from("ciclos_tarjeta")
     .update({
       total_real_centavos: parseo.data.totalRealCentavos,
       estado: "conciliado",
     })
-    .eq("id", parseo.data.cicloId)
-    .select("tarjeta_id");
-  if (error || !data?.length) return { ok: false, error: "No pudimos conciliar" };
+    .eq("id", parseo.data.cicloId);
+  if (error) return { ok: false, error: "No pudimos conciliar" };
 
-  revalidatePath(`/tarjetas/${data[0].tarjeta_id}`);
+  revalidatePath(`/tarjetas/${ciclo.tarjeta_id}`);
   return { ok: true };
 }
 
@@ -123,12 +136,17 @@ export async function pagarResumen(entrada: unknown): Promise<ResultadoAccion> {
   if (!parseo.success) return { ok: false, error: "Datos inválidos" };
 
   const sesion = await obtenerSesionHogar();
-  const { data: ciclo } = await sesion.supabase
-    .from("ciclos_tarjeta")
-    .select("id, tarjeta_id, fecha_vencimiento, tarjetas(nombre)")
-    .eq("id", parseo.data.cicloId)
-    .single();
+  const ciclo = await cicloDelHogarActivo(sesion, parseo.data.cicloId);
   if (!ciclo) return { ok: false, error: "Ciclo inexistente" };
+
+  // la cuenta de pago también tiene que ser del hogar activo
+  const { data: cuenta } = await sesion.supabase
+    .from("cuentas")
+    .select("id")
+    .eq("id", parseo.data.cuentaId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!cuenta) return { ok: false, error: "Cuenta inexistente" };
 
   const nombreTarjeta =
     (ciclo.tarjetas as unknown as { nombre: string } | null)?.nombre ?? "tarjeta";

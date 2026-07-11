@@ -81,14 +81,19 @@ export async function reenviarInvitacion(entrada: unknown): Promise<ResultadoInv
 
   const sesion = await obtenerSesionHogar();
   const vence = new Date(Date.now() + DIAS_VIGENCIA * 86400000).toISOString();
+  // solo se reenvía lo que sigue pendiente: reenviar no debe resucitar una
+  // invitación revocada ni revalidar el token de una ya aceptada
   const { data, error } = await sesion.supabase
     .from("invitaciones")
-    .update({ vence_el: vence, estado: "pendiente" })
+    .update({ vence_el: vence })
     .eq("id", parseo.data.invitacionId)
     .eq("hogar_id", sesion.hogarId)
+    .eq("estado", "pendiente")
     .select("email, token")
     .single();
-  if (error || !data) return { ok: false, error: "No pudimos reenviar." };
+  if (error || !data) {
+    return { ok: false, error: "Esa invitación ya no está pendiente." };
+  }
 
   const { data: hogar } = await sesion.supabase
     .from("hogares")

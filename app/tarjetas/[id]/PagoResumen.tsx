@@ -32,7 +32,9 @@ export function PagoResumen({ cicloId, totalCentavos, cuentas }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const pesosTotal = String(Math.round(totalCentavos / 100));
-  const centavos = pesos === "" ? 0 : Number(pesos) * 100;
+  // en modo "total" se paga el total EXACTO (con sus centavos sub-peso, que el
+  // input de pesos enteros no puede representar); "otro" usa lo tecleado
+  const centavos = modo === "total" ? totalCentavos : pesos === "" ? 0 : Number(pesos) * 100;
 
   function abrir() {
     setModo("total");

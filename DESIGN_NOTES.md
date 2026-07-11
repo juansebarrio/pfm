@@ -129,6 +129,29 @@ de 01c ("Empezar con julio") arma el mes desde esas categorías en $ 0.
   atenuadas al final con badge "inactiva". Reactivar queda como extensión
   pendiente si hace falta.
 
+### 1.15 Ronda de fixes post-revisión adversarial (18 bugs reales)
+Una revisión multi-agente (4 lentes + verificación escéptica) confirmó 18 bugs
+reales; todos arreglados. Los de fondo:
+- **Seguridad**: trigger que impide auto-ascenso a administrador (RLS
+  `miembros_update` no tenía WITH CHECK sobre el rol); las acciones de tarjeta
+  validan que la tarjeta y la cuenta sean del hogar activo; reenviar invitación
+  solo opera sobre las pendientes (no resucita revocadas/aceptadas).
+- **Ciclos de tarjeta** (el corazón argentino): se agregó generación automática
+  de ciclos. Una tarjeta nueva se da de alta con "día de cierre" y arranca con
+  su primer ciclo estimado; `asegurarCicloParaFecha()` genera los ciclos que
+  falten hacia adelante para que ningún consumo ni cuota quede huérfano;
+  `confirmarFechasCiclo` reasigna SIEMPRE (era solo al corregir la fecha); la
+  cuota 1 se asigna con piso en la fecha real de compra (no caía en un resumen
+  ya cerrado); la alta rápida muestra el mismo ciclo al que caerá el gasto; los
+  recurrentes de tarjeta también resuelven su ciclo.
+- **Plata/UI**: barra de partida no divide por cero con asignado $0 + rollover;
+  "$ X/mes" de cuotas usa la cuota base (no la primera que carga el resto); el
+  pago "Total" registra los centavos exactos; el aviso "Vence el resumen"
+  desaparece al pagarlo; una tenencia USD sin TC se marca "sin TC cargado" en
+  vez de $ 0; el buscador se resincroniza con la URL; una compra en cuotas exige
+  categoría (si no, quedaba inalcanzable); `/gasto/nuevo` sin medios ofrece
+  salida a /cuentas en vez de ser un callejón mudo.
+
 ## 2. Mejoras aplicadas directo (no cambian layout ni jerarquía)
 Detalle completo con mediciones en `DESIGN_AUDIT.md` §7.1. Estado: se aplican durante
 las tandas 1–8; esta lista se va tildando.
@@ -157,20 +180,30 @@ las tandas 1–8; esta lista se va tildando.
 - [x] **Sombra/opacidad dark documentadas**: dark sin sombras de card; opacidad de
   barra pagada unificada en .4.
 
-## 3. Propuestas que esperan el ok de Juanse (NO aplicadas)
-Detalle en `DESIGN_AUDIT.md` §7.2.
+## 3. Propuestas — resueltas con el ok delegado de Juanse ("hacé lo necesario")
+Detalle original en `DESIGN_AUDIT.md` §7.2. Estado final de cada una:
 
-1. Frame/fila con partida **excedida** en rojo `#B3402E` (hoy el estado no está
-   demostrado en ninguna pantalla).
-2. Frame dark adicional con chips y estados semánticos (ESTIMADA/ROLLOVER/bandeja) —
-   el dark de los chips hoy se decide por extrapolación.
-3. 06: convertir "Conciliar resumen" en fila accionable con affordance clara.
-4. 05: unificar el selector Hogar/Personal con el segmented del resto (hoy son chips
-   sueltos en la fila de filtros).
-5. Igualar metadata de movimientos entre 04 y 05 (`· cierra 28 jul`).
-6. Rotular el extremo derecho del timeline de ciclo (`6 ago`).
-7. Dibujar el estado "grilla inline abierta" de la bandeja (05b).
-8. Barra de partida con rollover: definir denominador ilustrado (hoy aplicamos §1.3).
+1. Partida **excedida** en rojo — **resuelta por la implementación**: `estadoPartida()`
+   y `CardPartida` ya renderizan el estado (barra roja, monto en rojo, "te pasaste
+   $ X"), validado en `/sistema` en claro y oscuro. No hacía falta tocar pantallas.
+2. Frame dark con chips y estados — **resuelta por la implementación**: `/sistema`
+   muestra todos los componentes en oscuro; las extrapolaciones pasaron AA
+   (Lighthouse accesibilidad 100).
+3. "Conciliar resumen" accionable — **APLICADA**: la fila lleva chevron de
+   affordance (única de las 8 que tocaba una pantalla del export).
+4. Segmented Hogar/Personal en 05 — **decidido no aplicar**: el export dibuja chips
+   en la fila de filtros a propósito; en lo visual gana el export.
+5. Metadata `· cierra` en 04 — **decidido no aplicar**: "corta a propósito" es la
+   spec explícita del Resumen; la condensación es intencional.
+6. Label `6 ago` en el timeline — **decidido no aplicar**: la fecha de vencimiento
+   ya vive en el bloque inferior, como dibuja el export; duplicarla agrega ruido.
+7. Grilla inline de bandeja — **resuelta por la implementación**: chips sugeridos +
+   "todas →" con grilla, verificada en navegador (Rappi → Delivery sin salir).
+8. Denominador del rollover — **resuelta por decisión §1.3**, que coincide con el
+   dibujo del export (barra al 75 %).
+
+Sigue pendiente de diseño (no de código): sumar un campo de comercio opcional al
+alta rápida (§1.9) — no se aplica porque cambia el flujo de la pantalla más usada.
 
 ## 4. Extrapolaciones de dark mode (pantalla 10 solo valida 01a)
 Los tokens dark de chips/estados no dibujados se derivan así y se validan en
