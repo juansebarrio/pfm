@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ArrowDownLeft, Inbox } from "lucide-react";
+import { ArrowDownLeft, Inbox, Info } from "lucide-react";
 import { categorizarMovimiento } from "@/app/acciones/movimientos";
 import { Chip } from "@/components/sistema/Chip";
 import { IconoCategoria } from "@/components/sistema/IconoCategoria";
@@ -42,6 +42,7 @@ export function Bandeja({ items, sugeridas, categorias }: Props) {
   const [grillaAbierta, setGrillaAbierta] = useState(false);
   const [ocultos, setOcultos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [infoAbierta, setInfoAbierta] = useState(false);
 
   const visibles = items.filter((i) => !ocultos.includes(i.id));
   if (visibles.length === 0) return null;
@@ -76,12 +77,42 @@ export function Bandeja({ items, sugeridas, categorias }: Props) {
       aria-label="Bandeja de entrada"
       className="rounded-card border border-borde-bandeja bg-superficie shadow-card"
     >
-      <header className="flex items-center gap-2 px-3.5 pt-3 pb-1.5">
+      <header className="relative flex items-center gap-2 px-3.5 pt-3 pb-1.5">
         <Inbox className="size-[15px] text-ambar" strokeWidth={1.5} aria-hidden />
         <h2 className="text-[13.5px] font-semibold text-tinta">Bandeja de entrada</h2>
+        <button
+          type="button"
+          onClick={() => setInfoAbierta((v) => !v)}
+          aria-label="Qué es la bandeja de entrada"
+          aria-expanded={infoAbierta}
+          className="hit-44 -m-1 p-1 text-tinta-terciaria"
+        >
+          <Info className="size-[14px]" strokeWidth={1.5} aria-hidden />
+        </button>
         <span className="cifra ml-auto flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-ambar px-1.5 text-[11px] font-semibold text-blanco">
           {visibles.length}
         </span>
+
+        {infoAbierta && (
+          <>
+            {/* backdrop invisible: un tap afuera cierra el tooltip (mobile) */}
+            <button
+              type="button"
+              aria-hidden
+              tabIndex={-1}
+              onClick={() => setInfoAbierta(false)}
+              className="fixed inset-0 z-10 cursor-default"
+            />
+            <div
+              role="tooltip"
+              className="absolute left-3.5 top-9 z-20 max-w-[250px] rounded-cta border border-borde bg-superficie p-2.5 text-[11.5px] leading-[1.5] text-tinta-secundaria shadow-card"
+            >
+              Acá se juntan los movimientos que todavía no tienen categoría (los que
+              cargás rápido o que llegan solos). Tocá uno, asignale una categoría y
+              pasa a tu historial.
+            </div>
+          </>
+        )}
       </header>
 
       <div className="divide-y divide-separador">

@@ -10,9 +10,6 @@ export function EncabezadoAuth({ subtitulo }: { subtitulo: string }) {
         <span className="text-[25px] font-semibold tracking-[-0.01em]">
           Fin de mes
         </span>
-        <span className="cifra rounded-tag border border-borde bg-superficie px-[5px] py-[2px] text-[9.5px] font-semibold tracking-[0.07em] text-tinta-secundaria">
-          NOMBRE PROVISORIO
-        </span>
       </div>
       <p className="text-[13.5px] leading-[1.55] text-tinta-secundaria">
         {subtitulo}
