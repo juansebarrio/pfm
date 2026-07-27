@@ -23,5 +23,8 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  // movil/ es el proyecto Expo: tiene su propio tsconfig, sus propios paths
+  // (@/* apunta a movil/src) y sus tipos de React Native. Se typechequea con
+  // `cd movil && npx tsc --noEmit`, no desde acá.
+  "exclude": ["node_modules", "movil"]
 }

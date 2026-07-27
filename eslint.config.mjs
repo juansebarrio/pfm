@@ -20,6 +20,7 @@ const eslintConfig = [
       "next-env.d.ts",
       "design/**", // export de Claude Design: referencia de lectura, no código propio
       "public/sw.js",
+      "movil/**", // proyecto Expo: tiene su propio lint (`cd movil && npm run lint`)
     ],
   },
 ];
