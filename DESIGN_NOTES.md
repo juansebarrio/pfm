@@ -251,6 +251,21 @@ Detalle original en `DESIGN_AUDIT.md` §7.2. Estado final de cada una:
 Sigue pendiente de diseño (no de código): sumar un campo de comercio opcional al
 alta rápida (§1.9) — no se aplica porque cambia el flujo de la pantalla más usada.
 
+### 1.20 Asistente financiero con IA (/asistente)
+Chat con la API de Anthropic (`@anthropic-ai/sdk`, modelo `claude-opus-5`,
+streaming, effort medium) que responde sobre las finanzas del hogar usando un
+contexto armado en el server con la sesión del usuario (RLS): presupuesto
+hogar+personal con partidas, avisos de "Para atender", últimos 15 movimientos
+y patrimonio (`lib/ia/contexto.ts`). Route handler `/api/asistente` (las
+server actions no streamean); prompt con bloque estable cacheado
+(`cache_control`) + contexto dinámico después; `fallbacks: "default"` por si
+un clasificador declina. Historial solo en memoria del cliente (nada se
+persiste). Entradas: ícono Sparkles en el header del resumen + card en
+/hogar, ambas gated por `ANTHROPIC_API_KEY` (server-only; sin la variable la
+feature no existe). Reglas del prompt: voseo, números exactos del contexto,
+sin asesoramiento de inversión específico (deriva a asesor CNV), texto plano.
+Disclaimer visible en la UI.
+
 ### 1.19 Google: login + sugerencias desde Gmail (opción A)
 Feature post-brief pedida por Juanse. Dos partes: "Continuar con Google"
 (login/registro) y una conexión a Gmail (scope `gmail.readonly`) que lee los

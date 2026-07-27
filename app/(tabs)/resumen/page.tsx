@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ChevronRight, CreditCard, Inbox, Mail, Zap, type LucideIcon } from "lucide-react";
+import { CalendarClock, ChevronRight, CreditCard, Inbox, Mail, Sparkles, Zap, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/sistema/Badge";
 import { BarraAvance } from "@/components/sistema/BarraAvance";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
@@ -55,13 +55,25 @@ export default async function Resumen() {
             {formatearDiaLargo(hoy)}
           </p>
         </div>
-        <Link
-          href="/hogar"
-          aria-label="Tu hogar"
-          className="hit-44 flex size-[34px] shrink-0 items-center justify-center rounded-full bg-tinta text-[14px] font-semibold text-papel"
-        >
-          {sesion.nombreMiembro.charAt(0).toUpperCase()}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2.5">
+          {/* asistente con IA — solo con ANTHROPIC_API_KEY configurada */}
+          {process.env.ANTHROPIC_API_KEY && (
+            <Link
+              href="/asistente"
+              aria-label="Asistente financiero"
+              className="hit-44 flex size-[34px] items-center justify-center rounded-full border border-borde bg-superficie text-verde"
+            >
+              <Sparkles className="size-[17px]" strokeWidth={1.5} aria-hidden />
+            </Link>
+          )}
+          <Link
+            href="/hogar"
+            aria-label="Tu hogar"
+            className="hit-44 flex size-[34px] items-center justify-center rounded-full bg-tinta text-[14px] font-semibold text-papel"
+          >
+            {sesion.nombreMiembro.charAt(0).toUpperCase()}
+          </Link>
+        </div>
       </header>
 
       {/* Card de disponible, tocable → /presupuesto */}

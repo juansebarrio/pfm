@@ -12,6 +12,7 @@
     "rls:check": "tsx --env-file=.env.local scripts/rls-check.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@date-fns/tz": "^1.5.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.2",
