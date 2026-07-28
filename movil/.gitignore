@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# copia generada del dominio compartido (la escribe metro.config.js)
+src/dominio/

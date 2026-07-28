@@ -250,6 +250,44 @@ se reenvía.
 
 ---
 
+## Compilar para tu iPhone con la cuenta gratis (sin los USD 99)
+
+Descubierto a fuerza de builds (2026-07-28). Cuatro trampas reales, en orden:
+
+1. **El entitlement de push rompe la firma gratis.** `expo-notifications` mete
+   `aps-environment` aunque los avisos sean locales, y un Personal Team no
+   puede firmar esa capability. Tras cada `expo prebuild`: dejar el `<dict/>`
+   vacío en `ios/Findemes/Findemes.entitlements`.
+2. **`expo-modules-jsi@57.0.4` no compila con el Swift de Xcode 26.3.** Un
+   `abs()` ambiguo. Parchado con `patch-package` (`movil/patches/`), se aplica
+   solo en el postinstall.
+3. **El sandbox de scripts de Xcode 26 mata el bundling.** El template trae
+   `ENABLE_USER_SCRIPT_SANDBOXING = YES` y Metro no puede ni leer el proyecto.
+   Tras cada prebuild: pasarlo a NO en el pbxproj (o `sed` como abajo).
+4. **`expo export:embed` no lee NADA fuera de movil/** — ni con watchFolders ni
+   con imports relativos. Por eso metro.config.js sincroniza `lib/dominio` →
+   `src/dominio` (copia generada, gitignoreada) al arrancar. La fuente de
+   verdad sigue siendo `lib/dominio`; los cambios ahí se toman al reiniciar
+   Metro.
+
+El paso final (firmar e instalar) va desde Xcode con ▶: `codesign` necesita el
+llavero de tu sesión gráfica — desde una terminal headless falla con
+`errSecInternalComponent`. La primera vez macOS pide la contraseña para usar la
+clave: "Permitir siempre".
+
+La app instalada con perfil gratis **expira a los 7 días**; se reinstala con ▶.
+
+```bash
+# receta completa desde cero (tras un prebuild)
+cd movil && npx expo prebuild --platform ios --clean
+python3 -c "import re,glob; f=glob.glob('ios/*/*.entitlements')[0]; s=open(f).read(); open(f,'w').write(re.sub(r'\s*<key>aps-environment</key>\s*<string>[^<]*</string>','',s))"
+sed -i '' 's/ENABLE_USER_SCRIPT_SANDBOXING = YES/ENABLE_USER_SCRIPT_SANDBOXING = NO/g' ios/Findemes.xcodeproj/project.pbxproj
+cd ios && LANG=en_US.UTF-8 pod install && open Findemes.xcworkspace
+# en Xcode: elegir el iPhone y ▶
+```
+
+---
+
 ## Regenerar el proyecto nativo
 
 `movil/ios/` no está en el repo a propósito: se genera de `app.json` cada vez
