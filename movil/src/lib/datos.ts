@@ -24,8 +24,44 @@ export type SesionHogar = {
   rol: "administrador" | "miembro";
 };
 
-/** Usuario + su hogar activo (el último al que se sumó). */
-export async function obtenerSesionHogar(): Promise<SesionHogar | null> {
+// Mismas categorías que ofrece la web al crear un hogar (lib/datos/sesion.ts).
+const CATEGORIAS_SUGERIDAS: Array<[string, string, string]> = [
+  ["Vivienda", "Alquiler", "house"],
+  ["Vivienda", "Expensas", "building-2"],
+  ["Comida", "Supermercado", "shopping-cart"],
+  ["Comida", "Delivery", "bike"],
+  ["Comida", "Restaurantes", "utensils"],
+  ["Ahorro", "Ahorro e inversión", "piggy-bank"],
+  ["Salud", "Prepaga", "heart-pulse"],
+  ["Salud", "Farmacia", "pill"],
+  ["Servicios", "Luz", "zap"],
+  ["Servicios", "Internet", "wifi"],
+  ["Servicios", "Celular", "smartphone"],
+  ["Suscripciones", "Suscripciones", "tv"],
+  ["Transporte", "Nafta", "fuel"],
+  ["Transporte", "SUBE", "bus"],
+  ["Entretenimiento", "Entretenimiento", "clapperboard"],
+];
+
+// Deduplica llamadas concurrentes: al primer arranque varias pantallas piden la
+// sesión a la vez, y si el usuario es nuevo cada una intentaría crear SU hogar.
+// Compartiendo la promesa en curso, el bootstrap corre exactamente una vez.
+let enCurso: Promise<SesionHogar | null> | null = null;
+
+/**
+ * Usuario + su hogar activo (el último al que se sumó). Si el usuario recién
+ * se registró y no tiene hogar, se le crea uno con las categorías sugeridas —
+ * espeja obtenerSesionHogar de lib/datos/sesion.ts, mismo onboarding sin
+ * fricción en los dos clientes.
+ */
+export function obtenerSesionHogar(): Promise<SesionHogar | null> {
+  enCurso ??= buscarOCrearSesion().finally(() => {
+    enCurso = null;
+  });
+  return enCurso;
+}
+
+async function buscarOCrearSesion(): Promise<SesionHogar | null> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -38,14 +74,38 @@ export async function obtenerSesionHogar(): Promise<SesionHogar | null> {
     .order("creado_el", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!miembro) return null;
 
-  return {
-    userId: user.id,
-    hogarId: miembro.hogar_id,
-    nombreMiembro: miembro.nombre,
-    rol: miembro.rol,
-  };
+  if (miembro) {
+    return {
+      userId: user.id,
+      hogarId: miembro.hogar_id,
+      nombreMiembro: miembro.nombre,
+      rol: miembro.rol,
+    };
+  }
+
+  // primer ingreso: hogar propio + categorías sugeridas
+  const nombre =
+    (user.user_metadata?.nombre as string | undefined) ??
+    user.email?.split("@")[0] ??
+    "Yo";
+  const { data: hogarId, error } = await supabase.rpc("crear_hogar", {
+    nombre_hogar: "Mi hogar",
+    nombre_miembro: nombre,
+  });
+  if (error || !hogarId) return null;
+  await supabase.from("categorias").insert(
+    CATEGORIAS_SUGERIDAS.map(([grupo, nombreCat, icono], i) => ({
+      hogar_id: hogarId,
+      grupo,
+      nombre: nombreCat,
+      icono,
+      ambito: "hogar",
+      orden: i,
+    })),
+  );
+
+  return { userId: user.id, hogarId, nombreMiembro: nombre, rol: "administrador" };
 }
 
 // ──────────────────────────────────────────────────────── presupuesto

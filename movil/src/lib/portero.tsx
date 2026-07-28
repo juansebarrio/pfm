@@ -17,8 +17,9 @@ export function Portero() {
 
   useEffect(() => {
     if (cargando) return;
-    // estando en login no hay adónde sacar a nadie; el resto sí
-    if (!sesion && segmentos[0] !== "login") router.replace("/login");
+    // login y registro son las pantallas públicas: ahí no hay adónde sacar a nadie
+    const publica = segmentos[0] === "login" || segmentos[0] === "registro";
+    if (!sesion && !publica) router.replace("/login");
   }, [sesion, cargando, segmentos, router]);
 
   return null;

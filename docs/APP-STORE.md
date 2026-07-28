@@ -22,6 +22,78 @@ mirar en cada paso.
 | Login limpio | Sin credenciales precargadas. Ojo al probar en el simulador: el teclado automatizado no escribe la arroba (`juanse@sobres.local` sale `juanse"sob`) — hay que pegar desde el portapapeles con `xcrun simctl pbcopy` |
 | Perfiles de build | `movil/eas.json` con `development`, `preview` y `production` |
 | El prebuild corre limpio | `npx expo prebuild --platform ios` genera el proyecto sin errores |
+| Registro en la app | `movil/src/app/registro.tsx`, con el aviso de confirmación por email |
+| Onboarding de usuario nuevo | El primer ingreso crea el hogar + 15 categorías (verificado: exactamente uno, sin duplicados por llamadas concurrentes) |
+| Demo protegida | La cuenta de demo no se puede borrar (guarda server-side en `lib/datos/borrar-cuenta.ts`) |
+
+---
+
+## Auditoría pre-envío (QA del 2026-07-28)
+
+Recorrido completo con el ojo de App Review. Cada punto se verificó contra el
+código o en el simulador — no es una lista de deseos, es lo que se comprobó.
+
+### Guidelines que aplican, y cómo estamos
+
+| Guideline | Qué mira Apple | Estado |
+|---|---|---|
+| **2.1 Completeness** | Que la app esté completa, sin crashes ni placeholders, y que el reviewer pueda probarla | ✅ Recorrido entero sin crashes. Usuario nuevo aterriza en un Resumen funcional con CTA de armar presupuesto. Una sesión huérfana (cuenta borrada desde otro lado) degrada sin romper. El botón de demo le da al reviewer una cuenta con datos sin fricción |
+| **2.3 Metadata** | Que la ficha describa lo que la app hace | ⏳ Externa: se escribe en App Store Connect (ver §5). Capturas SIN el botón de Expo Go |
+| **4.8 Login services** | Si hay login de terceros (Google, Facebook), exige Sign in with Apple | ✅ No aplica: la app nativa solo tiene email+contraseña y demo. ⚠️ Si algún día se agrega "Continuar con Google" al iOS, ese día se vuelve OBLIGATORIO agregar Sign in with Apple |
+| **5.1.1(v) Account deletion** | Borrar la cuenta DESDE la app, no por mail | ✅ En Hogar, en las dos apps. Probado end-to-end (`pnpm prueba:borrado`, 14 aserciones) |
+| **5.1.1 Data collection** | Política de privacidad accesible + pedir solo lo necesario | ✅ `/privacidad` pública sin login, linkeada desde el login y Hogar. Sin trackers, sin analítica, sin ATT |
+| **5.1.2 Data use** | Que los datos no se compartan sin decirlo | ✅ La política declara Supabase/Vercel como infraestructura y qué viaja a Anthropic al usar el asistente |
+| **1.2 / IA generativa** | Contenido generado con moderación y descargo | ✅ Descargo fijo en el chat ("no es asesoramiento financiero profesional") + límites duros en el system prompt (no recomienda instrumentos, deriva a asesor CNV) |
+| **2.5.4 / background** | Modos de background que no se usan | ✅ Ninguno declarado. Avisos = notificaciones LOCALES, sin push remoto ni entitlement de aps |
+| **Export compliance** | Cifrado | ✅ `usesNonExemptEncryption: false` (solo HTTPS estándar) |
+| **Privacy manifests** | Required-Reason APIs de los SDKs | ✅ Los pods de Expo SDK 57 / RN traen sus `PrivacyInfo.xcprivacy`; no hay SDKs de terceros fuera de eso |
+| **App icon** | 1024 sin canal alfa | ✅ Verificado en el prebuild: `hasAlpha: no` |
+| **ATS** | Nada de HTTP plano | ✅ Todos los endpoints de build son HTTPS (`eas.json`); `http://localhost` solo existe en desarrollo |
+| **iPad** | Si no es universal, que escale bien | ✅ `supportsTablet: false` → corre en modo iPhone escalado, aceptado por revisión |
+
+### Cuestionario App Privacy (respuestas para cargar tal cual)
+
+| Dato | ¿Se recolecta? | ¿Vinculado al usuario? | ¿Tracking? |
+|---|---|---|---|
+| Email | Sí (cuenta) | Sí | No |
+| Información financiera | Sí (lo que cargás) | Sí | No |
+| Nombre | Sí (nombre en el hogar) | Sí | No |
+| Identificadores, ubicación, contactos, fotos, salud, analítica | No | — | — |
+
+### Hallazgos del QA (ya corregidos en este commit)
+
+1. **No había registro en la app iOS** — un usuario nuevo no podía crear
+   cuenta. Riesgo directo de rechazo por 2.1. → `registro.tsx` + link en el
+   login + ruta pública en el Portero.
+2. **El primer ingreso quedaba roto**: el `obtenerSesionHogar` nativo devolvía
+   `null` para un usuario sin hogar (la web lo bootstrapea, la app no). El
+   reviewer que creara una cuenta veía una app vacía sin salida. → Se portó el
+   bootstrap (RPC `crear_hogar` + categorías), con deduplicación de llamadas
+   concurrentes para no crear dos hogares en el primer render.
+3. **Cualquier visitante de la demo podía borrar la cuenta de demo** (el botón
+   del login le da una sesión real a cualquiera, y el borrado nuevo llegaba
+   hasta `auth.users`: la demo moría para siempre). → Guarda server-side por
+   `DEMO_EMAIL`; probado con el token de demo, responde "la cuenta de demo es
+   compartida y no se puede borrar" y el hogar Coghlan queda intacto.
+4. **`pnpm rls:check` crasheaba** contra producción porque la migración de
+   Gmail está dormida (tablas ausentes). → La sección de Gmail se saltea con
+   aviso; el resto corre entero: cero filtraciones.
+5. **`.env.example` publicaba la contraseña real de la demo** en un
+   comentario. → Placeholder. (La misma clave sigue en `scripts/seed.ts`
+   porque el seed la necesita; la demo es compartida por diseño, pero si algún
+   día importa, rotarla.)
+
+### Nota de Supabase que va a doler en el registro real
+
+El signUp con confirmación por email usa el mailer built-in de Supabase, que
+permite **~2 mails por hora**. Para la revisión de Apple alcanza (el reviewer
+usa la demo), pero el primer día con usuarios reales se traba. Antes del
+launch: configurar SMTP propio (Resend) en Supabase → Auth → SMTP.
+
+Detalle de comportamiento: registrarse con un email ya existente muestra el
+mismo aviso de "revisá tu correo" — es la protección anti-enumeración de
+Supabase (no revela si el email existe), no un bug. La web hace exactamente lo
+mismo.
 
 ---
 

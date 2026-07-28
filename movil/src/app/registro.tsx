@@ -12,51 +12,55 @@ import {
 import { Redirect, useRouter } from "expo-router";
 import { Mail } from "lucide-react-native";
 import { useSesion } from "@/lib/sesion";
-import { entrarDemo } from "@/lib/cuenta";
 import { supabase } from "@/lib/supabase";
 import { color, radio } from "@/lib/tema";
 
-const DEMO = process.env.EXPO_PUBLIC_DEMO === "true";
+// Registro nativo. Espeja registrarse() de app/(auth)/acciones.ts: mismos
+// mensajes de error y el mismo aviso cuando el proyecto exige confirmar el
+// email. El hogar inicial NO se crea acá: lo hace obtenerSesionHogar en el
+// primer ingreso, igual que en la web.
 
-// Login nativo. Mismo copy y jerarquía visual que app/(auth)/login de la web,
-// con inputs nativos: teclado de email, sin autocapitalize y KeyboardAvoiding.
-
-export default function Login() {
+export default function Registro() {
   const router = useRouter();
   const { sesion } = useSesion();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState(false);
 
-  async function entrar() {
+  async function crear() {
     if (pendiente) return;
     setError(null);
+    setAviso(null);
+    if (password.length < 8) {
+      setError("La contraseña necesita al menos 8 caracteres");
+      return;
+    }
     setPendiente(true);
-    const { error: e } = await supabase.auth.signInWithPassword({
+    const { data, error: e } = await supabase.auth.signUp({
       email: email.trim(),
       password,
     });
     if (e) {
       setError(
-        e.message.toLowerCase().includes("invalid login")
-          ? "Email o contraseña incorrectos."
-          : "No pudimos iniciar sesión. Probá de nuevo.",
+        e.code === "user_already_exists"
+          ? "Ya existe una cuenta con ese email. Iniciá sesión."
+          : e.code === "weak_password"
+            ? "Esa contraseña es demasiado débil. Probá otra."
+            : e.message.toLowerCase().includes("invalid")
+              ? "Ingresá un email válido."
+              : "No pudimos crear la cuenta. Probá de nuevo.",
       );
       setPendiente(false);
+      return;
     }
-    // con éxito, el contexto ve la sesión nueva y el Redirect de abajo dispara
-  }
-
-  async function demo() {
-    if (pendiente) return;
-    setError(null);
-    setPendiente(true);
-    const r = await entrarDemo();
-    if (!r.ok) {
-      setError(r.error);
+    // sin sesión = el proyecto exige confirmación por email
+    if (!data.session) {
+      setAviso("Te mandamos un correo para confirmar la cuenta. Después entrá desde acá.");
       setPendiente(false);
     }
+    // con sesión, el contexto la ve y el Redirect de abajo dispara
   }
 
   if (sesion) return <Redirect href="/(tabs)/resumen" />;
@@ -76,8 +80,8 @@ export default function Login() {
           <Text style={e.marca}>Fin de mes</Text>
         </View>
         <Text style={e.subtitulo}>
-          Llegá tranquilo a fin de mes. Presupuesto del hogar y personal,
-          tarjetas con ciclos reales y patrimonio, hecho para Argentina.
+          Creá tu cuenta. Al entrar por primera vez ya vas a tener tu hogar con
+          las categorías listas para armar el presupuesto.
         </Text>
       </View>
 
@@ -105,9 +109,10 @@ export default function Login() {
       />
 
       {error && <Text style={e.error}>{error}</Text>}
+      {aviso && <Text style={e.aviso}>{aviso}</Text>}
 
       <Pressable
-        onPress={entrar}
+        onPress={crear}
         disabled={!listo}
         style={({ pressed }) => [
           e.cta,
@@ -118,40 +123,15 @@ export default function Login() {
         {pendiente ? (
           <ActivityIndicator color={color.papel} />
         ) : (
-          <Text style={e.ctaTexto}>Entrar</Text>
+          <Text style={e.ctaTexto}>Crear cuenta</Text>
         )}
       </Pressable>
 
-      <Pressable
-        onPress={() => router.push("/registro")}
-        style={e.registro}
-        hitSlop={8}
-      >
-        <Text style={e.registroTexto}>
-          ¿Primera vez? <Text style={e.registroLink}>Creá tu cuenta</Text>
+      <Pressable onPress={() => router.back()} style={e.volver} hitSlop={8}>
+        <Text style={e.volverTexto}>
+          ¿Ya tenés cuenta? <Text style={e.volverLink}>Iniciá sesión</Text>
         </Text>
       </Pressable>
-
-      {/* Probar sin cuenta. Igual que en la web, solo donde hay demo cargada. */}
-      {DEMO && (
-        <View style={{ marginTop: 24 }}>
-          <View style={e.separadorFila}>
-            <View style={e.linea} />
-            <Text style={e.separadorTexto}>o probá sin cuenta</Text>
-            <View style={e.linea} />
-          </View>
-          <Pressable
-            onPress={demo}
-            disabled={pendiente}
-            style={[e.ctaDemo, pendiente && { opacity: 0.6 }]}
-          >
-            <Text style={e.ctaDemoTexto}>Ver demo de prueba</Text>
-          </Pressable>
-          <Text style={e.avisoDemo}>
-            Datos de ejemplo compartidos, solo para explorar.
-          </Text>
-        </View>
-      )}
     </KeyboardAvoidingView>
   );
 }
@@ -180,12 +160,7 @@ const e = StyleSheet.create({
     lineHeight: 21,
     color: color.tintaSecundaria,
   },
-  etiqueta: {
-    marginBottom: 6,
-    fontSize: 13,
-    fontWeight: "600",
-    color: color.tinta,
-  },
+  etiqueta: { marginBottom: 6, fontSize: 13, fontWeight: "600", color: color.tinta },
   input: {
     height: 50,
     borderRadius: radio.cta,
@@ -197,42 +172,31 @@ const e = StyleSheet.create({
     color: color.tinta,
   },
   error: {
-    marginTop: 8,
+    marginTop: 14,
     textAlign: "center",
     fontSize: 12.5,
     fontWeight: "500",
     color: color.rojo,
   },
+  aviso: {
+    marginTop: 14,
+    textAlign: "center",
+    fontSize: 12.5,
+    lineHeight: 19,
+    fontWeight: "500",
+    color: color.verde,
+  },
   cta: {
     marginTop: 20,
     height: 50,
     borderRadius: radio.cta,
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: color.verde,
-  },
-  ctaApagado: { opacity: 0.6 },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
-  registro: { marginTop: 18, alignItems: "center", paddingVertical: 8 },
-  registroTexto: { fontSize: 13, color: color.tintaSecundaria },
-  registroLink: { fontWeight: "600", color: color.verde },
-  separadorFila: { flexDirection: "row", alignItems: "center", gap: 12 },
-  linea: { flex: 1, height: 1, backgroundColor: color.borde },
-  separadorTexto: { fontSize: 11.5, color: color.tintaSecundaria },
-  ctaDemo: {
-    marginTop: 16,
-    height: 50,
-    borderRadius: radio.cta,
-    borderWidth: 1,
-    borderColor: color.verde,
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaDemoTexto: { fontSize: 15, fontWeight: "600", color: color.verde },
-  avisoDemo: {
-    marginTop: 8,
-    textAlign: "center",
-    fontSize: 11,
-    color: color.tintaSecundaria,
-  },
+  ctaApagado: { opacity: 0.5 },
+  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  volver: { marginTop: 20, alignItems: "center", paddingVertical: 8 },
+  volverTexto: { fontSize: 13, color: color.tintaSecundaria },
+  volverLink: { fontWeight: "600", color: color.verde },
 });

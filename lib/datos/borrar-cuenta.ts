@@ -28,6 +28,21 @@ export async function borrarCuenta(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = crearClienteAdmin();
 
+  // La cuenta de demo es de todos: el botón del login le da una sesión a
+  // cualquiera, así que sin esta guarda cualquier visitante anónimo podría
+  // borrar el dataset entero (y el borrado llega hasta auth.users: la demo
+  // dejaría de existir). Se chequea acá — y no en la UI — para cubrir a la
+  // web, a la app nativa y a cualquier cliente futuro con un solo candado.
+  if (process.env.DEMO_EMAIL) {
+    const { data: usuario } = await admin.auth.admin.getUserById(userId);
+    if (usuario?.user?.email === process.env.DEMO_EMAIL) {
+      return {
+        ok: false,
+        error: "La cuenta de demo es compartida y no se puede borrar.",
+      };
+    }
+  }
+
   const { data: membresias, error: errMembresias } = await admin
     .from("miembros_hogar")
     .select("hogar_id")

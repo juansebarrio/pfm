@@ -197,6 +197,15 @@ async function main() {
   esperar(nombreBeto === null, "Beto sí puede editar su propio nombre");
 
   console.log("\n4) Conexión Gmail y sugerencias del correo (privadas del usuario):");
+  // La feature Gmail está detrás de una migración que puede no estar aplicada
+  // (está dormida hasta configurar Google). Sin las tablas, esta sección no
+  // tiene nada que chequear — saltearla NO es una filtración.
+  const { error: sinTablas } = await admin.from("conexiones_gmail").select("id").limit(1);
+  if (sinTablas) {
+    console.log("  – salteada: la migración de Gmail no está aplicada (feature dormida)");
+    await limpiar();
+    return terminar();
+  }
   await admin.from("conexiones_gmail").insert({
     user_id: ANA, email_gmail: "ana@gmail.com", refresh_token_cifrado: "iv.tag.datos-de-prueba",
   });
@@ -229,7 +238,10 @@ async function main() {
   esperar((updSugBeto ?? []).length === 0, "Beto no puede aceptar la sugerencia de Ana");
 
   await limpiar();
+  terminar();
+}
 
+function terminar() {
   if (fallas > 0) {
     console.error(`\n✗ rls:check FALLÓ: ${fallas} filtración(es). NO desplegar.`);
     process.exit(1);
