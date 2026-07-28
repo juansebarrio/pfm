@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 import { LineChart } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
 import {
@@ -36,6 +37,12 @@ export default function Patrimonio() {
   useEffect(() => {
     cargar().finally(() => setCargando(false));
   }, [cargar]);
+
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   async function refrescar() {
     setRefrescando(true);

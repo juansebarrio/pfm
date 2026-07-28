@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarClock, CreditCard, Inbox, type LucideIcon } from "lucide-react-native";
 // ⭐ Dominio COMPARTIDO con la web: los mismos archivos, sin copiar ni adaptar.
@@ -77,6 +78,13 @@ export default function Resumen() {
   useEffect(() => {
     cargar().finally(() => setCargando(false));
   }, [cargar]);
+
+  // al volver de cargar un gasto, refrescar sin spinner de pantalla completa
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   async function refrescar() {
     setRefrescando(true);

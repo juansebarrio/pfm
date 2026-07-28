@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 import { ChevronLeft, ChevronRight, Wallet } from "lucide-react-native";
 import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
@@ -86,6 +87,13 @@ export default function Presupuesto() {
     setCargando(true);
     cargar().finally(() => setCargando(false));
   }, [cargar]);
+
+  // al volver de cargar un gasto, refrescar sin spinner de pantalla completa
+  useFocusEffect(
+    useCallback(() => {
+      cargar();
+    }, [cargar]),
+  );
 
   async function refrescar() {
     setRefrescando(true);
