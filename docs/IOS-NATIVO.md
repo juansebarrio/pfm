@@ -39,6 +39,36 @@ a ser traducir cada `className` a un objeto de estilo. Es la razón principal
 por la que la estimación sube (ver abajo). A cambio: los tokens quedan tipados
 (el compilador avisa si se usa uno que no existe) y hay una dependencia menos.
 
+### Modo de ejecución: Expo Go (sin `prebuild`)
+
+El proyecto es **managed**: no existe `movil/ios/` ni `movil/android/`, no hay
+Podfile ni `.xcworkspace`, y en el simulador solo está instalada Expo Go
+(`host.exp.Exponent`). Nada nativo se compiló todavía.
+
+Funciona porque **todos los paquetes nativos que usa el proyecto vienen dentro
+de Expo Go** (AsyncStorage, react-native-svg, gesture-handler, reanimated,
+screens): el JS se carga por red y los módulos nativos ya están ahí.
+
+**Es deliberado, y conviene sostenerlo.** `prebuild` agrega fricción real
+(recompilar ante cada cambio nativo, iteración más lenta, y la decisión de
+versionar `ios/` o regenerarlo). Las fases 3–5 son 100 % JavaScript y salen más
+rápido sobre Expo Go.
+
+| Fase | ¿Alcanza Expo Go? |
+|---|---|
+| 3 · las cuatro tabs | ✅ hecho |
+| 4 · pantallas de escritura | ✅ todo JS |
+| 5 · asistente + sugerencias | ✅ salvo que el streaming pida algo fuera del SDK |
+| **6 · Face ID, push, widget, ícono** | ❌ **requiere prebuild + build nativo** |
+| **7 · App Store** | ❌ imposible sin build nativo |
+
+**Cuando llegue el prebuild, aparece el problema de Xcode** (26.3 local vs 26.4+
+que pide SDK 57). Dos salidas:
+1. Actualizar Xcode antes de la Fase 6.
+2. **EAS Build** (nube de Expo) — compila con el Xcode correcto del lado de
+   Expo, saca al Mac local de la ecuación y es el camino natural a TestFlight.
+   **Recomendada**: con esto el Xcode local deja de ser bloqueante.
+
 ### Otros hallazgos
 
 1. **El middleware no traduce 1:1.** El portero de sesión de la web se rearmó
