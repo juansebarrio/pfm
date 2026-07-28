@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /auth: vuelta del OAuth de Google (el código se canjea ahí, aún sin sesión)
-const RUTAS_PUBLICAS = ["/login", "/registro", "/invitacion", "/auth"];
+// /privacidad: Apple exige que se pueda leer ANTES de crear una cuenta
+const RUTAS_PUBLICAS = ["/login", "/registro", "/invitacion", "/auth", "/privacidad"];
 
 function esRutaPublica(pathname: string) {
   return RUTAS_PUBLICAS.some(

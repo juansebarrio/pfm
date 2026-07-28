@@ -1,9 +1,13 @@
 # Plan: llevar Fin de mes a iOS nativo
 
-> ✅ **SPIKE EJECUTADO (2026-07-27).** El proyecto vive en `movil/`. Resultados
-> medidos, decisiones tomadas y estimación recalibrada en **§0** — leer eso
-> primero; el resto del documento es el plan original, ya corregido con lo
-> aprendido.
+> ✅ **FASES 0 a 7 EJECUTADAS (2026-07-27).** El proyecto vive en `movil/`. La
+> app nativa cubre lo mismo que la web (las 4 tabs, las pantallas de escritura,
+> el asistente) más lo que la PWA no puede dar (Face ID, hápticos, swipe real,
+> avisos locales). Lo que queda no es código: son las puertas de Apple, y están
+> listadas en [APP-STORE.md](APP-STORE.md).
+>
+> Resultados del spike, decisiones tomadas y estimación recalibrada en **§0**;
+> el estado por fase, en **§8**.
 
 ---
 
@@ -326,3 +330,44 @@ código —no con estimaciones— las preguntas que definen todo lo demás:
 Si el spike convence, el resto es ejecución sobre una estimación ya calibrada.
 Si la Fase 0 pelea, se sabe el día 1 y no en la mitad del proyecto — y la PWA
 sigue en producción sin haberla tocado.
+
+---
+
+## 8. Estado por fase
+
+Todo lo de abajo está en `movil/`, verificado en el simulador (iPhone Air, iOS
+26, Expo Go) contra la base real del hogar Coghlan.
+
+| Fase | Estado | Qué quedó |
+|---|---|---|
+| 0 · Fundación | ✅ | Expo + TS strict + tokens tipados. `lib/dominio` se comparte con la web por `watchFolders` + `paths`, sin copiar un archivo |
+| 1 · Auth y shell | ✅ | Login real, sesión en AsyncStorage, tab bar de 4 + FAB. El portero es `index.tsx` con `<Redirect>` |
+| 2 · Capa de datos | ✅ | `lib/datos.ts`. Sin TanStack Query: con `useFocusEffect` alcanzó, y una dependencia menos |
+| 3 · Las 4 tabs | ✅ | Resumen, Presupuesto, Movimientos, Patrimonio + el sistema de diseño en RN |
+| 4 · Escritura | ✅ | Alta rápida con teclado propio, categorizar, armar presupuesto, cuentas y tarjetas, detalle de tarjeta, cuotas, hogar |
+| 5 · Asistente | ✅ | Streaming con `expo/fetch` y auth por bearer. **Gmail no**: la feature está dormida en la web (falta migración + setup de Google), así que no hay nada que portar todavía |
+| 6 · Lo nativo | ✅ | Face ID, hápticos, swipe con física, avisos locales de cierre y vencimiento. Sin widget de pantalla de inicio: era opcional y pide código nativo + prebuild permanente |
+| 7 · App Store | ⏳ | Identidad, ícono, permisos, `eas.json`, `/privacidad` y borrado de cuenta: **hechos**. Falta lo que necesita tu cuenta de Apple → [APP-STORE.md](APP-STORE.md) |
+
+### Lo que no se pudo verificar acá
+
+**Face ID.** Expo Go no lo soporta en iOS (limitación del SDK 57, no un bug
+nuestro). El código está y tipa; el camino completo se prueba en el primer
+development build. Está anotado como primer ítem del §3 de APP-STORE.md.
+
+**Hápticos.** El simulador no tiene motor háptico: el código corre pero no se
+siente nada. Se verifica en un iPhone de verdad.
+
+### Dos cosas que aparecieron y no estaban en el plan
+
+1. **El middleware de Next cortaba a la app nativa.** Los pedidos con
+   `Authorization: Bearer` morían en un 307 a `/login` antes de llegar al route
+   handler. No estaba en la lista de trampas del §5 y costó un rato de
+   diagnóstico, porque el síntoma era la app "pensando" para siempre.
+
+2. **El borrado de cuenta era obligatorio y no existía.** Apple lo exige desde
+   la app desde 2022. Se construyó para las dos apps y se probó contra la base
+   con usuarios descartables (`pnpm prueba:borrado`). En el camino apareció un
+   choque real: el trigger `proteger_rol_miembro` rechaza cambios de rol hechos
+   con la service key, así que el ascenso del sucesor va con el JWT del que se
+   va — que además es la semántica correcta.

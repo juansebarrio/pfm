@@ -13,6 +13,7 @@ import { obtenerHogar } from "@/lib/datos/hogar";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { HUSO, diasEntre, hoyBA } from "@/lib/dominio/fechas";
 import { AccionesInvitacion } from "./AccionesInvitacion";
+import { BorrarCuenta } from "./BorrarCuenta";
 import { CambiadorTema } from "./CambiadorTema";
 import { Invitar } from "./Invitar";
 
@@ -187,11 +188,22 @@ export default async function Hogar() {
         </dl>
       </Card>
 
-      <form action={cerrarSesion} className="mt-6 text-center">
+      <p className="mt-6 text-center">
+        <Link
+          href="/privacidad"
+          className="hit-44 inline-block text-[12.5px] text-tinta-secundaria underline underline-offset-2"
+        >
+          Cómo cuidamos tus datos
+        </Link>
+      </p>
+
+      <form action={cerrarSesion} className="mt-2 text-center">
         <button type="submit" className="hit-44 text-[13px] font-medium text-rojo">
           Cerrar sesión
         </button>
       </form>
+
+      <BorrarCuenta soloMiembro={nMiembros === 1} />
     </div>
   );
 }

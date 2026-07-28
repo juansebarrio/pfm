@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { borrarCuenta } from "@/lib/datos/borrar-cuenta";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquemaCredenciales = z.object({
@@ -146,6 +147,25 @@ export async function registrarse(
 
 export async function cerrarSesion() {
   const supabase = await crearClienteServidor();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
+
+/**
+ * Borrar la cuenta desde la app. Apple lo exige (guía 5.1.1(v)): no alcanza
+ * con "escribinos y la borramos". La lógica pesada vive en lib/datos, porque
+ * la comparte con la ruta que usa la app nativa.
+ */
+export async function borrarMiCuenta(): Promise<{ ok: false; error: string }> {
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const resultado = await borrarCuenta(user.id, supabase);
+  if (!resultado.ok) return resultado;
+
   await supabase.auth.signOut();
   redirect("/login");
 }

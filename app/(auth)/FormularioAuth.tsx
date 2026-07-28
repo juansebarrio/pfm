@@ -77,11 +77,19 @@ export function PieAuth({
   texto: string;
 }) {
   return (
-    <p className="mt-5 text-center text-[13px] text-tinta-secundaria">
-      {pregunta}{" "}
-      <Link href={href} className="font-medium text-verde">
-        {texto}
-      </Link>
-    </p>
+    <>
+      <p className="mt-5 text-center text-[13px] text-tinta-secundaria">
+        {pregunta}{" "}
+        <Link href={href} className="font-medium text-verde">
+          {texto}
+        </Link>
+      </p>
+      {/* legible sin cuenta: es requisito de la App Store */}
+      <p className="mt-3 text-center text-[11.5px] text-tinta-terciaria">
+        <Link href="/privacidad" className="underline underline-offset-2">
+          Cómo cuidamos tus datos
+        </Link>
+      </p>
+    </>
   );
 }

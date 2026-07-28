@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Bell,
@@ -23,6 +24,7 @@ import {
   Wallet,
 } from "lucide-react-native";
 import { useBloqueo } from "@/lib/bloqueo";
+import { borrarMiCuenta } from "@/lib/cuenta";
 import {
   activarAvisos,
   avisosActivos,
@@ -42,6 +44,8 @@ import { Badge, Card } from "@/componentes/sistema";
 // 09 — Hogar: miembros con su rol, accesos a cuentas y cuotas, el statement de
 // visibilidad y la salida (cerrar sesión).
 
+const API = process.env.EXPO_PUBLIC_API_URL;
+
 /** "los ve Juanse" / "los ven Juanse y Vale" / "los ven A, B y C". */
 function losVen(nombres: string[]): string {
   if (nombres.length <= 1) return `los ve ${nombres[0] ?? "el hogar"}`;
@@ -58,6 +62,7 @@ export default function Hogar() {
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [avisos, setAvisos] = useState(false);
   const [programados, setProgramados] = useState(0);
+  const [borrando, setBorrando] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -75,6 +80,44 @@ export default function Hogar() {
       }
     })().finally(() => setCargando(false));
   }, []);
+
+  /**
+   * Dos pasos a propósito: el primero explica qué se lleva puesto, el segundo
+   * es el destructivo. No hay papelera ni "deshacer" del otro lado.
+   */
+  function confirmarBorrado() {
+    const soloMiembro = miembros.length === 1;
+    Alert.alert(
+      "Borrar mi cuenta",
+      soloMiembro
+        ? "Se borra tu hogar completo: movimientos, presupuestos, cuentas, tarjetas y patrimonio."
+        : "Se borra tu usuario y todo lo personal. Lo compartido del hogar queda para los demás.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Continuar",
+          style: "destructive",
+          onPress: () =>
+            Alert.alert("¿Seguro?", "Esto no se puede deshacer.", [
+              { text: "No", style: "cancel" },
+              { text: "Borrar", style: "destructive", onPress: borrar },
+            ]),
+        },
+      ],
+    );
+  }
+
+  async function borrar() {
+    setBorrando(true);
+    const r = await borrarMiCuenta();
+    if (r.ok) {
+      // signOut deja la sesión nula y el portero de index.tsx manda al login
+      await supabase.auth.signOut();
+    } else {
+      setBorrando(false);
+      Alert.alert("No pudimos borrarla", r.error);
+    }
+  }
 
   async function alternarAvisos(prender: boolean) {
     if (!sesion) return;
@@ -236,11 +279,30 @@ export default function Hogar() {
             </View>
           </Card>
 
+          {/* La política vive en la web: una sola fuente para las dos apps */}
+          <Pressable
+            onPress={() => WebBrowser.openBrowserAsync(`${API}/privacidad`)}
+            style={{ marginTop: 24, alignItems: "center", paddingVertical: 10 }}
+          >
+            <Text style={e.privacidad}>Cómo cuidamos tus datos</Text>
+          </Pressable>
+
           <Pressable
             onPress={() => supabase.auth.signOut()}
-            style={{ marginTop: 24, alignItems: "center", paddingVertical: 12 }}
+            style={{ marginTop: 4, alignItems: "center", paddingVertical: 12 }}
           >
             <Text style={e.cerrar}>Cerrar sesión</Text>
+          </Pressable>
+
+          {/* Apple exige poder borrar la cuenta desde la app (guía 5.1.1(v)) */}
+          <Pressable
+            onPress={confirmarBorrado}
+            disabled={borrando}
+            style={{ marginTop: 12, alignItems: "center", paddingVertical: 10 }}
+          >
+            <Text style={e.borrarCuenta}>
+              {borrando ? "Borrando…" : "Borrar mi cuenta"}
+            </Text>
           </Pressable>
         </ScrollView>
       )}
@@ -305,5 +367,15 @@ const e = StyleSheet.create({
   },
   leyenda: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   leyendaTexto: { flex: 1, fontSize: 11.5, lineHeight: 17, color: color.tintaSecundaria },
+  privacidad: {
+    fontSize: 12.5,
+    color: color.tintaSecundaria,
+    textDecorationLine: "underline",
+  },
   cerrar: { fontSize: 13, fontWeight: "500", color: color.rojo },
+  borrarCuenta: {
+    fontSize: 12.5,
+    color: color.tintaTerciaria,
+    textDecorationLine: "underline",
+  },
 });
