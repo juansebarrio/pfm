@@ -18,6 +18,9 @@ const esquemaGasto = z.object({
   categoriaNombre: z.string().trim().min(1).max(40).optional(),
   ambito: z.enum(["hogar", "personal"]),
   cuotas: z.union([z.literal(1), z.literal(3), z.literal(6), z.literal(12)]),
+  /** yyyy-mm-dd; sin fecha, hoy. Se permite otro mes: mover un gasto al mes
+   *  siguiente es exactamente "arrastrarlo". */
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   descripcion: z.string().trim().max(80).optional(),
   nota: z.string().trim().max(200).optional(),
 });
@@ -38,6 +41,8 @@ async function encontrarOCrearCategoria(
   sesion: Awaited<ReturnType<typeof obtenerSesionHogar>>,
   nombre: string,
   ambito: "hogar" | "personal",
+  // "Ingresos" cuando la categoría nace de un ingreso; "Otros" para gastos
+  grupo: "Otros" | "Ingresos" = "Otros",
 ): Promise<string | null> {
   const patron = nombre.replace(/[\\%_]/g, (m) => `\\${m}`);
   let consulta = sesion.supabase
@@ -58,7 +63,7 @@ async function encontrarOCrearCategoria(
     .insert({
       hogar_id: sesion.hogarId,
       user_id: ambito === "personal" ? sesion.userId : null,
-      grupo: "Otros",
+      grupo,
       nombre,
       ambito,
       icono: "tag",
@@ -92,13 +97,21 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
 
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
+  // la fecha elegida manda; para tarjeta, el ciclo se asigna con max(fecha, hoy)
+  // vía fechaParaCiclo para no caer en un resumen que ya cerró
+  const fecha = datos.fecha ?? hoy;
   const visibilidad = datos.ambito === "hogar" ? "compartido" : "personal";
   const nota = datos.nota ?? null;
 
   // categoría efectiva: el id elegido, o el nombre escrito a mano resuelto
   let categoriaId = datos.categoriaId;
   if (!categoriaId && datos.categoriaNombre) {
-    categoriaId = await encontrarOCrearCategoria(sesion, datos.categoriaNombre, datos.ambito);
+    categoriaId = await encontrarOCrearCategoria(
+      sesion,
+      datos.categoriaNombre,
+      datos.ambito,
+      esIngreso ? "Ingresos" : "Otros",
+    );
     if (!categoriaId) return { ok: false, error: "No pudimos crear la categoría" };
   }
 
@@ -132,7 +145,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
         descripcion,
         total_centavos: datos.importeCentavos,
         n_cuotas: datos.cuotas,
-        fecha: hoy,
+        fecha,
         visibilidad,
       })
       .select()
@@ -140,7 +153,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
     if (errCompra || !compra) return { ok: false, error: "No pudimos guardar la compra" };
 
     const hijos = [];
-    for (const c of generarCuotas(datos.importeCentavos, datos.cuotas, hoy)) {
+    for (const c of generarCuotas(datos.importeCentavos, datos.cuotas, fecha)) {
       // la cuota devenga el día 1, pero para el ciclo de tarjeta manda la fecha
       // real de compra: así la cuota 1 no cae en un resumen que cerró antes
       hijos.push({
@@ -154,7 +167,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
         ciclo_id: await asegurarCicloParaFecha(
           sesion,
           datos.medioId,
-          fechaParaCiclo(c.fecha, hoy),
+          fechaParaCiclo(c.fecha, hoy), // nunca antes de HOY: el ciclo viejo ya cerró
         ),
         categoria_id: categoriaId,
         visibilidad,
@@ -172,12 +185,12 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
       tipo: datos.tipo,
       descripcion,
       importe_centavos: datos.importeCentavos,
-      fecha: hoy,
+      fecha,
       cuenta_id: datos.medioTipo === "cuenta" ? datos.medioId : null,
       tarjeta_id: datos.medioTipo === "tarjeta" ? datos.medioId : null,
       ciclo_id:
         datos.medioTipo === "tarjeta"
-          ? await asegurarCicloParaFecha(sesion, datos.medioId, hoy)
+          ? await asegurarCicloParaFecha(sesion, datos.medioId, fechaParaCiclo(fecha, hoy))
           : null,
       categoria_id: categoriaId,
       visibilidad,
@@ -239,6 +252,56 @@ export async function actualizarNota(entrada: unknown): Promise<ResultadoAccion>
   if (error || !data?.length) return { ok: false, error: "No pudimos guardar el comentario" };
 
   revalidatePath("/movimientos");
+  return { ok: true };
+}
+
+const esquemaFecha = z.object({
+  movimientoId: z.uuid(),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+/**
+ * Cambiar la fecha de un movimiento — también sirve para "arrastrarlo" a otro
+ * mes. Si es de tarjeta se le reasigna el ciclo que corresponde a la fecha
+ * nueva (nunca uno anterior a hoy: ese resumen ya cerró). Las cuotas quedan
+ * afuera: su fecha la define la serie de la compra.
+ */
+export async function actualizarFecha(entrada: unknown): Promise<ResultadoAccion> {
+  const parseo = esquemaFecha.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+
+  const sesion = await obtenerSesionHogar();
+  const { data: mov } = await sesion.supabase
+    .from("movimientos")
+    .select("id, compra_id, tarjeta_id")
+    .eq("id", parseo.data.movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+  if (mov.compra_id) {
+    return { ok: false, error: "La fecha de una cuota la maneja la compra" };
+  }
+
+  const cambios: { fecha: string; ciclo_id?: string | null } = {
+    fecha: parseo.data.fecha,
+  };
+  if (mov.tarjeta_id) {
+    cambios.ciclo_id = await asegurarCicloParaFecha(
+      sesion,
+      mov.tarjeta_id,
+      fechaParaCiclo(parseo.data.fecha, hoyBA()),
+    );
+  }
+  const { error } = await sesion.supabase
+    .from("movimientos")
+    .update(cambios)
+    .eq("id", mov.id)
+    .eq("hogar_id", sesion.hogarId);
+  if (error) return { ok: false, error: "No pudimos cambiar la fecha" };
+
+  revalidatePath("/movimientos");
+  revalidatePath("/resumen");
+  revalidatePath("/presupuesto");
   return { ok: true };
 }
 

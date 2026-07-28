@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,6 +23,7 @@ import {
   mesDe,
   mesSiguiente,
 } from "@dominio/fechas";
+import { repetirPresupuesto } from "@/lib/acciones";
 import {
   obtenerPresupuestoMes,
   obtenerSesionHogar,
@@ -77,11 +79,26 @@ export default function Presupuesto() {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
 
+  const [hayAnterior, setHayAnterior] = useState(false);
+  const [repitiendo, setRepitiendo] = useState(false);
+
+  async function repetir() {
+    if (!sesion || repitiendo) return;
+    setRepitiendo(true);
+    const r = await repetirPresupuesto(sesion, mes, ambito);
+    if (r.ok) await cargar();
+    else Alert.alert("No pudimos copiarlo", r.error);
+    setRepitiendo(false);
+  }
+
   const cargar = useCallback(async () => {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    setPresupuesto(await obtenerPresupuestoMes(s, mes, ambito));
+    const p = await obtenerPresupuestoMes(s, mes, ambito);
+    setPresupuesto(p);
+    // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
+    setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
 
   useEffect(() => {
@@ -158,6 +175,16 @@ export default function Presupuesto() {
                 }),
             }}
           />
+          {/* con presupuesto el mes pasado, el arrastre es un toque */}
+          {hayAnterior && (
+            <Pressable onPress={repetir} disabled={repitiendo} hitSlop={8}>
+              <Text style={e.repetir}>
+                {repitiendo
+                  ? "Copiando…"
+                  : `Repetir el presupuesto de ${formatearMesSolo(mesAnterior(mes))}`}
+              </Text>
+            </Pressable>
+          )}
         </View>
       ) : (
         <ScrollView
@@ -273,6 +300,13 @@ const e = StyleSheet.create({
   segmentoActivo: { backgroundColor: color.segmentedActivo },
   segmentoTexto: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
   segmentoTextoActivo: { fontWeight: "600", color: color.tinta },
+  repetir: {
+    marginTop: 14,
+    fontSize: 13,
+    fontWeight: "500",
+    color: color.verde,
+    textDecorationLine: "underline",
+  },
   heroEtiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
   heroMeta: { marginTop: 4, fontSize: 11, color: color.tintaSecundaria },
   pistaHero: {

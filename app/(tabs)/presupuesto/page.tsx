@@ -25,6 +25,7 @@ import {
   mesSiguiente,
 } from "@/lib/dominio/fechas";
 import { existePresupuesto } from "./datos";
+import { BotonRepetir } from "./BotonRepetir";
 import { EncabezadoPresupuesto } from "./EncabezadoPresupuesto";
 import { SugerenciaRecurrente } from "./SugerenciaRecurrente";
 
@@ -84,10 +85,11 @@ export default async function PaginaPresupuesto({
   const mesProximo = mesSiguiente(mes);
 
   const sesion = await obtenerSesionHogar();
-  const [presupuesto, sugerencias, proximoArmado] = await Promise.all([
+  const [presupuesto, sugerencias, proximoArmado, hayAnterior] = await Promise.all([
     obtenerPresupuestoMes(sesion, mes, ambito),
     sugerenciasRecurrentes(sesion, mes),
     existePresupuesto(sesion, mesProximo, ambito),
+    existePresupuesto(sesion, mesAnterior(mes), ambito),
   ]);
 
   const urlMes = (m: string) => `/presupuesto?mes=${m}&ambito=${ambito}`;
@@ -127,6 +129,14 @@ export default async function PaginaPresupuesto({
               </Link>
             }
           />
+          {/* con presupuesto el mes pasado, el arrastre es un toque */}
+          {hayAnterior && (
+            <BotonRepetir
+              mes={mes}
+              ambito={ambito}
+              etiquetaMes={formatearMesSolo(mesAnterior(mes))}
+            />
+          )}
         </div>
       </div>
     );

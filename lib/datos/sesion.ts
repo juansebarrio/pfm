@@ -19,6 +19,10 @@ const CATEGORIAS_SUGERIDAS: Array<[string, string, string]> = [
   ["Transporte", "Nafta", "fuel"],
   ["Transporte", "SUBE", "bus"],
   ["Entretenimiento", "Entretenimiento", "clapperboard"],
+  // Ingresos: grupo especial, solo aparece al cargar/categorizar un ingreso
+  ["Ingresos", "Sueldo", "banknote"],
+  ["Ingresos", "Honorarios", "briefcase"],
+  ["Ingresos", "Otros ingresos", "hand-coins"],
 ];
 
 export type SesionHogar = {
@@ -83,16 +87,27 @@ export async function obtenerSesionHogar(
   if (error || !hogarId) {
     throw new Error(`no pude crear el hogar inicial: ${error?.message}`);
   }
-  await supabase.from("categorias").insert(
-    CATEGORIAS_SUGERIDAS.map(([grupo, nombreCat, icono], i) => ({
-      hogar_id: hogarId,
-      grupo,
-      nombre: nombreCat,
-      icono,
-      ambito: "hogar",
-      orden: i,
-    })),
-  );
+  // Doble bootstrap concurrente (visto en producción: dos tandas con 1 s de
+  // diferencia) → categorías duplicadas. El insert solo corre si el hogar
+  // sigue vacío; no cierra la ventana por completo, pero la reduce de
+  // segundos a milisegundos y cada corrida extra la achica más.
+  const { data: yaTiene } = await supabase
+    .from("categorias")
+    .select("id")
+    .eq("hogar_id", hogarId)
+    .limit(1);
+  if (!yaTiene || yaTiene.length === 0) {
+    await supabase.from("categorias").insert(
+      CATEGORIAS_SUGERIDAS.map(([grupo, nombreCat, icono], i) => ({
+        hogar_id: hogarId,
+        grupo,
+        nombre: nombreCat,
+        icono,
+        ambito: "hogar",
+        orden: i,
+      })),
+    );
+  }
 
   return { supabase, userId: user.id, hogarId, nombreMiembro: nombre, rol: "administrador" };
 }

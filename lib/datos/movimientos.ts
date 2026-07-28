@@ -162,6 +162,34 @@ export async function categoriasRecientes(
     .slice(0, 8);
 }
 
+export type TotalesMes = {
+  ingresosCentavos: number;
+  gastosCentavos: number;
+};
+
+/**
+ * Totales del mes para el totalizador: lo que entró y lo que salió (gasto e
+ * ingreso; transferencias y pagos de resumen no son ni una cosa ni la otra).
+ * Incluye lo compartido y lo personal tuyo — es "tu mes", no el del hogar.
+ */
+export async function totalesDelMes(sesion: SesionHogar, mes: string): Promise<TotalesMes> {
+  const hasta = `${mes.slice(0, 7)}-31`;
+  const { data } = await sesion.supabase
+    .from("movimientos")
+    .select("tipo, importe_centavos")
+    .eq("hogar_id", sesion.hogarId)
+    .in("tipo", ["gasto", "ingreso"])
+    .gte("fecha", mes)
+    .lte("fecha", hasta);
+  let ingresos = 0;
+  let gastos = 0;
+  for (const m of data ?? []) {
+    if (m.tipo === "ingreso") ingresos += m.importe_centavos;
+    else gastos += m.importe_centavos;
+  }
+  return { ingresosCentavos: ingresos, gastosCentavos: gastos };
+}
+
 export type MedioDePago =
   | { tipo: "cuenta"; id: string; nombre: string; etiqueta: string }
   | {

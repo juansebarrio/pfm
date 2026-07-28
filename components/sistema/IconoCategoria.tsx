@@ -1,11 +1,14 @@
 import {
+  Banknote,
   Bike,
   Building2,
+  Briefcase,
   Bus,
   Camera,
   Clapperboard,
   Fuel,
   Gift,
+  HandCoins,
   HeartPulse,
   House,
   PiggyBank,
@@ -41,6 +44,9 @@ const iconos: Record<string, LucideIcon> = {
   sparkles: Sparkles,
   camera: Camera,
   gift: Gift,
+  banknote: Banknote,
+  briefcase: Briefcase,
+  "hand-coins": HandCoins,
   tag: Tag,
 };
 

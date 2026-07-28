@@ -41,6 +41,10 @@ const CATEGORIAS_SUGERIDAS: Array<[string, string, string]> = [
   ["Transporte", "Nafta", "fuel"],
   ["Transporte", "SUBE", "bus"],
   ["Entretenimiento", "Entretenimiento", "clapperboard"],
+  // Ingresos: grupo especial, solo aparece al cargar/categorizar un ingreso
+  ["Ingresos", "Sueldo", "banknote"],
+  ["Ingresos", "Honorarios", "briefcase"],
+  ["Ingresos", "Otros ingresos", "hand-coins"],
 ];
 
 // Deduplica llamadas concurrentes: al primer arranque varias pantallas piden la
@@ -67,13 +71,16 @@ async function buscarOCrearSesion(): Promise<SesionHogar | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: miembro } = await supabase
+  const { data: miembro, error: errMiembro } = await supabase
     .from("miembros_hogar")
     .select("hogar_id, rol, nombre")
     .eq("user_id", user.id)
     .order("creado_el", { ascending: false })
     .limit(1)
     .maybeSingle();
+  // Un error de red acá NO es "usuario sin hogar": si se confunden, el
+  // bootstrap le crea un hogar nuevo a alguien que ya tiene el suyo.
+  if (errMiembro) return null;
 
   if (miembro) {
     return {
@@ -94,18 +101,51 @@ async function buscarOCrearSesion(): Promise<SesionHogar | null> {
     nombre_miembro: nombre,
   });
   if (error || !hogarId) return null;
-  await supabase.from("categorias").insert(
-    CATEGORIAS_SUGERIDAS.map(([grupo, nombreCat, icono], i) => ({
-      hogar_id: hogarId,
-      grupo,
-      nombre: nombreCat,
-      icono,
-      ambito: "hogar",
-      orden: i,
-    })),
-  );
+  // igual que en la web: insertar solo si el hogar sigue sin categorías
+  // (el doble bootstrap concurrente duplicaba las 15)
+  const { data: yaTiene } = await supabase
+    .from("categorias")
+    .select("id")
+    .eq("hogar_id", hogarId)
+    .limit(1);
+  if (!yaTiene || yaTiene.length === 0) {
+    await supabase.from("categorias").insert(
+      CATEGORIAS_SUGERIDAS.map(([grupo, nombreCat, icono], i) => ({
+        hogar_id: hogarId,
+        grupo,
+        nombre: nombreCat,
+        icono,
+        ambito: "hogar",
+        orden: i,
+      })),
+    );
+  }
 
   return { userId: user.id, hogarId, nombreMiembro: nombre, rol: "administrador" };
+}
+
+export type TotalesMes = { ingresosCentavos: number; gastosCentavos: number };
+
+/**
+ * Totales del mes para el totalizador: lo que entró y lo que salió (gasto e
+ * ingreso; transferencias y pagos de resumen no son ni una cosa ni la otra).
+ */
+export async function totalesDelMes(sesion: SesionHogar, mes: string): Promise<TotalesMes> {
+  const hasta = `${mes.slice(0, 7)}-31`;
+  const { data } = await supabase
+    .from("movimientos")
+    .select("tipo, importe_centavos")
+    .eq("hogar_id", sesion.hogarId)
+    .in("tipo", ["gasto", "ingreso"])
+    .gte("fecha", mes)
+    .lte("fecha", hasta);
+  let ingresos = 0;
+  let gastos = 0;
+  for (const m of data ?? []) {
+    if (m.tipo === "ingreso") ingresos += m.importe_centavos;
+    else gastos += m.importe_centavos;
+  }
+  return { ingresosCentavos: ingresos, gastosCentavos: gastos };
 }
 
 // ──────────────────────────────────────────────────────── presupuesto

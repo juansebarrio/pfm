@@ -94,6 +94,8 @@ async function encontrarOCrearCategoria(
   sesion: SesionHogar,
   nombre: string,
   ambito: "hogar" | "personal",
+  // "Ingresos" cuando la categoría nace de un ingreso; "Otros" para gastos
+  grupo: "Otros" | "Ingresos" = "Otros",
 ): Promise<string | null> {
   const patron = nombre.replace(/[\\%_]/g, (m) => `\\${m}`);
   let consulta = supabase
@@ -115,7 +117,7 @@ async function encontrarOCrearCategoria(
     .insert({
       hogar_id: sesion.hogarId,
       user_id: ambito === "personal" ? sesion.userId : null,
-      grupo: "Otros",
+      grupo,
       nombre,
       ambito,
       icono: "tag",
@@ -190,6 +192,7 @@ export type CategoriaSimple = {
   id: string;
   nombre: string;
   icono: string;
+  grupo: string;
   ambito: "hogar" | "personal";
 };
 
@@ -198,13 +201,18 @@ export async function categoriasDelHogar(
 ): Promise<CategoriaSimple[]> {
   const { data } = await supabase
     .from("categorias")
-    .select("id, nombre, icono, ambito")
+    .select("id, nombre, icono, grupo, ambito")
     .eq("hogar_id", sesion.hogarId)
     .order("orden");
   return (data ?? []) as CategoriaSimple[];
 }
 
 // ────────────────────────────────────────────── crear gasto
+
+/** La fecha con la que se asigna el ciclo nunca es anterior a la compra real. */
+function fechaParaCiclo(fechaDevengado: string, fechaCompra: string): string {
+  return fechaDevengado > fechaCompra ? fechaDevengado : fechaCompra;
+}
 
 export type EntradaGasto = {
   importeCentavos: number;
@@ -217,6 +225,8 @@ export type EntradaGasto = {
   categoriaNombre?: string;
   ambito: "hogar" | "personal";
   cuotas: 1 | 3 | 6 | 12;
+  /** yyyy-mm-dd; sin fecha, hoy. Elegir otro mes es "arrastrar" el movimiento. */
+  fecha?: string;
   nota?: string;
 };
 
@@ -241,6 +251,8 @@ export async function crearGasto(
   }
 
   const hoy = hoyBA();
+  // la fecha elegida manda; el ciclo de tarjeta se asigna con max(fecha, hoy)
+  const fecha = datos.fecha ?? hoy;
   const visibilidad = datos.ambito === "hogar" ? "compartido" : "personal";
   const nota = datos.nota?.trim() || null;
 
@@ -251,6 +263,7 @@ export async function crearGasto(
       sesion,
       datos.categoriaNombre.trim(),
       datos.ambito,
+      esIngreso ? "Ingresos" : "Otros",
     );
     if (!categoriaId) return { ok: false, error: "No pudimos crear la categoría" };
   }
@@ -286,7 +299,7 @@ export async function crearGasto(
         descripcion,
         total_centavos: datos.importeCentavos,
         n_cuotas: datos.cuotas,
-        fecha: hoy,
+        fecha,
         visibilidad,
       })
       .select()
@@ -294,7 +307,7 @@ export async function crearGasto(
     if (errCompra || !compra) return { ok: false, error: "No pudimos guardar la compra" };
 
     const hijos = [];
-    for (const c of generarCuotas(datos.importeCentavos, datos.cuotas, hoy)) {
+    for (const c of generarCuotas(datos.importeCentavos, datos.cuotas, fecha)) {
       // la cuota devenga el día 1, pero para el ciclo manda la fecha real de
       // compra: así la cuota 1 no cae en un resumen que ya cerró
       const fechaCiclo = c.fecha > hoy ? c.fecha : hoy;
@@ -325,12 +338,12 @@ export async function crearGasto(
     tipo,
     descripcion,
     importe_centavos: datos.importeCentavos,
-    fecha: hoy,
+    fecha,
     cuenta_id: datos.medioTipo === "cuenta" ? datos.medioId : null,
     tarjeta_id: datos.medioTipo === "tarjeta" ? datos.medioId : null,
     ciclo_id:
       datos.medioTipo === "tarjeta"
-        ? await asegurarCicloParaFecha(sesion, datos.medioId, hoy)
+        ? await asegurarCicloParaFecha(sesion, datos.medioId, fechaParaCiclo(fecha, hoy))
         : null,
     categoria_id: categoriaId,
     visibilidad,
@@ -340,6 +353,64 @@ export async function crearGasto(
     return { ok: false, error: `No pudimos guardar el ${esIngreso ? "ingreso" : "gasto"}` };
   }
   return { ok: true };
+}
+
+/**
+ * Cambiar la fecha de un movimiento — también sirve para "arrastrarlo" a otro
+ * mes. Si es de tarjeta se le reasigna el ciclo de la fecha nueva (nunca uno
+ * anterior a hoy: ese resumen ya cerró). Las cuotas quedan afuera: su fecha la
+ * define la serie de la compra. Espeja actualizarFecha de la web.
+ */
+export async function actualizarFecha(
+  sesion: SesionHogar,
+  movimientoId: string,
+  fecha: string,
+): Promise<Resultado> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { ok: false, error: "Fecha inválida" };
+
+  const { data: mov } = await supabase
+    .from("movimientos")
+    .select("id, compra_id, tarjeta_id")
+    .eq("id", movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+  if (mov.compra_id) {
+    return { ok: false, error: "La fecha de una cuota la maneja la compra" };
+  }
+
+  const cambios: { fecha: string; ciclo_id?: string | null } = { fecha };
+  if (mov.tarjeta_id) {
+    cambios.ciclo_id = await asegurarCicloParaFecha(
+      sesion,
+      mov.tarjeta_id,
+      fechaParaCiclo(fecha, hoyBA()),
+    );
+  }
+  const { error } = await supabase
+    .from("movimientos")
+    .update(cambios)
+    .eq("id", mov.id)
+    .eq("hogar_id", sesion.hogarId);
+  if (error) return { ok: false, error: "No pudimos cambiar la fecha" };
+  return { ok: true };
+}
+
+/**
+ * "Arrastrar" el presupuesto: copia las partidas del mes anterior tal cual al
+ * mes pedido. baseParaArmar ya trae exactamente eso (activa + monto anterior).
+ */
+export async function repetirPresupuesto(
+  sesion: SesionHogar,
+  mes: string,
+  ambito: "hogar" | "personal",
+): Promise<Resultado> {
+  const base = await baseParaArmar(sesion, mes, ambito);
+  const partidas = base.filter((p) => p.activa);
+  if (partidas.length === 0) {
+    return { ok: false, error: "El mes anterior no tiene presupuesto para repetir" };
+  }
+  return armarPresupuesto(sesion, mes, ambito, partidas);
 }
 
 /** Editar el comentario de un movimiento. Vacío borra la nota. */
@@ -486,7 +557,8 @@ export async function baseParaArmar(
     obtenerPresupuestoMes(sesion, mesPrevio, ambito),
     categoriasDelHogar(sesion),
   ]);
-  const delAmbito = categorias.filter((c) => c.ambito === ambito);
+  // las categorías de ingreso no son partidas: el presupuesto es de gastos
+  const delAmbito = categorias.filter((c) => c.ambito === ambito && c.grupo !== "Ingresos");
 
   if (!anterior) {
     return delAmbito.map((c) => ({

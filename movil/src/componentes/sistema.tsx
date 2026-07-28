@@ -1,14 +1,17 @@
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import {
   ArrowDownLeft,
+  Banknote,
   Bike,
   Building2,
+  Briefcase,
   Bus,
   Camera,
   Check,
   Clapperboard,
   Fuel,
   Gift,
+  HandCoins,
   HeartPulse,
   House,
   PiggyBank,
@@ -216,6 +219,9 @@ const iconos: Record<string, LucideIcon> = {
   sparkles: Sparkles,
   camera: Camera,
   gift: Gift,
+  banknote: Banknote,
+  briefcase: Briefcase,
+  "hand-coins": HandCoins,
   tag: Tag,
 };
 

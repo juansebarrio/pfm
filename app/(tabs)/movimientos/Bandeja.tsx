@@ -13,7 +13,7 @@ import { Importe } from "@/components/sistema/Importe";
 // inline (3 chips sugeridos + "todas →" con la grilla completa), asignás
 // y pasa al historial sin salir — optimista, la fila desaparece al toque.
 
-export type CategoriaChip = { id: string; nombre: string; icono: string };
+export type CategoriaChip = { id: string; nombre: string; icono: string; grupo: string };
 
 export type ItemBandeja = {
   id: string;
@@ -153,7 +153,11 @@ export function Bandeja({ items, sugeridas, categorias }: Props) {
                 <div className="px-3.5 pb-3">
                   {!grillaAbierta ? (
                     <div className="flex flex-wrap gap-1.5">
-                      {sugeridas[item.ambito].map((c) => (
+                      {/* un ingreso se categoriza con las de Ingresos; un gasto, con el resto */}
+                      {(item.esIngreso
+                        ? categorias[item.ambito].filter((c) => c.grupo === "Ingresos")
+                        : sugeridas[item.ambito].filter((c) => c.grupo !== "Ingresos")
+                      ).map((c) => (
                         <Chip
                           key={c.id}
                           escala="mini"
@@ -175,7 +179,11 @@ export function Bandeja({ items, sugeridas, categorias }: Props) {
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 gap-[7px]">
-                      {categorias[item.ambito].map((c) => (
+                      {categorias[item.ambito]
+                        .filter((c) =>
+                          item.esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos",
+                        )
+                        .map((c) => (
                         <button
                           key={c.id}
                           type="button"

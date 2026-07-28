@@ -20,7 +20,7 @@ import { IconoCategoria } from "@/components/sistema/IconoCategoria";
 import { Importe } from "@/components/sistema/Importe";
 import { TecladoNumerico } from "@/components/sistema/TecladoNumerico";
 import type { CategoriaSimple, MedioDePago } from "@/lib/datos/movimientos";
-import { formatearDiaCorto } from "@/lib/dominio/fechas";
+import { formatearDiaCorto, hoyBA } from "@/lib/dominio/fechas";
 
 // Alta rápida (03): de tocar + a guardado en menos de 10 segundos.
 // El monto vive como string (entero + decimales) y se convierte a centavos
@@ -61,6 +61,7 @@ export function AltaRapida({
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [categoriaTexto, setCategoriaTexto] = useState("");
   const [nota, setNota] = useState("");
+  const [fecha, setFecha] = useState(hoyBA()); // editable: mover un gasto de día (o de mes) es arrastrarlo
   const [cuotas, setCuotas] = useState<Cuotas>(1);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,8 +85,15 @@ export function AltaRapida({
   const medio = mediosElegibles.find((m) => m.id === medioId);
   const enteroCentavos = Number(entero || "0") * 100;
   const centavos = enteroCentavos + (decimales ? Number(decimales.padEnd(2, "0")) : 0);
-  const categorias = ambito === "hogar" ? categoriasHogar : categoriasPersonales;
-  const todas = ambito === "hogar" ? todasHogar : todasPersonales;
+  // gasto → recientes sin las de Ingresos; ingreso → SOLO las de Ingresos
+  const todasDelAmbito = ambito === "hogar" ? todasHogar : todasPersonales;
+  const recientes = ambito === "hogar" ? categoriasHogar : categoriasPersonales;
+  const categorias = esIngreso
+    ? todasDelAmbito.filter((c) => c.grupo === "Ingresos")
+    : recientes.filter((c) => c.grupo !== "Ingresos");
+  const todas = todasDelAmbito.filter((c) =>
+    esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos",
+  );
 
   // categoría a mano: sugerencias entre las existentes del ámbito
   const textoNorm = categoriaTexto.trim().toLowerCase();
@@ -143,6 +151,8 @@ export function AltaRapida({
   function elegirTipo(t: Tipo) {
     setTipo(t);
     setCuotas(1);
+    setCategoriaId(null); // la categoría es del otro grupo: no puede quedar elegida
+    setCategoriaTexto("");
     if (t === "ingreso") {
       const cuentas = medios.filter((m) => m.tipo === "cuenta");
       if (!cuentas.some((m) => m.id === medioId)) setMedioId(cuentas[0]?.id ?? null);
@@ -178,6 +188,7 @@ export function AltaRapida({
         categoriaNombre: categoriaId ? undefined : categoriaTexto.trim() || undefined,
         ambito,
         cuotas: medio.tipo === "tarjeta" ? cuotas : 1,
+        fecha,
         nota: nota.trim() || undefined,
       });
       if (resultado.ok) {
@@ -413,6 +424,22 @@ export function AltaRapida({
             )}
           </div>
         )}
+
+        {/* fecha del movimiento: por defecto hoy, editable — elegir un día de
+            otro mes es mover el gasto a ese mes */}
+        <div className="mt-3 flex h-11 items-center gap-2.5 rounded-cta border border-borde bg-superficie px-3.5">
+          <CalendarDays className="size-[15px] shrink-0 text-tinta-secundaria" strokeWidth={1.5} aria-hidden />
+          <label htmlFor="fecha-mov" className="text-[12.5px] text-tinta-secundaria">
+            Fecha
+          </label>
+          <input
+            id="fecha-mov"
+            type="date"
+            value={fecha}
+            onChange={(e) => e.target.value && setFecha(e.target.value)}
+            className="min-w-0 flex-1 bg-transparent text-right text-[14px] text-tinta [color-scheme:dark]"
+          />
+        </div>
 
         {/* comentario libre → nota del movimiento */}
         <input

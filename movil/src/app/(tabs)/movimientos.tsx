@@ -12,13 +12,16 @@ import {
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Inbox } from "lucide-react-native";
-import { etiquetaDia, hoyBA } from "@dominio/fechas";
+import { formatearImporte } from "@dominio/dinero";
+import { etiquetaDia, hoyBA, mesDe } from "@dominio/fechas";
 import {
   bandejaDeEntrada,
   movimientosCategorizados,
   obtenerSesionHogar,
+  totalesDelMes,
   type MovimientoFila,
   type SesionHogar,
+  type TotalesMes,
 } from "@/lib/datos";
 import {
   borrarMovimiento,
@@ -64,6 +67,7 @@ export default function Movimientos() {
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
   const [ocultos, setOcultos] = useState<string[]>([]);
   const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
+  const [totales, setTotales] = useState<TotalesMes | null>(null);
 
   const hoy = hoyBA();
 
@@ -71,14 +75,16 @@ export default function Movimientos() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [b, h, c] = await Promise.all([
+    const [b, h, c, t] = await Promise.all([
       bandejaDeEntrada(s),
       movimientosCategorizados(s, 40),
       categoriasDelHogar(s),
+      totalesDelMes(s, mesDe(hoyBA())),
     ]);
     setBandeja(b);
     setHistorial(h);
     setCategorias(c);
+    setTotales(t);
     setOcultos([]);
   }, []);
 
@@ -158,6 +164,42 @@ export default function Movimientos() {
     >
       <Text style={e.titulo}>Movimientos</Text>
 
+      {/* Totalizador del mes: lo que entró, lo que salió y el saldo. Es caja
+          (ingresos − gastos), no el "disponible" del presupuesto. */}
+      {totales && (
+        <View style={e.totalizador}>
+          <View style={e.totalCol}>
+            <Text style={e.totalEtiqueta}>Ingresos</Text>
+            <Text numberOfLines={1} style={[e.totalCifra, { color: color.verde }]}>
+              {formatearImporte(totales.ingresosCentavos)}
+            </Text>
+          </View>
+          <View style={[e.totalCol, e.totalConBorde]}>
+            <Text style={e.totalEtiqueta}>Gastos</Text>
+            <Text numberOfLines={1} style={e.totalCifra}>
+              {formatearImporte(totales.gastosCentavos)}
+            </Text>
+          </View>
+          <View style={[e.totalCol, e.totalConBorde]}>
+            <Text style={e.totalEtiqueta}>Balance</Text>
+            <Text
+              numberOfLines={1}
+              style={[
+                e.totalCifra,
+                {
+                  color:
+                    totales.ingresosCentavos - totales.gastosCentavos < 0
+                      ? color.rojo
+                      : color.verde,
+                },
+              ]}
+            >
+              {formatearImporte(totales.ingresosCentavos - totales.gastosCentavos)}
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Bandeja de entrada: borde cálido + contador ámbar. Tocar un ítem
           despliega las categorías; al asignar, pasa al historial. */}
       {visiblesBandeja.length > 0 && (
@@ -171,7 +213,12 @@ export default function Movimientos() {
           </View>
           {visiblesBandeja.map((m, i) => {
             const abierto = abiertoId === m.id;
-            const delAmbito = categorias.filter((c) => c.ambito === m.ambito);
+            // un ingreso se categoriza con las de Ingresos; un gasto, con el resto
+            const delAmbito = categorias.filter(
+              (c) =>
+                c.ambito === m.ambito &&
+                (m.esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos"),
+            );
             return (
               <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
                 <Pressable
@@ -257,6 +304,7 @@ export default function Movimientos() {
     <DetalleMovimiento
       movimiento={detalle}
       sesion={sesion}
+      alCambiar={cargar}
       alCerrar={() => setDetalle(null)}
       alBorrar={() => {
         const id = detalle?.id;
@@ -276,6 +324,18 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.papel,
   },
+  totalizador: {
+    marginTop: 14,
+    flexDirection: "row",
+    borderRadius: radio.card,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+  },
+  totalCol: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },
+  totalEtiqueta: { fontSize: 10.5, color: color.tintaSecundaria },
+  totalCifra: { marginTop: 2, fontSize: 14, fontWeight: "600", color: color.tinta },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
   bandeja: {
     marginTop: 16,

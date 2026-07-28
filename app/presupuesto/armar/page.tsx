@@ -35,8 +35,9 @@ export default async function ArmarPresupuesto({ searchParams }: Props) {
 
   const mesPrevio = mesAnterior(mes);
   const anterior = await obtenerPresupuestoMes(sesion, mesPrevio, ambito);
+  // las de ingreso no son partidas: el presupuesto es de gastos
   const categorias = (await categoriasDelHogar(sesion)).filter(
-    (c) => c.ambito === ambito,
+    (c) => c.ambito === ambito && c.grupo !== "Ingresos",
   );
 
   // Base: partidas del mes anterior en su orden; las categorías que no

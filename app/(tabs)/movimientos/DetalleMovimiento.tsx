@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { actualizarNota } from "@/app/acciones/movimientos";
+import { actualizarFecha, actualizarNota } from "@/app/acciones/movimientos";
 import { Badge } from "@/components/sistema/Badge";
 import { HojaInferior } from "@/components/sistema/HojaInferior";
 import { IconoCategoria } from "@/components/sistema/IconoCategoria";
@@ -82,7 +82,13 @@ export function DetalleMovimiento({
               )}
             </Fila>
             {m.medio && <Fila etiqueta="Medio">{m.medio}</Fila>}
-            <Fila etiqueta="Fecha">{formatearDiaLargo(m.fecha)}</Fila>
+            <Fila etiqueta="Fecha">
+              {m.esCuota ? (
+                formatearDiaLargo(m.fecha)
+              ) : (
+                <EditorFecha key={m.id} movimientoId={m.id} fechaInicial={m.fecha} />
+              )}
+            </Fila>
             <Fila etiqueta="Ámbito">
               <Badge variante={m.visibilidad === "compartido" ? "hogar" : "personal"}>
                 {m.visibilidad === "compartido" ? "hogar" : "personal"}
@@ -130,6 +136,53 @@ export function DetalleMovimiento({
 // Campo de comentario del detalle: mismo input que el alta rápida. El botón
 // "Guardar" aparece solo cuando el texto difiere de lo guardado; al confirmar
 // muestra "Guardado ✓" y refresca la lista de fondo.
+/**
+ * La fecha se edita acá mismo y se guarda al elegirla — cambiarla a un día de
+ * otro mes es "arrastrar" el movimiento a ese mes. Si es de tarjeta, el server
+ * le reasigna el ciclo que corresponde.
+ */
+function EditorFecha({
+  movimientoId,
+  fechaInicial,
+}: {
+  movimientoId: string;
+  fechaInicial: string;
+}) {
+  const router = useRouter();
+  const [pendiente, iniciarTransicion] = useTransition();
+  const [fecha, setFecha] = useState(fechaInicial);
+  const [error, setError] = useState(false);
+
+  function guardar(nueva: string) {
+    if (!nueva || nueva === fecha || pendiente) return;
+    const anterior = fecha;
+    setFecha(nueva); // optimista: el input ya muestra la fecha nueva
+    setError(false);
+    iniciarTransicion(async () => {
+      const r = await actualizarFecha({ movimientoId, fecha: nueva });
+      if (r.ok) {
+        router.refresh();
+      } else {
+        setFecha(anterior);
+        setError(true);
+      }
+    });
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {error && <span className="text-[11px] text-rojo">no se pudo</span>}
+      <input
+        type="date"
+        value={fecha}
+        onChange={(e) => guardar(e.target.value)}
+        aria-label="Fecha del movimiento"
+        className="bg-transparent text-right text-[13.5px] font-medium text-tinta [color-scheme:inherit]"
+      />
+    </span>
+  );
+}
+
 function EditorNota({
   movimientoId,
   notaInicial,

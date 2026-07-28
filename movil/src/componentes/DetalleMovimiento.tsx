@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -13,7 +14,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Trash2 } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
 import { formatearDiaLargo } from "@dominio/fechas";
-import { actualizarNota } from "@/lib/acciones";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { actualizarFecha, actualizarNota } from "@/lib/acciones";
+import { aISO, desdeISO } from "@/lib/fecha-local";
 import type { MovimientoFila, SesionHogar } from "@/lib/datos";
 import { color, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
@@ -36,11 +39,14 @@ export function DetalleMovimiento({
   sesion,
   alCerrar,
   alBorrar,
+  alCambiar,
 }: {
   movimiento: MovimientoFila | null;
   sesion: SesionHogar | null;
   alCerrar: () => void;
   alBorrar: () => void;
+  /** algo cambió (p. ej. la fecha): la lista de atrás tiene que recargar */
+  alCambiar?: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const m = movimiento;
@@ -82,7 +88,17 @@ export function DetalleMovimiento({
                 </Fila>
               )}
               <Fila etiqueta="Fecha" conBorde>
-                <Text style={e.valor}>{formatearDiaLargo(m.fecha)}</Text>
+                {m.badgeCuota ? (
+                  <Text style={e.valor}>{formatearDiaLargo(m.fecha)}</Text>
+                ) : (
+                  <EditorFecha
+                    key={m.id}
+                    sesion={sesion}
+                    movimientoId={m.id}
+                    fechaInicial={m.fecha}
+                    alCambiar={alCambiar}
+                  />
+                )}
               </Fila>
               <Fila etiqueta="Ámbito" conBorde>
                 <Badge variante={m.ambito === "hogar" ? "hogar" : "personal"}>
@@ -145,6 +161,51 @@ function Fila({
       <Text style={e.etiqueta}>{etiqueta}</Text>
       <View style={{ flexShrink: 1 }}>{children}</View>
     </View>
+  );
+}
+
+/**
+ * La fecha se edita acá mismo y se guarda al elegirla — cambiarla a otro mes es
+ * "arrastrar" el movimiento. Si es de tarjeta, la acción reasigna el ciclo.
+ */
+function EditorFecha({
+  sesion,
+  movimientoId,
+  fechaInicial,
+  alCambiar,
+}: {
+  sesion: SesionHogar | null;
+  movimientoId: string;
+  fechaInicial: string;
+  alCambiar?: () => void;
+}) {
+  const [fecha, setFecha] = useState(fechaInicial);
+
+  async function guardar(elegida: Date) {
+    const nueva = aISO(elegida);
+    if (!sesion || nueva === fecha) return;
+    const anterior = fecha;
+    setFecha(nueva); // optimista
+    const r = await actualizarFecha(sesion, movimientoId, nueva);
+    if (r.ok) {
+      tacto.guardado();
+      alCambiar?.();
+    } else {
+      setFecha(anterior);
+      tacto.error();
+      Alert.alert("No pudimos cambiar la fecha", r.error);
+    }
+  }
+
+  return (
+    <DateTimePicker
+      mode="date"
+      display="compact"
+      value={desdeISO(fecha)}
+      onChange={(_evento, elegida) => elegida && guardar(elegida)}
+      themeVariant="dark"
+      accentColor={color.verde}
+    />
   );
 }
 

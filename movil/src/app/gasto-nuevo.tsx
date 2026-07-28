@@ -20,8 +20,10 @@ import {
   X,
 } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { aISO, desdeISO } from "@/lib/fecha-local";
 import { formatearImporte } from "@dominio/dinero";
-import { formatearDiaCorto } from "@dominio/fechas";
+import { formatearDiaCorto, hoyBA } from "@dominio/fechas";
 import { obtenerSesionHogar, type SesionHogar } from "@/lib/datos";
 import {
   categoriasDelHogar,
@@ -62,6 +64,7 @@ export default function GastoNuevo() {
   const [medioId, setMedioId] = useState<string | null>(null);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [nota, setNota] = useState("");
+  const [fecha, setFecha] = useState(hoyBA()); // editable: mover el gasto de día (o de mes)
   const [cuotas, setCuotas] = useState<Cuotas>(1);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState(false);
@@ -100,7 +103,10 @@ export default function GastoNuevo() {
   const medio = mediosElegibles.find((m) => m.id === medioId);
   const enteroCentavos = Number(entero || "0") * 100;
   const centavos = enteroCentavos + (decimales ? Number(decimales.padEnd(2, "0")) : 0);
-  const categoriasDelAmbito = categorias.filter((c) => c.ambito === ambito);
+  // gasto → todas menos Ingresos; ingreso → SOLO las de Ingresos
+  const categoriasDelAmbito = categorias.filter(
+    (c) => c.ambito === ambito && (esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos"),
+  );
   const hayCategoria = categoriaId !== null;
 
   // updates funcionales: taps consecutivos en el mismo tick no se pisan
@@ -150,6 +156,7 @@ export default function GastoNuevo() {
     tacto.toque();
     setTipo(t);
     setCuotas(1);
+    setCategoriaId(null); // la categoría es del otro grupo: no puede quedar elegida
     if (t === "ingreso") {
       const cuentas = medios.filter((m) => m.tipo === "cuenta");
       if (!cuentas.some((m) => m.id === medioId)) setMedioId(cuentas[0]?.id ?? null);
@@ -168,6 +175,7 @@ export default function GastoNuevo() {
       categoriaId,
       ambito,
       cuotas: medio.tipo === "tarjeta" ? cuotas : 1,
+      fecha,
       nota: nota.trim() || undefined,
     });
     if (r.ok) {
@@ -369,6 +377,21 @@ export default function GastoNuevo() {
           })}
         </View>
 
+        {/* fecha del movimiento: por defecto hoy, editable — elegir un día de
+            otro mes es mover el gasto a ese mes */}
+        <View style={e.filaFecha}>
+          <CalendarDays size={15} color={color.tintaSecundaria} strokeWidth={1.5} />
+          <Text style={e.etiquetaFecha}>Fecha</Text>
+          <DateTimePicker
+            mode="date"
+            display="compact"
+            value={desdeISO(fecha)}
+            onChange={(_evento, elegida) => elegida && setFecha(aISO(elegida))}
+            themeVariant="dark"
+            accentColor={color.verde}
+          />
+        </View>
+
         <TextInput
           value={nota}
           onChangeText={setNota}
@@ -546,6 +569,19 @@ const e = StyleSheet.create({
   tileSel: { borderWidth: 1.5, borderColor: color.verde, backgroundColor: color.verdeSuave },
   tileTexto: { maxWidth: "100%", fontSize: 10, fontWeight: "500", color: color.tinta },
   tileTextoSel: { fontWeight: "600", color: color.verde },
+  filaFecha: {
+    marginTop: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  etiquetaFecha: { flex: 1, fontSize: 12.5, color: color.tintaSecundaria },
   inputNota: {
     marginTop: 12,
     marginBottom: 16,

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { mesAnterior } from "@/lib/dominio/fechas";
 
 const esquemaArmado = z.object({
   mes: z.string().regex(/^\d{4}-\d{2}-01$/),
@@ -23,6 +24,61 @@ const esquemaArmado = z.object({
 });
 
 export type ResultadoArmado = { ok: true } | { ok: false; error: string };
+
+const esquemaRepetir = z.object({
+  mes: z.string().regex(/^\d{4}-\d{2}-01$/),
+  ambito: z.enum(["hogar", "personal"]),
+});
+
+/**
+ * "Arrastrar" el presupuesto: copia tal cual las partidas del mes anterior al
+ * mes pedido, con sus montos y flags. Para ajustar antes de confirmar está el
+ * armado a mano; esto es el camino de un toque para el mes que ya funciona.
+ */
+export async function repetirPresupuesto(entrada: unknown): Promise<ResultadoArmado> {
+  const parseo = esquemaRepetir.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const { mes, ambito } = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+  const previo = mesAnterior(mes);
+
+  let consulta = sesion.supabase
+    .from("presupuestos")
+    .select("id, partidas_presupuesto(categoria_id, asignado_centavos, activa, fija, rollover, nota)")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("mes", previo)
+    .eq("ambito", ambito);
+  consulta =
+    ambito === "personal"
+      ? consulta.eq("user_id", sesion.userId)
+      : consulta.is("user_id", null);
+  const { data: anterior } = await consulta.maybeSingle();
+  const partidas = (anterior?.partidas_presupuesto ?? []) as Array<{
+    categoria_id: string;
+    asignado_centavos: number;
+    activa: boolean;
+    fija: boolean;
+    rollover: boolean;
+    nota: string | null;
+  }>;
+  if (partidas.length === 0) {
+    return { ok: false, error: "El mes anterior no tiene presupuesto para repetir" };
+  }
+
+  return armarPresupuesto({
+    mes,
+    ambito,
+    partidas: partidas.map((p) => ({
+      categoriaId: p.categoria_id,
+      asignadoCentavos: p.asignado_centavos,
+      activa: p.activa,
+      fija: p.fija,
+      rollover: p.rollover,
+      nota: p.nota,
+    })),
+  });
+}
 
 /** Confirmar el armado del mes (02): crea presupuesto + partidas. */
 export async function armarPresupuesto(entrada: unknown): Promise<ResultadoArmado> {

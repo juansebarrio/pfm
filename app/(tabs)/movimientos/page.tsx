@@ -4,11 +4,13 @@ import {
   categoriasDelHogar,
   categoriasRecientes,
   mediosDePago,
+  totalesDelMes,
   type MovimientoLista,
 } from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
-import { etiquetaDia, hoyBA } from "@/lib/dominio/fechas";
+import { etiquetaDia, hoyBA, mesDe } from "@/lib/dominio/fechas";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
+import { TotalizadorMes } from "./TotalizadorMes";
 import { Filtros } from "./Filtros";
 import { Historial } from "./Historial";
 import { miembrosDelHogar, movimientosFiltrados } from "./datos";
@@ -45,8 +47,8 @@ function comoTipo(valor: string | undefined): "gasto" | "ingreso" | undefined {
   return valor === "gasto" || valor === "ingreso" ? valor : undefined;
 }
 
-const soloChip = ({ id, nombre, icono }: { id: string; nombre: string; icono: string }) =>
-  ({ id, nombre, icono }) satisfies CategoriaChip;
+const soloChip = ({ id, nombre, icono, grupo }: { id: string; nombre: string; icono: string; grupo: string }) =>
+  ({ id, nombre, icono, grupo }) satisfies CategoriaChip;
 
 export default async function PaginaMovimientos({
   searchParams,
@@ -64,6 +66,7 @@ export default async function PaginaMovimientos({
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
 
+  const totalesPedido = totalesDelMes(sesion, mesDe(hoy));
   const [bandeja, historial, categorias, medios, miembros, recientesHogar, recientesPersonal] =
     await Promise.all([
       bandejaDeEntrada(sesion),
@@ -107,6 +110,10 @@ export default async function PaginaMovimientos({
           {inicial}
         </Link>
       </header>
+
+      {/* Totalizador del mes: lo que entró, lo que salió y el saldo entre ambos.
+          No es el "disponible" del presupuesto (eso vive en Resumen): es caja. */}
+      <TotalizadorMes totales={await totalesPedido} />
 
       <div className="mt-4">
         <Filtros
