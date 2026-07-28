@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const CATEGORIAS_SUGERIDAS: Array<[string, string, string]> = [
@@ -21,7 +22,7 @@ const CATEGORIAS_SUGERIDAS: Array<[string, string, string]> = [
 ];
 
 export type SesionHogar = {
-  supabase: Awaited<ReturnType<typeof crearClienteServidor>>;
+  supabase: SupabaseClient;
   userId: string;
   hogarId: string;
   nombreMiembro: string;
@@ -32,13 +33,22 @@ export type SesionHogar = {
  * Usuario + su hogar. Si el usuario recién se registró y no tiene hogar,
  * se le crea uno con las categorías sugeridas (decisión anotada: onboarding
  * sin fricción; el nombre se edita después en /hogar).
+ *
+ * `clientePortador` es para los pedidos de la app nativa, que se autentica con
+ * `Authorization: Bearer` en vez de cookies. Ahí no hay adónde redirigir: sin
+ * sesión tira error y el route handler responde 401.
  */
-export async function obtenerSesionHogar(): Promise<SesionHogar> {
-  const supabase = await crearClienteServidor();
+export async function obtenerSesionHogar(
+  clientePortador?: SupabaseClient,
+): Promise<SesionHogar> {
+  const supabase = clientePortador ?? (await crearClienteServidor());
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    if (clientePortador) throw new Error("sin sesión");
+    redirect("/login");
+  }
 
   // hogar activo = el último al que te sumaste: así, quien acepta una
   // invitación después de haber recibido su hogar automático aterriza en el

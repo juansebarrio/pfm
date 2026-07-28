@@ -10,7 +10,13 @@ import {
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CalendarClock, CreditCard, Inbox, type LucideIcon } from "lucide-react-native";
+import {
+  CalendarClock,
+  CreditCard,
+  Inbox,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react-native";
 // ⭐ Dominio COMPARTIDO con la web: los mismos archivos, sin copiar ni adaptar.
 import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
@@ -125,11 +131,20 @@ export default function Resumen() {
           <Text style={e.saludo}>Hola, {sesion?.nombreMiembro ?? ""}</Text>
           <Text style={e.fecha}>{formatearDiaLargo(hoy)}</Text>
         </View>
-        <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
-          <Text style={e.avatarTexto}>
-            {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
-          </Text>
-        </Pressable>
+        <View style={e.accionesEncabezado}>
+          <Pressable
+            onPress={() => router.push("/asistente")}
+            hitSlop={8}
+            style={e.botonAsistente}
+          >
+            <Sparkles size={17} color={color.verde} strokeWidth={1.5} />
+          </Pressable>
+          <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
+            <Text style={e.avatarTexto}>
+              {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Card de disponible */}
@@ -237,6 +252,17 @@ const e = StyleSheet.create({
   },
   saludo: { fontSize: 22, fontWeight: "600", color: color.tinta },
   fecha: { marginTop: 2, fontSize: 12.5, color: color.tintaSecundaria },
+  accionesEncabezado: { flexDirection: "row", alignItems: "center", gap: 10 },
+  botonAsistente: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatar: {
     width: 34,
     height: 34,

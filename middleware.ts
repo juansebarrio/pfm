@@ -10,7 +10,22 @@ function esRutaPublica(pathname: string) {
   );
 }
 
+/**
+ * La app nativa no tiene cookies: manda `Authorization: Bearer <access_token>`.
+ * Esos pedidos pasan sin el portero de cookies porque el route handler valida
+ * el token él mismo (y responde 401 si no sirve). Se limita a /api/ a propósito:
+ * las páginas siempre pasan por el portero.
+ */
+function esPedidoConPortador(request: NextRequest) {
+  return (
+    request.nextUrl.pathname.startsWith("/api/") &&
+    request.headers.get("authorization")?.startsWith("Bearer ") === true
+  );
+}
+
 export async function middleware(request: NextRequest) {
+  if (esPedidoConPortador(request)) return NextResponse.next({ request });
+
   let respuesta = NextResponse.next({ request });
 
   const supabase = createServerClient(

@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { contextoFinanciero } from "@/lib/ia/contexto";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { crearClienteConToken } from "@/lib/supabase/portador";
 
 // Asistente financiero: POST con el historial del chat, respuesta en
 // streaming (texto plano por chunks). El contexto del hogar se arma en el
@@ -53,10 +54,17 @@ export async function POST(request: Request) {
     return new Response("Datos inválidos", { status: 400 });
   }
 
+  // La web manda cookies; la app nativa manda `Authorization: Bearer`. En los
+  // dos casos manda RLS: el token identifica al usuario ante Postgres.
+  const autorizacion = request.headers.get("authorization");
+  const token = autorizacion?.startsWith("Bearer ")
+    ? autorizacion.slice(7).trim()
+    : null;
+
   // obtenerSesionHogar redirige a /login sin sesión; acá preferimos un 401
   let sesion;
   try {
-    sesion = await obtenerSesionHogar();
+    sesion = await obtenerSesionHogar(token ? crearClienteConToken(token) : undefined);
   } catch {
     return new Response("No autorizado", { status: 401 });
   }
