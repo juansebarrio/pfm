@@ -3,7 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // /auth: vuelta del OAuth de Google (el código se canjea ahí, aún sin sesión)
 // /privacidad: Apple exige que se pueda leer ANTES de crear una cuenta
-const RUTAS_PUBLICAS = ["/login", "/registro", "/invitacion", "/auth", "/privacidad"];
+// /api/demo: entrar a la demo desde la app nativa, justamente sin sesión
+const RUTAS_PUBLICAS = [
+  "/login",
+  "/registro",
+  "/invitacion",
+  "/auth",
+  "/privacidad",
+  "/api/demo",
+];
 
 function esRutaPublica(pathname: string) {
   return RUTAS_PUBLICAS.some(

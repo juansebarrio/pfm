@@ -254,6 +254,10 @@ export type MovimientoFila = {
   medio: string | null;
   ambito: "hogar" | "personal";
   badgeCuota?: string;
+  /** lo que solo mira el detalle: la lista no los usa */
+  tipo: "gasto" | "ingreso" | "transferencia" | "pago_resumen";
+  nota: string | null;
+  nCuotasTotal: number | null;
 };
 
 type FilaMovimientoDb = {
@@ -264,6 +268,7 @@ type FilaMovimientoDb = {
   tipo: string;
   visibilidad: string;
   n_cuota: number | null;
+  nota: string | null;
   categorias: { nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; ultimos4: string } | null;
@@ -273,7 +278,7 @@ type FilaMovimientoDb = {
 // OJO: movimientos tiene DOS FK a cuentas (cuenta_id y cuenta_destino_id), así
 // que el embed hay que desambiguarlo por nombre de constraint o PostgREST falla.
 const SELECT_MOVIMIENTO =
-  "id, descripcion, importe_centavos, fecha, tipo, visibilidad, n_cuota, " +
+  "id, descripcion, importe_centavos, fecha, tipo, visibilidad, n_cuota, nota, " +
   "categorias(nombre, icono), cuentas!movimientos_cuenta_id_fkey(nombre), " +
   "tarjetas(nombre, ultimos4), compras_en_cuotas(n_cuotas)";
 
@@ -296,6 +301,9 @@ function aFila(m: FilaMovimientoDb): MovimientoFila {
       m.n_cuota && m.compras_en_cuotas
         ? `CUOTA ${m.n_cuota}/${m.compras_en_cuotas.n_cuotas}`
         : undefined,
+    tipo: m.tipo as MovimientoFila["tipo"],
+    nota: m.nota ?? null,
+    nCuotasTotal: m.compras_en_cuotas?.n_cuotas ?? null,
   };
 }
 

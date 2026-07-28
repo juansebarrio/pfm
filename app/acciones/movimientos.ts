@@ -9,6 +9,8 @@ import { hoyBA } from "@/lib/dominio/fechas";
 
 const esquemaGasto = z.object({
   importeCentavos: z.number().int().positive().max(100_000_000_000),
+  // el default mantiene compatibles a los llamadores viejos, que solo cargaban gastos
+  tipo: z.enum(["gasto", "ingreso"]).default("gasto"),
   medioTipo: z.enum(["cuenta", "tarjeta"]),
   medioId: z.uuid(),
   categoriaId: z.uuid().nullable(),
@@ -67,11 +69,26 @@ async function encontrarOCrearCategoria(
   return nueva?.id ?? null;
 }
 
-/** Alta rápida (03). El gasto aparece al instante: optimistic UI del lado cliente. */
+/**
+ * Alta rápida (03). El movimiento aparece al instante: optimistic UI del cliente.
+ *
+ * Sirve para gastos y para ingresos. Un ingreso es más simple por definición: la
+ * plata ENTRA a una cuenta, así que no admite tarjeta (no existe "cobrar en la
+ * tarjeta") ni cuotas. El check de la tabla ya lo exige — validarlo acá es para
+ * dar un error entendible en vez de un 400 de Postgres.
+ */
 export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
   const parseo = esquemaGasto.safeParse(entrada);
   if (!parseo.success) return { ok: false, error: "Datos inválidos" };
   const datos = parseo.data;
+  const esIngreso = datos.tipo === "ingreso";
+
+  if (esIngreso && datos.medioTipo !== "cuenta") {
+    return { ok: false, error: "Un ingreso entra a una cuenta, no a una tarjeta" };
+  }
+  if (esIngreso && datos.cuotas > 1) {
+    return { ok: false, error: "Un ingreso no se cobra en cuotas" };
+  }
 
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
@@ -95,7 +112,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
       .single();
     descripcion = cat?.nombre;
   }
-  descripcion ||= "Gasto";
+  descripcion ||= esIngreso ? "Ingreso" : "Gasto";
 
   if (datos.cuotas > 1) {
     if (datos.medioTipo !== "tarjeta") {
@@ -152,7 +169,7 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
     const { error } = await sesion.supabase.from("movimientos").insert({
       hogar_id: sesion.hogarId,
       user_id: sesion.userId,
-      tipo: "gasto",
+      tipo: datos.tipo,
       descripcion,
       importe_centavos: datos.importeCentavos,
       fecha: hoy,
@@ -166,7 +183,9 @@ export async function crearGasto(entrada: unknown): Promise<ResultadoAccion> {
       visibilidad,
       nota,
     });
-    if (error) return { ok: false, error: "No pudimos guardar el gasto" };
+    if (error) {
+      return { ok: false, error: `No pudimos guardar el ${esIngreso ? "ingreso" : "gasto"}` };
+    }
   }
 
   revalidatePath("/resumen");

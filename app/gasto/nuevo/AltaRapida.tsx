@@ -3,7 +3,14 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, CreditCard, Wallet, X } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarDays,
+  CreditCard,
+  Wallet,
+  X,
+} from "lucide-react";
 import { crearGasto } from "@/app/acciones/movimientos";
 import { Badge } from "@/components/sistema/Badge";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
@@ -22,6 +29,7 @@ import { formatearDiaCorto } from "@/lib/dominio/fechas";
 
 type Ambito = "hogar" | "personal";
 type Cuotas = 1 | 3 | 6 | 12;
+type Tipo = "gasto" | "ingreso";
 
 const OPCIONES_CUOTAS: readonly Cuotas[] = [1, 3, 6, 12];
 const CLAVE_AMBITO = "sobres.ambito";
@@ -47,6 +55,7 @@ export function AltaRapida({
   const router = useRouter();
   const [pendiente, iniciarTransicion] = useTransition();
 
+  const [tipo, setTipo] = useState<Tipo>("gasto");
   const [ambito, setAmbito] = useState<Ambito>("hogar");
   const [medioId, setMedioId] = useState<string | null>(medios[0]?.id ?? null);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
@@ -67,7 +76,12 @@ export function AltaRapida({
     if (m && medios.some((x) => x.id === m)) setMedioId(m);
   }, [medios]);
 
-  const medio = medios.find((m) => m.id === medioId);
+  // Un ingreso ENTRA a una cuenta: la tarjeta no es un destino posible, así que
+  // ni se ofrece (la action lo rechaza igual, pero un chip que da error es peor
+  // que un chip que no está).
+  const esIngreso = tipo === "ingreso";
+  const mediosElegibles = esIngreso ? medios.filter((m) => m.tipo === "cuenta") : medios;
+  const medio = mediosElegibles.find((m) => m.id === medioId);
   const enteroCentavos = Number(entero || "0") * 100;
   const centavos = enteroCentavos + (decimales ? Number(decimales.padEnd(2, "0")) : 0);
   const categorias = ambito === "hogar" ? categoriasHogar : categoriasPersonales;
@@ -120,6 +134,21 @@ export function AltaRapida({
     window.localStorage.setItem(CLAVE_MEDIO, m.id);
   }
 
+  /**
+   * Cambiar de gasto a ingreso puede dejar seleccionada una tarjeta, que ya no
+   * es elegible. En vez de dejar el formulario en un estado imposible, se cae a
+   * la primera cuenta. El medio elegido NO se recuerda acá: el default de la
+   * próxima vez sigue siendo el del gasto, que es el caso frecuente.
+   */
+  function elegirTipo(t: Tipo) {
+    setTipo(t);
+    setCuotas(1);
+    if (t === "ingreso") {
+      const cuentas = medios.filter((m) => m.tipo === "cuenta");
+      if (!cuentas.some((m) => m.id === medioId)) setMedioId(cuentas[0]?.id ?? null);
+    }
+  }
+
   // elegir un tile o una sugerencia y escribir a mano son mutuamente exclusivos
   function alternarCategoria(id: string) {
     setCategoriaId(categoriaId === id ? null : id);
@@ -142,6 +171,7 @@ export function AltaRapida({
     iniciarTransicion(async () => {
       const resultado = await crearGasto({
         importeCentavos: centavos,
+        tipo,
         medioTipo: medio.tipo,
         medioId: medio.id,
         categoriaId,
@@ -168,7 +198,9 @@ export function AltaRapida({
       >
         <X className="size-[22px]" strokeWidth={2} aria-hidden />
       </button>
-      <h1 className="flex-1 text-[16px] font-semibold">Nuevo gasto</h1>
+      <h1 className="flex-1 text-[16px] font-semibold">
+        {esIngreso ? "Nuevo ingreso" : "Nuevo gasto"}
+      </h1>
       {medios.length > 0 && <SegmentedMini valor={ambito} onCambio={elegirAmbito} />}
     </header>
   );
@@ -202,8 +234,40 @@ export function AltaRapida({
     <div className="flex min-h-dvh flex-col px-5 pt-14">
       {cabecera}
 
+      {/* Gasto o ingreso. Va arriba de todo porque cambia el sentido de la
+          pantalla entera: qué medios se ofrecen, si hay cuotas y qué se pregunta. */}
+      <div
+        role="group"
+        aria-label="Tipo de movimiento"
+        className="mt-5 flex rounded-cta bg-fondo-segmented p-[3px]"
+      >
+        {(["gasto", "ingreso"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={tipo === t}
+            onClick={() => elegirTipo(t)}
+            className={`flex flex-1 items-center justify-center gap-1.5 rounded-[9px] py-2 text-[13.5px] transition-colors ${
+              tipo === t
+                ? "bg-segmented-activo font-semibold text-tinta shadow-thumb"
+                : "font-medium text-tinta-secundaria"
+            }`}
+          >
+            {t === "gasto" ? (
+              <ArrowUpRight className="size-4" strokeWidth={1.8} aria-hidden />
+            ) : (
+              <ArrowDownLeft className="size-4" strokeWidth={1.8} aria-hidden />
+            )}
+            {t === "gasto" ? "Gasto" : "Ingreso"}
+          </button>
+        ))}
+      </div>
+
       {/* Monto protagonista: 52px, la tipografía más grande del sistema */}
-      <div className="mt-7 text-center" aria-live="polite">
+      <div
+        className={`mt-6 text-center ${esIngreso ? "text-verde" : ""}`}
+        aria-live="polite"
+      >
         <Importe centavos={enteroCentavos} variante="hero-alta" />
         {decimales !== null && (
           // espejo exacto de la variante hero-alta de <Importe> para la coma en curso
@@ -214,10 +278,10 @@ export function AltaRapida({
       {/* Chips de medio de pago con fade en el borde derecho */}
       <div
         role="group"
-        aria-label="Medio de pago"
+        aria-label={esIngreso ? "Cuenta de destino" : "Medio de pago"}
         className="-mx-5 mt-6 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_32px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {medios.map((m) => (
+        {mediosElegibles.map((m) => (
           <Chip
             key={m.id}
             escala="medio"
@@ -231,6 +295,17 @@ export function AltaRapida({
           </Chip>
         ))}
       </div>
+
+      {/* Solo tarjetas cargadas: un ingreso no tiene dónde entrar */}
+      {esIngreso && mediosElegibles.length === 0 && (
+        <p className="mt-3 rounded-cta border border-borde bg-superficie px-3.5 py-3 text-[12.5px] leading-[1.5] text-tinta-secundaria">
+          Un ingreso entra a una cuenta y todavía no tenés ninguna.{" "}
+          <Link href="/cuentas" className="font-medium text-verde underline underline-offset-2">
+            Creá una cuenta
+          </Link>{" "}
+          y volvé.
+        </p>
+      )}
 
       {/* Card contextual de tarjeta: ciclo + cuotas (solo con tarjeta, §3.11) */}
       {medio?.tipo === "tarjeta" && (
@@ -280,7 +355,9 @@ export function AltaRapida({
 
       {/* Categoría (§3.12): grilla de recientes + escribir a mano + comentario */}
       <section className="mt-5">
-        <p className="text-[12px] text-tinta-secundaria">¿En qué lo gastaste? · opcional</p>
+        <p className="text-[12px] text-tinta-secundaria">
+          {esIngreso ? "¿De dónde viene?" : "¿En qué lo gastaste?"} · opcional
+        </p>
 
         {categorias.length > 0 && (
           <div className="mt-2 grid grid-cols-4 gap-[7px]">

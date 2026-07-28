@@ -10,7 +10,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CalendarDays, CreditCard, Delete, Wallet, X } from "lucide-react-native";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarDays,
+  CreditCard,
+  Delete,
+  Wallet,
+  X,
+} from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { formatearImporte } from "@dominio/dinero";
 import { formatearDiaCorto } from "@dominio/fechas";
@@ -33,6 +41,7 @@ import { Badge, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
 
 type Ambito = "hogar" | "personal";
 type Cuotas = 1 | 3 | 6 | 12;
+type Tipo = "gasto" | "ingreso";
 
 const OPCIONES_CUOTAS: readonly Cuotas[] = [1, 3, 6, 12];
 const CLAVE_AMBITO = "sobres.ambito";
@@ -48,6 +57,7 @@ export default function GastoNuevo() {
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
   const [cargando, setCargando] = useState(true);
 
+  const [tipo, setTipo] = useState<Tipo>("gasto");
   const [ambito, setAmbito] = useState<Ambito>("hogar");
   const [medioId, setMedioId] = useState<string | null>(null);
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
@@ -83,7 +93,11 @@ export default function GastoNuevo() {
     })().finally(() => setCargando(false));
   }, []);
 
-  const medio = medios.find((m) => m.id === medioId);
+  // Un ingreso ENTRA a una cuenta: la tarjeta ni se ofrece (la acción lo
+  // rechaza igual, pero un chip que da error es peor que un chip que no está).
+  const esIngreso = tipo === "ingreso";
+  const mediosElegibles = esIngreso ? medios.filter((m) => m.tipo === "cuenta") : medios;
+  const medio = mediosElegibles.find((m) => m.id === medioId);
   const enteroCentavos = Number(entero || "0") * 100;
   const centavos = enteroCentavos + (decimales ? Number(decimales.padEnd(2, "0")) : 0);
   const categoriasDelAmbito = categorias.filter((c) => c.ambito === ambito);
@@ -127,12 +141,28 @@ export default function GastoNuevo() {
     AsyncStorage.setItem(CLAVE_MEDIO, m.id);
   }
 
+  /**
+   * Pasar a ingreso puede dejar elegida una tarjeta, que ya no es elegible: se
+   * cae a la primera cuenta en vez de quedar en un estado imposible. El medio
+   * NO se recuerda acá: el default de la próxima sigue siendo el del gasto.
+   */
+  function elegirTipo(t: Tipo) {
+    tacto.toque();
+    setTipo(t);
+    setCuotas(1);
+    if (t === "ingreso") {
+      const cuentas = medios.filter((m) => m.tipo === "cuenta");
+      if (!cuentas.some((m) => m.id === medioId)) setMedioId(cuentas[0]?.id ?? null);
+    }
+  }
+
   async function guardar() {
     if (!sesion || !medio || centavos <= 0 || pendiente) return;
     setError(null);
     setPendiente(true);
     const r = await crearGasto(sesion, {
       importeCentavos: centavos,
+      tipo,
       medioTipo: medio.tipo,
       medioId: medio.id,
       categoriaId,
@@ -155,7 +185,7 @@ export default function GastoNuevo() {
       <Pressable onPress={() => router.back()} hitSlop={12}>
         <X size={22} color={color.tinta} strokeWidth={2} />
       </Pressable>
-      <Text style={e.titulo}>Nuevo gasto</Text>
+      <Text style={e.titulo}>{esIngreso ? "Nuevo ingreso" : "Nuevo gasto"}</Text>
       {medios.length > 0 && (
         <View style={e.segmentedMini}>
           {(["hogar", "personal"] as const).map((a) => (
@@ -212,10 +242,39 @@ export default function GastoNuevo() {
         contentContainerStyle={{ paddingHorizontal: 20 }}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Gasto o ingreso. Va arriba de todo porque cambia el sentido de la
+            pantalla: qué medios se ofrecen, si hay cuotas y qué se pregunta. */}
+        <View style={e.segmentedTipo}>
+          {(["gasto", "ingreso"] as const).map((t) => {
+            const sel = tipo === t;
+            const Icono = t === "gasto" ? ArrowUpRight : ArrowDownLeft;
+            return (
+              <Pressable
+                key={t}
+                onPress={() => elegirTipo(t)}
+                style={[e.segmentoTipo, sel && e.segmentoTipoActivo]}
+              >
+                <Icono
+                  size={16}
+                  color={sel ? color.tinta : color.tintaSecundaria}
+                  strokeWidth={1.8}
+                />
+                <Text style={[e.segmentoTipoTexto, sel && e.segmentoTipoTextoActivo]}>
+                  {t === "gasto" ? "Gasto" : "Ingreso"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         {/* Monto protagonista: 52px, la tipografía más grande del sistema */}
         <View style={e.montoFila}>
-          <Text style={e.monto}>{formatearImporte(enteroCentavos)}</Text>
-          {decimales !== null && <Text style={e.monto}>,{decimales}</Text>}
+          <Text style={[e.monto, esIngreso && { color: color.verde }]}>
+            {formatearImporte(enteroCentavos)}
+          </Text>
+          {decimales !== null && (
+            <Text style={[e.monto, esIngreso && { color: color.verde }]}>,{decimales}</Text>
+          )}
         </View>
 
         {/* Chips de medio de pago */}
@@ -225,7 +284,7 @@ export default function GastoNuevo() {
           contentContainerStyle={e.chipsFila}
           style={{ marginTop: 20 }}
         >
-          {medios.map((m) => {
+          {mediosElegibles.map((m) => {
             const sel = m.id === medioId;
             return (
               <Pressable
@@ -247,6 +306,14 @@ export default function GastoNuevo() {
             );
           })}
         </ScrollView>
+
+        {/* Solo tarjetas cargadas: un ingreso no tiene dónde entrar */}
+        {esIngreso && mediosElegibles.length === 0 && (
+          <Text style={e.avisoSinCuenta}>
+            Un ingreso entra a una cuenta y todavía no tenés ninguna. Creá una
+            desde Hogar › Cuentas y tarjetas.
+          </Text>
+        )}
 
         {/* Card contextual de tarjeta: ciclo + cuotas */}
         {medio?.tipo === "tarjeta" && (
@@ -281,7 +348,9 @@ export default function GastoNuevo() {
         )}
 
         {/* Categoría (opcional) + comentario */}
-        <Text style={e.etiquetaSeccion}>¿En qué lo gastaste? · opcional</Text>
+        <Text style={e.etiquetaSeccion}>
+          {esIngreso ? "¿De dónde viene?" : "¿En qué lo gastaste?"} · opcional
+        </Text>
         <View style={e.grillaCategorias}>
           {categoriasDelAmbito.map((c) => {
             const sel = c.id === categoriaId;
@@ -377,6 +446,37 @@ const e = StyleSheet.create({
   segmentoMiniActivo: { backgroundColor: color.segmentedActivo },
   segmentoMiniTexto: { fontSize: 11.5, fontWeight: "500", color: color.tintaSecundaria },
   segmentoMiniTextoActivo: { fontWeight: "600", color: color.tinta },
+  segmentedTipo: {
+    marginTop: 16,
+    flexDirection: "row",
+    borderRadius: radio.cta,
+    backgroundColor: color.fondoSegmented,
+    padding: 3,
+  },
+  segmentoTipo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 9,
+    paddingVertical: 9,
+  },
+  segmentoTipoActivo: { backgroundColor: color.segmentedActivo },
+  segmentoTipoTexto: { fontSize: 13.5, fontWeight: "500", color: color.tintaSecundaria },
+  segmentoTipoTextoActivo: { fontWeight: "600", color: color.tinta },
+  avisoSinCuenta: {
+    marginTop: 12,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 12.5,
+    lineHeight: 19,
+    color: color.tintaSecundaria,
+  },
   montoFila: {
     marginTop: 24,
     flexDirection: "row",

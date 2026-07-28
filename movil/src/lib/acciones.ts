@@ -208,6 +208,8 @@ export async function categoriasDelHogar(
 
 export type EntradaGasto = {
   importeCentavos: number;
+  /** por defecto gasto: es el caso frecuente y mantiene compatibles a los viejos llamadores */
+  tipo?: "gasto" | "ingreso";
   medioTipo: "cuenta" | "tarjeta";
   medioId: string;
   categoriaId: string | null;
@@ -225,6 +227,17 @@ export async function crearGasto(
 ): Promise<Resultado> {
   if (!Number.isInteger(datos.importeCentavos) || datos.importeCentavos <= 0) {
     return { ok: false, error: "El importe tiene que ser mayor a cero" };
+  }
+
+  // Un ingreso ENTRA a una cuenta: no hay tarjeta ni cuotas. El check de la
+  // tabla lo exige igual; validar acá es para dar un error legible.
+  const tipo = datos.tipo ?? "gasto";
+  const esIngreso = tipo === "ingreso";
+  if (esIngreso && datos.medioTipo !== "cuenta") {
+    return { ok: false, error: "Un ingreso entra a una cuenta, no a una tarjeta" };
+  }
+  if (esIngreso && datos.cuotas > 1) {
+    return { ok: false, error: "Un ingreso no se cobra en cuotas" };
   }
 
   const hoy = hoyBA();
@@ -252,7 +265,7 @@ export async function crearGasto(
       .single();
     descripcion = cat?.nombre;
   }
-  descripcion ||= "Gasto";
+  descripcion ||= esIngreso ? "Ingreso" : "Gasto";
 
   if (datos.cuotas > 1) {
     if (datos.medioTipo !== "tarjeta") {
@@ -309,7 +322,7 @@ export async function crearGasto(
   const { error } = await supabase.from("movimientos").insert({
     hogar_id: sesion.hogarId,
     user_id: sesion.userId,
-    tipo: "gasto",
+    tipo,
     descripcion,
     importe_centavos: datos.importeCentavos,
     fecha: hoy,
@@ -323,7 +336,26 @@ export async function crearGasto(
     visibilidad,
     nota,
   });
-  if (error) return { ok: false, error: "No pudimos guardar el gasto" };
+  if (error) {
+    return { ok: false, error: `No pudimos guardar el ${esIngreso ? "ingreso" : "gasto"}` };
+  }
+  return { ok: true };
+}
+
+/** Editar el comentario de un movimiento. Vacío borra la nota. */
+export async function actualizarNota(
+  sesion: SesionHogar,
+  movimientoId: string,
+  nota: string,
+): Promise<Resultado> {
+  const limpia = nota.trim();
+  const { error, data } = await supabase
+    .from("movimientos")
+    .update({ nota: limpia === "" ? null : limpia.slice(0, 200) })
+    .eq("id", movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .select("id");
+  if (error || !data?.length) return { ok: false, error: "No pudimos guardar el comentario" };
   return { ok: true };
 }
 

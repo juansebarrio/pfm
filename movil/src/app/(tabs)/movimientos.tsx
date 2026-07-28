@@ -34,6 +34,7 @@ import {
   Importe,
 } from "@/componentes/sistema";
 import { FilaSwipe } from "@/componentes/FilaSwipe";
+import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
 
 // 05 — Movimientos: bandeja de entrada (lo que llegó sin categoría) arriba, y
 // abajo el historial agrupado por día. La bandeja lleva el borde cálido, único
@@ -62,6 +63,7 @@ export default function Movimientos() {
   // categorización inline: qué ítem está abierto y cuáles ya se ocultaron
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
   const [ocultos, setOcultos] = useState<string[]>([]);
+  const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
 
   const hoy = hoyBA();
 
@@ -84,10 +86,13 @@ export default function Movimientos() {
     cargar().finally(() => setCargando(false));
   }, [cargar]);
 
-  // al volver de cargar un gasto, refrescar sin spinner de pantalla completa
+  // al volver de cargar un gasto, refrescar sin spinner de pantalla completa.
+  // Al salir se cierra el detalle: un Modal no se desmonta con la navegación y
+  // si no, queda flotando arriba de la pantalla siguiente.
   useFocusEffect(
     useCallback(() => {
       cargar();
+      return () => setDetalle(null);
     }, [cargar]),
   );
 
@@ -135,6 +140,7 @@ export default function Movimientos() {
   );
 
   return (
+    <>
     <ScrollView
       style={e.pantalla}
       contentContainerStyle={{
@@ -238,6 +244,7 @@ export default function Movimientos() {
                     }}
                     etiquetaBorrar={m.badgeCuota ? "Borrar compra" : "Borrar"}
                     alBorrar={() => borrar(m.id)}
+                    alTocar={() => setDetalle(m)}
                   />
                 </View>
               ))}
@@ -246,6 +253,18 @@ export default function Movimientos() {
         ))
       )}
     </ScrollView>
+
+    <DetalleMovimiento
+      movimiento={detalle}
+      sesion={sesion}
+      alCerrar={() => setDetalle(null)}
+      alBorrar={() => {
+        const id = detalle?.id;
+        setDetalle(null);
+        if (id) borrar(id);
+      }}
+    />
+    </>
   );
 }
 

@@ -12,8 +12,11 @@ import {
 import { Redirect } from "expo-router";
 import { Mail } from "lucide-react-native";
 import { useSesion } from "@/lib/sesion";
+import { entrarDemo } from "@/lib/cuenta";
 import { supabase } from "@/lib/supabase";
 import { color, radio } from "@/lib/tema";
+
+const DEMO = process.env.EXPO_PUBLIC_DEMO === "true";
 
 // Login nativo. Mismo copy y jerarquía visual que app/(auth)/login de la web,
 // con inputs nativos: teclado de email, sin autocapitalize y KeyboardAvoiding.
@@ -42,6 +45,17 @@ export default function Login() {
       setPendiente(false);
     }
     // con éxito, el contexto ve la sesión nueva y el Redirect de abajo dispara
+  }
+
+  async function demo() {
+    if (pendiente) return;
+    setError(null);
+    setPendiente(true);
+    const r = await entrarDemo();
+    if (!r.ok) {
+      setError(r.error);
+      setPendiente(false);
+    }
   }
 
   if (sesion) return <Redirect href="/(tabs)/resumen" />;
@@ -106,6 +120,27 @@ export default function Login() {
           <Text style={e.ctaTexto}>Entrar</Text>
         )}
       </Pressable>
+
+      {/* Probar sin cuenta. Igual que en la web, solo donde hay demo cargada. */}
+      {DEMO && (
+        <View style={{ marginTop: 24 }}>
+          <View style={e.separadorFila}>
+            <View style={e.linea} />
+            <Text style={e.separadorTexto}>o probá sin cuenta</Text>
+            <View style={e.linea} />
+          </View>
+          <Pressable
+            onPress={demo}
+            disabled={pendiente}
+            style={[e.ctaDemo, pendiente && { opacity: 0.6 }]}
+          >
+            <Text style={e.ctaDemoTexto}>Ver demo de prueba</Text>
+          </Pressable>
+          <Text style={e.avisoDemo}>
+            Datos de ejemplo compartidos, solo para explorar.
+          </Text>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -167,4 +202,23 @@ const e = StyleSheet.create({
   },
   ctaApagado: { opacity: 0.6 },
   ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  separadorFila: { flexDirection: "row", alignItems: "center", gap: 12 },
+  linea: { flex: 1, height: 1, backgroundColor: color.borde },
+  separadorTexto: { fontSize: 11.5, color: color.tintaSecundaria },
+  ctaDemo: {
+    marginTop: 16,
+    height: 50,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.verde,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ctaDemoTexto: { fontSize: 15, fontWeight: "600", color: color.verde },
+  avisoDemo: {
+    marginTop: 8,
+    textAlign: "center",
+    fontSize: 11,
+    color: color.tintaSecundaria,
+  },
 });

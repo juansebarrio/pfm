@@ -20,9 +20,11 @@ type Props = {
   datos: DatosFilaMovimiento;
   etiquetaBorrar: string; // "Borrar" | "Borrar compra"
   alBorrar: () => void;
+  /** tap en el cuerpo → abre el detalle */
+  alTocar: () => void;
 };
 
-export function FilaSwipe({ datos, etiquetaBorrar, alBorrar }: Props) {
+export function FilaSwipe({ datos, etiquetaBorrar, alBorrar, alTocar }: Props) {
   const ref = useRef<SwipeableMethods>(null);
 
   function confirmar() {
@@ -55,9 +57,11 @@ export function FilaSwipe({ datos, etiquetaBorrar, alBorrar }: Props) {
       renderRightActions={panel}
       containerStyle={{ backgroundColor: color.rojo }}
     >
-      <View style={{ backgroundColor: color.superficie }}>
+      {/* El Pressable va DENTRO del Swipeable: el gesture handler ya decide si
+          el gesto es un arrastre, y en ese caso cancela el press. */}
+      <Pressable onPress={alTocar} style={{ backgroundColor: color.superficie }}>
         <FilaMovimiento {...datos} />
-      </View>
+      </Pressable>
     </ReanimatedSwipeable>
   );
 }
