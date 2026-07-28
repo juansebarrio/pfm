@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -20,6 +21,7 @@ import {
   type SesionHogar,
 } from "@/lib/datos";
 import {
+  borrarMovimiento,
   categoriasDelHogar,
   categorizarMovimiento,
   type CategoriaSimple,
@@ -28,10 +30,10 @@ import { color, radio } from "@/lib/tema";
 import {
   Card,
   EstadoVacio,
-  FilaMovimiento,
   IconoCategoria,
   Importe,
 } from "@/componentes/sistema";
+import { FilaSwipe } from "@/componentes/FilaSwipe";
 
 // 05 — Movimientos: bandeja de entrada (lo que llegó sin categoría) arriba, y
 // abajo el historial agrupado por día. La bandeja lleva el borde cálido, único
@@ -105,6 +107,19 @@ export default function Movimientos() {
     else await cargar();
   }
 
+  /** Igual que categorizar: la fila desaparece ya y se reconcilia contra la base. */
+  async function borrar(movimientoId: string) {
+    if (!sesion) return;
+    setOcultos((prev) => [...prev, movimientoId]);
+    const r = await borrarMovimiento(sesion, movimientoId);
+    if (!r.ok) {
+      setOcultos((prev) => prev.filter((id) => id !== movimientoId));
+      Alert.alert("No pudimos borrarlo", r.error);
+    } else {
+      await cargar();
+    }
+  }
+
   if (cargando) {
     return (
       <View style={e.centrado}>
@@ -114,7 +129,10 @@ export default function Movimientos() {
   }
 
   const visiblesBandeja = bandeja.filter((m) => !ocultos.includes(m.id));
-  const grupos = porDia(historial, hoy);
+  const grupos = porDia(
+    historial.filter((m) => !ocultos.includes(m.id)),
+    hoy,
+  );
 
   return (
     <ScrollView
@@ -208,14 +226,18 @@ export default function Movimientos() {
             <Card>
               {g.items.map((m, i) => (
                 <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
-                  <FilaMovimiento
-                    descripcion={m.descripcion}
-                    icono={m.icono}
-                    metadata={[m.categoria, m.medio].filter(Boolean).join(" · ")}
-                    importeCentavos={m.importeCentavos}
-                    esIngreso={m.esIngreso}
-                    ambito={m.ambito}
-                    badgeCuota={m.badgeCuota}
+                  <FilaSwipe
+                    datos={{
+                      descripcion: m.descripcion,
+                      icono: m.icono,
+                      metadata: [m.categoria, m.medio].filter(Boolean).join(" · "),
+                      importeCentavos: m.importeCentavos,
+                      esIngreso: m.esIngreso,
+                      ambito: m.ambito,
+                      badgeCuota: m.badgeCuota,
+                    }}
+                    etiquetaBorrar={m.badgeCuota ? "Borrar compra" : "Borrar"}
+                    alBorrar={() => borrar(m.id)}
                   />
                 </View>
               ))}

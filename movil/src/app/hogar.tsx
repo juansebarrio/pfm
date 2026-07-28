@@ -1,24 +1,40 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  Bell,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   Lock,
+  ScanFace,
   Sparkles,
   Users,
   Wallet,
 } from "lucide-react-native";
-import { obtenerHogar, obtenerSesionHogar, type MiembroFila } from "@/lib/datos";
+import { useBloqueo } from "@/lib/bloqueo";
+import {
+  activarAvisos,
+  avisosActivos,
+  desactivarAvisos,
+  reprogramarAvisos,
+} from "@/lib/avisos";
+import {
+  obtenerHogar,
+  obtenerSesionHogar,
+  type MiembroFila,
+  type SesionHogar,
+} from "@/lib/datos";
 import { supabase } from "@/lib/supabase";
 import { color } from "@/lib/tema";
 import { Badge, Card } from "@/componentes/sistema";
@@ -35,19 +51,49 @@ function losVen(nombres: string[]): string {
 export default function Hogar() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const bloqueo = useBloqueo();
   const [nombre, setNombre] = useState("Mi hogar");
   const [miembros, setMiembros] = useState<MiembroFila[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [sesion, setSesion] = useState<SesionHogar | null>(null);
+  const [avisos, setAvisos] = useState(false);
+  const [programados, setProgramados] = useState(0);
 
   useEffect(() => {
     (async () => {
       const s = await obtenerSesionHogar();
       if (!s) return;
+      setSesion(s);
       const h = await obtenerHogar(s);
       setNombre(h.nombre);
       setMiembros(h.miembros);
+
+      // los avisos se reprograman en cada apertura: los ciclos se mueven
+      if (await avisosActivos()) {
+        setAvisos(true);
+        setProgramados(await reprogramarAvisos(s));
+      }
     })().finally(() => setCargando(false));
   }, []);
+
+  async function alternarAvisos(prender: boolean) {
+    if (!sesion) return;
+    if (prender) {
+      const ok = await activarAvisos();
+      setAvisos(ok);
+      if (ok) setProgramados(await reprogramarAvisos(sesion));
+      else {
+        Alert.alert(
+          "Faltan permisos",
+          "Activá las notificaciones de Fin de mes desde Ajustes del teléfono.",
+        );
+      }
+    } else {
+      await desactivarAvisos();
+      setAvisos(false);
+      setProgramados(0);
+    }
+  }
 
   const n = miembros.length;
 
@@ -125,6 +171,47 @@ export default function Hogar() {
               <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
             </Pressable>
           </Card>
+
+          {/* Avisos de tarjeta */}
+          <Card style={{ marginTop: 16 }}>
+            {/* toda la fila alterna: el Switch solo, en 51pt, es un blanco chico */}
+            <Pressable onPress={() => alternarAvisos(!avisos)} style={e.navFila}>
+              <Bell size={17} color={color.tinta} strokeWidth={1.5} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={e.navTexto}>Avisarme de cierres y vencimientos</Text>
+                <Text style={e.navAyuda}>
+                  {avisos
+                    ? `${programados} ${programados === 1 ? "aviso programado" : "avisos programados"}`
+                    : "Un día antes, a las 10 de la mañana"}
+                </Text>
+              </View>
+              <Switch
+                value={avisos}
+                onValueChange={alternarAvisos}
+                trackColor={{ true: color.verde, false: color.borde }}
+              />
+            </Pressable>
+          </Card>
+
+          {/* Bloqueo biométrico: solo se ofrece si el equipo lo soporta */}
+          {bloqueo.disponible && (
+            <Card style={{ marginTop: 16 }}>
+              <Pressable onPress={bloqueo.alternar} style={e.navFila}>
+                <ScanFace size={17} color={color.tinta} strokeWidth={1.5} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={e.navTexto}>Pedir Face ID al abrir</Text>
+                  <Text style={e.navAyuda}>
+                    Se bloquea sola cuando dejás la app un rato
+                  </Text>
+                </View>
+                <Switch
+                  value={bloqueo.activo}
+                  onValueChange={bloqueo.alternar}
+                  trackColor={{ true: color.verde, false: color.borde }}
+                />
+              </Pressable>
+            </Card>
+          )}
 
           {/* Statement de visibilidad */}
           <Card style={{ marginTop: 16, paddingHorizontal: 16, paddingVertical: 14 }}>
@@ -207,6 +294,7 @@ const e = StyleSheet.create({
     paddingVertical: 14,
   },
   navTexto: { flex: 1, fontSize: 14, fontWeight: "500", color: color.tinta },
+  navAyuda: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
   lockFila: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   statement: {
     flex: 1,

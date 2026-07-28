@@ -570,3 +570,41 @@ export async function categorizarMovimiento(
   if (error || !data?.length) return { ok: false, error: "No pudimos categorizar" };
   return { ok: true };
 }
+
+/**
+ * Borrar un movimiento. Si es una cuota (compra_id), borra la COMPRA completa
+ * — una cuota suelta rompería la serie; el on-delete-cascade limpia las hijas.
+ * Espeja app/acciones/movimientos.ts: mismo criterio en los dos clientes.
+ */
+export async function borrarMovimiento(
+  sesion: SesionHogar,
+  movimientoId: string,
+): Promise<Resultado> {
+  const { data: mov } = await supabase
+    .from("movimientos")
+    .select("id, compra_id")
+    .eq("id", movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+
+  if (mov.compra_id) {
+    const { error } = await supabase
+      .from("compras_en_cuotas")
+      .delete()
+      .eq("id", mov.compra_id)
+      .eq("hogar_id", sesion.hogarId);
+    if (error) return { ok: false, error: "No pudimos borrar la compra" };
+  } else {
+    const { error, data } = await supabase
+      .from("movimientos")
+      .delete()
+      .eq("id", mov.id)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error || !data?.length) {
+      return { ok: false, error: "No pudimos borrar el movimiento" };
+    }
+  }
+  return { ok: true };
+}

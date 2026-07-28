@@ -23,6 +23,7 @@ import {
   type MedioDePago,
 } from "@/lib/acciones";
 import { color, radio } from "@/lib/tema";
+import { tacto } from "@/lib/tacto";
 import { Badge, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
 
 // 03 — Alta rápida: de tocar + a guardado en menos de 10 segundos.
@@ -90,6 +91,7 @@ export default function GastoNuevo() {
 
   // updates funcionales: taps consecutivos en el mismo tick no se pisan
   function tocarDigito(d: string) {
+    tacto.toque();
     if (decimales !== null) {
       setDecimales((x) => (x !== null && x.length < 2 ? x + d : x));
       return;
@@ -98,12 +100,14 @@ export default function GastoNuevo() {
   }
 
   function tocarComa() {
+    tacto.toque();
     if (decimales !== null) return;
     setEntero((x) => (x === "" ? "0" : x));
     setDecimales("");
   }
 
   function tocarBorrar() {
+    tacto.toque();
     if (decimales !== null) {
       setDecimales((x) => (x !== null && x.length > 0 ? x.slice(0, -1) : null));
       return;
@@ -136,8 +140,11 @@ export default function GastoNuevo() {
       cuotas: medio.tipo === "tarjeta" ? cuotas : 1,
       nota: nota.trim() || undefined,
     });
-    if (r.ok) router.back();
-    else {
+    if (r.ok) {
+      tacto.guardado();
+      router.back();
+    } else {
+      tacto.error();
       setError(r.error);
       setPendiente(false);
     }

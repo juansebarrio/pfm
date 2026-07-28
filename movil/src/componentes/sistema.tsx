@@ -373,6 +373,17 @@ export function CardPartida(p: DatosPartida) {
 
 // ─────────────────────────────────────────────────────── FilaMovimiento
 
+export type DatosFilaMovimiento = {
+  descripcion: string;
+  icono?: string | null;
+  metadata?: string;
+  cierreCiclo?: string | null;
+  importeCentavos: number;
+  esIngreso?: boolean;
+  ambito?: "hogar" | "personal";
+  badgeCuota?: string;
+};
+
 export function FilaMovimiento({
   descripcion,
   icono,
@@ -382,16 +393,7 @@ export function FilaMovimiento({
   esIngreso,
   ambito,
   badgeCuota,
-}: {
-  descripcion: string;
-  icono?: string | null;
-  metadata?: string;
-  cierreCiclo?: string | null;
-  importeCentavos: number;
-  esIngreso?: boolean;
-  ambito?: "hogar" | "personal";
-  badgeCuota?: string;
-}) {
+}: DatosFilaMovimiento) {
   return (
     <View style={e.movimiento}>
       <IconoCategoria nombre={icono ?? null} />
