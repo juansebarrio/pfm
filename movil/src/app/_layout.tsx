@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ProveedorSesion } from "@/lib/sesion";
 import { ProveedorBloqueo } from "@/lib/bloqueo";
+import { Portero } from "@/lib/portero";
 import { engancharNotificaciones } from "@/lib/avisos";
 
 // Layout raíz: provee la sesión a toda la app y fija el fondo oscuro (el
@@ -22,6 +23,7 @@ export default function LayoutRaiz() {
         <SafeAreaProvider>
           <ProveedorBloqueo>
             <StatusBar style="light" />
+            <Portero />
             <Stack
               screenOptions={{
                 headerShown: false,

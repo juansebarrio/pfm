@@ -82,8 +82,10 @@ que pide SDK 57). Dos salidas:
    compila nativo), pero **hay que actualizar Xcode antes de cualquier build
    real o envío a la App Store**.
 3. **El teclado del simulador no escribe `@`** — limitación de la automatización,
-   no de la app. Las credenciales quedaron precargadas bajo `__DEV__` en
-   `login.tsx`; **sacar eso antes de un build real**.
+   no de la app: `juanse@sobres.local` sale `juanse"sob`. Durante el spike las
+   credenciales quedaron precargadas bajo `__DEV__`; **ya se sacaron**. Para
+   entrar en el simulador hay que pegar desde el portapapeles
+   (`xcrun simctl pbcopy` + mantener apretado el campo → Paste).
 4. **Los cambios de rutas necesitan reinicio de Expo Go**, no alcanza Fast
    Refresh. Bundle limpio: ~11 s; incremental: <100 ms.
 

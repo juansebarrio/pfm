@@ -19,23 +19,13 @@ mirar en cada paso.
 | Cifrado | `usesNonExemptEncryption: false` — solo HTTPS estándar, así que no hay papeleo de exportación |
 | Política de privacidad | Publicada en `/privacidad`, pública sin login (Apple la lee antes de crear cuenta) |
 | Borrado de cuenta | Desde Hogar, en las dos apps. Probado contra la base con `pnpm prueba:borrado` |
+| Login limpio | Sin credenciales precargadas. Ojo al probar en el simulador: el teclado automatizado no escribe la arroba (`juanse@sobres.local` sale `juanse"sob`) — hay que pegar desde el portapapeles con `xcrun simctl pbcopy` |
 | Perfiles de build | `movil/eas.json` con `development`, `preview` y `production` |
 | El prebuild corre limpio | `npx expo prebuild --platform ios` genera el proyecto sin errores |
 
 ---
 
 ## 1. Antes de cualquier build
-
-**Sacar el prellenado de credenciales.** En
-[`movil/src/app/login.tsx`](../movil/src/app/login.tsx) el email y la
-contraseña vienen puestos bajo `__DEV__` para poder tipear en el simulador (el
-teclado del simulador no escribe la arroba). `__DEV__` es `false` en un build
-de producción, así que técnicamente no se filtra — pero es una credencial real
-en el código fuente y no tiene por qué seguir ahí.
-
-```bash
-grep -n "__DEV__" movil/src/app/login.tsx
-```
 
 **Cargar las variables de entorno en EAS.** `movil/.env` está gitignoreado, así
 que las builds en la nube no lo ven. Hay tres:

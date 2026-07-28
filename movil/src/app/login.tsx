@@ -20,11 +20,8 @@ import { color, radio } from "@/lib/tema";
 
 export default function Login() {
   const { sesion } = useSesion();
-  // SOLO SPIKE: credenciales del seed precargadas para poder verificar el
-  // flujo en el simulador (el teclado automatizado no escribe "@"). Sacar
-  // antes de cualquier build real.
-  const [email, setEmail] = useState(__DEV__ ? "juanse@sobres.local" : "");
-  const [password, setPassword] = useState(__DEV__ ? "coghlan-juanse-2026" : "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState(false);
 

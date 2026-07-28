@@ -111,7 +111,7 @@ export default function Hogar() {
     setBorrando(true);
     const r = await borrarMiCuenta();
     if (r.ok) {
-      // signOut deja la sesión nula y el portero de index.tsx manda al login
+      // signOut deja la sesión nula y el Portero global saca de esta pantalla
       await supabase.auth.signOut();
     } else {
       setBorrando(false);
