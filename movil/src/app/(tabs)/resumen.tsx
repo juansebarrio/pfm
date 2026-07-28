@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalendarClock, CreditCard, Inbox, type LucideIcon } from "lucide-react-native";
 // ⭐ Dominio COMPARTIDO con la web: los mismos archivos, sin copiar ni adaptar.
@@ -50,6 +51,7 @@ const iconosAviso: Record<Aviso["tipo"], LucideIcon> = {
 };
 
 export default function Resumen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [presupuesto, setPresupuesto] = useState<PresupuestoMes | null>(null);
@@ -123,11 +125,11 @@ export default function Resumen() {
           <Text style={e.saludo}>Hola, {sesion?.nombreMiembro ?? ""}</Text>
           <Text style={e.fecha}>{formatearDiaLargo(hoy)}</Text>
         </View>
-        <View style={e.avatar}>
+        <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
           <Text style={e.avatarTexto}>
             {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
           </Text>
-        </View>
+        </Pressable>
       </View>
 
       {/* Card de disponible */}

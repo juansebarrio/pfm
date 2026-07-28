@@ -327,6 +327,234 @@ export async function crearGasto(
   return { ok: true };
 }
 
+// ────────────────────────────────────────────── cuentas y tarjetas
+
+export type EntradaCuenta = {
+  nombre: string;
+  tipo: "efectivo" | "banco" | "billetera" | "inversion";
+  moneda: "ARS" | "USD";
+  visibilidad: "compartido" | "personal";
+};
+
+export async function crearCuenta(
+  sesion: SesionHogar,
+  d: EntradaCuenta,
+): Promise<Resultado> {
+  if (!d.nombre.trim()) return { ok: false, error: "Poné un nombre" };
+  const { error } = await supabase.from("cuentas").insert({
+    hogar_id: sesion.hogarId,
+    user_id: sesion.userId,
+    nombre: d.nombre.trim(),
+    tipo: d.tipo,
+    moneda: d.moneda,
+    visibilidad: d.visibilidad,
+  });
+  if (error) return { ok: false, error: "No pudimos crear la cuenta" };
+  return { ok: true };
+}
+
+export type EntradaTarjeta = {
+  nombre: string;
+  banco: string;
+  red: "visa" | "mastercard" | "amex" | "otra";
+  ultimos4: string;
+  visibilidad: "compartido" | "personal";
+  diaCierre: number | null;
+};
+
+/** Alta de tarjeta. Con día de cierre, se le crea el primer ciclo estimado. */
+export async function crearTarjeta(
+  sesion: SesionHogar,
+  d: EntradaTarjeta,
+): Promise<Resultado> {
+  if (!d.nombre.trim() || !d.banco.trim()) {
+    return { ok: false, error: "Completá nombre y banco" };
+  }
+  if (!/^\d{4}$/.test(d.ultimos4)) {
+    return { ok: false, error: "Los últimos 4 dígitos tienen que ser 4 números" };
+  }
+  if (d.diaCierre !== null && (d.diaCierre < 1 || d.diaCierre > 28)) {
+    return { ok: false, error: "El día de cierre va del 1 al 28" };
+  }
+
+  const { data: nueva, error } = await supabase
+    .from("tarjetas")
+    .insert({
+      hogar_id: sesion.hogarId,
+      user_id: sesion.userId,
+      nombre: d.nombre.trim(),
+      banco: d.banco.trim(),
+      red: d.red,
+      ultimos4: d.ultimos4,
+      visibilidad: d.visibilidad,
+      dia_cierre: d.diaCierre,
+    })
+    .select("id")
+    .single();
+  if (error || !nueva) return { ok: false, error: "No pudimos crear la tarjeta" };
+
+  // primer ciclo estimado, para que la tarjeta pueda recibir gastos desde ya
+  if (d.diaCierre !== null) {
+    const primero = primerCicloEstimado(d.diaCierre, hoyBA());
+    await supabase.from("ciclos_tarjeta").insert({
+      tarjeta_id: nueva.id,
+      fecha_cierre: primero.fechaCierre,
+      fecha_vencimiento: primero.fechaVencimiento,
+      estado_fechas: "estimado",
+      estado: "abierto",
+    });
+  }
+  return { ok: true };
+}
+
+/** Sin borrado físico: cuentas y tarjetas se desactivan. */
+export async function cambiarActiva(
+  sesion: SesionHogar,
+  tabla: "cuentas" | "tarjetas",
+  id: string,
+  activa: boolean,
+): Promise<Resultado> {
+  const { error, data } = await supabase
+    .from(tabla)
+    .update({ activa })
+    .eq("id", id)
+    .eq("hogar_id", sesion.hogarId)
+    .select("id");
+  if (error || !data?.length) {
+    return { ok: false, error: activa ? "No pudimos reactivar" : "No pudimos desactivar" };
+  }
+  return { ok: true };
+}
+
+// ────────────────────────────────────────────── armar presupuesto
+
+export type PartidaArmado = {
+  categoriaId: string;
+  nombre: string;
+  icono: string;
+  asignadoCentavos: number;
+  asignadoAnteriorCentavos: number;
+  activa: boolean;
+  fija: boolean;
+  rollover: boolean;
+};
+
+/**
+ * Base para armar un mes: las partidas del mes anterior en su orden, más las
+ * categorías que no estaban (nuevas o desactivadas), apagadas en 0.
+ */
+export async function baseParaArmar(
+  sesion: SesionHogar,
+  mes: string,
+  ambito: "hogar" | "personal",
+): Promise<PartidaArmado[]> {
+  const { obtenerPresupuestoMes } = await import("./datos");
+  const mesPrevio = mesAnteriorDe(mes);
+  const [anterior, categorias] = await Promise.all([
+    obtenerPresupuestoMes(sesion, mesPrevio, ambito),
+    categoriasDelHogar(sesion),
+  ]);
+  const delAmbito = categorias.filter((c) => c.ambito === ambito);
+
+  if (!anterior) {
+    return delAmbito.map((c) => ({
+      categoriaId: c.id,
+      nombre: c.nombre,
+      icono: c.icono,
+      asignadoCentavos: 0,
+      asignadoAnteriorCentavos: 0,
+      activa: false,
+      fija: false,
+      rollover: false,
+    }));
+  }
+
+  const previas = anterior.grupos.flatMap((g) => g.partidas);
+  const idsPrevias = new Set(previas.map((p) => p.categoriaId));
+  return [
+    ...previas.map((p) => ({
+      categoriaId: p.categoriaId,
+      nombre: p.nombre,
+      icono: p.icono,
+      asignadoCentavos: p.asignadoCentavos, // se sugiere lo del mes anterior
+      asignadoAnteriorCentavos: p.asignadoCentavos,
+      activa: true,
+      fija: p.fija,
+      rollover: p.rollover,
+    })),
+    ...delAmbito
+      .filter((c) => !idsPrevias.has(c.id))
+      .map((c) => ({
+        categoriaId: c.id,
+        nombre: c.nombre,
+        icono: c.icono,
+        asignadoCentavos: 0,
+        asignadoAnteriorCentavos: 0,
+        activa: false,
+        fija: false,
+        rollover: false,
+      })),
+  ];
+}
+
+/** mesAnterior sin importar el módulo entero de fechas dos veces. */
+function mesAnteriorDe(mes: string): string {
+  const [anio, m] = mes.split("-").map(Number);
+  const total = anio * 12 + (m - 1) - 1;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}-01`;
+}
+
+export async function armarPresupuesto(
+  sesion: SesionHogar,
+  mes: string,
+  ambito: "hogar" | "personal",
+  partidas: PartidaArmado[],
+): Promise<Resultado> {
+  let consulta = supabase
+    .from("presupuestos")
+    .select("id")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("mes", mes)
+    .eq("ambito", ambito);
+  consulta =
+    ambito === "personal"
+      ? consulta.eq("user_id", sesion.userId)
+      : consulta.is("user_id", null);
+  const { data: existente } = await consulta.maybeSingle();
+  if (existente) return { ok: false, error: "Ese mes ya tiene presupuesto" };
+
+  const { data: presupuesto, error: errPresu } = await supabase
+    .from("presupuestos")
+    .insert({
+      hogar_id: sesion.hogarId,
+      mes,
+      ambito,
+      user_id: ambito === "personal" ? sesion.userId : null,
+    })
+    .select()
+    .single();
+  if (errPresu || !presupuesto) {
+    return { ok: false, error: "No pudimos crear el presupuesto" };
+  }
+
+  const { error: errPartidas } = await supabase.from("partidas_presupuesto").insert(
+    partidas.map((p) => ({
+      presupuesto_id: presupuesto.id,
+      categoria_id: p.categoriaId,
+      asignado_centavos: p.asignadoCentavos,
+      activa: p.activa,
+      fija: p.fija,
+      rollover: p.rollover,
+    })),
+  );
+  if (errPartidas) {
+    // sin partidas el presupuesto es basura: se revierte
+    await supabase.from("presupuestos").delete().eq("id", presupuesto.id);
+    return { ok: false, error: "No pudimos crear las partidas" };
+  }
+  return { ok: true };
+}
+
 /** Categorización inline desde la bandeja (05): asignás y pasa al historial. */
 export async function categorizarMovimiento(
   sesion: SesionHogar,

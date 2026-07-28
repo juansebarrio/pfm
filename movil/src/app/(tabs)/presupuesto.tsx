@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { ChevronLeft, ChevronRight, Wallet } from "lucide-react-native";
 import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
@@ -67,6 +67,7 @@ function aDatosPartida(p: PartidaConEstado, mes: string): DatosPartida {
 }
 
 export default function Presupuesto() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const hoy = hoyBA();
   const [mes, setMes] = useState(mesDe(hoy));
@@ -148,6 +149,14 @@ export default function Presupuesto() {
             Icono={Wallet}
             titulo="Armá tu primer presupuesto"
             cuerpo={`Asignale un monto a cada partida de ${formatearMesSolo(mes)}, como sobres de plata, y mirá cuánto queda a medida que cargás gastos.`}
+            accion={{
+              texto: "Armar presupuesto",
+              onPress: () =>
+                router.push({
+                  pathname: "/armar-presupuesto",
+                  params: { mes, ambito },
+                }),
+            }}
           />
         </View>
       ) : (

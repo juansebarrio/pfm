@@ -447,6 +447,232 @@ export async function avisosParaAtender(sesion: SesionHogar): Promise<Aviso[]> {
   return avisos;
 }
 
+// ──────────────────────────────────────────────────────── medios (listado)
+
+export type CuentaFila = {
+  id: string;
+  nombre: string;
+  tipo: string;
+  moneda: string;
+  visibilidad: string;
+  activa: boolean;
+};
+
+export type TarjetaFila = {
+  id: string;
+  nombre: string;
+  banco: string;
+  red: string;
+  ultimos4: string;
+  visibilidad: string;
+  activa: boolean;
+  diaCierre: number | null;
+};
+
+/** Activas primero; dentro de cada grupo, por orden de creación. */
+function activasPrimero<T extends { activa: boolean }>(filas: T[]): T[] {
+  return [...filas].sort((a, b) => Number(b.activa) - Number(a.activa));
+}
+
+export async function listarMedios(
+  sesion: SesionHogar,
+): Promise<{ cuentas: CuentaFila[]; tarjetas: TarjetaFila[] }> {
+  const [{ data: cuentas }, { data: tarjetas }] = await Promise.all([
+    supabase
+      .from("cuentas")
+      .select("id, nombre, tipo, moneda, visibilidad, activa")
+      .eq("hogar_id", sesion.hogarId)
+      .order("creado_el"),
+    supabase
+      .from("tarjetas")
+      .select("id, nombre, banco, red, ultimos4, visibilidad, activa, dia_cierre")
+      .eq("hogar_id", sesion.hogarId)
+      .order("creado_el"),
+  ]);
+  return {
+    cuentas: activasPrimero((cuentas ?? []) as CuentaFila[]),
+    tarjetas: activasPrimero(
+      (tarjetas ?? []).map((t) => ({
+        id: t.id,
+        nombre: t.nombre,
+        banco: t.banco,
+        red: t.red,
+        ultimos4: t.ultimos4,
+        visibilidad: t.visibilidad,
+        activa: t.activa,
+        diaCierre: t.dia_cierre,
+      })),
+    ),
+  };
+}
+
+// ──────────────────────────────────────────────────────── tarjeta y cuotas
+
+export type CicloFila = {
+  id: string;
+  fechaCierre: string;
+  fechaVencimiento: string;
+  estadoFechas: "estimado" | "confirmado";
+  estado: "abierto" | "cerrado" | "conciliado";
+  totalRealCentavos: number | null;
+  /** consumos del ciclo + impuestos estimados de la tarjeta */
+  proyectadoCentavos: number;
+};
+
+export type DetalleTarjeta = {
+  nombre: string;
+  banco: string;
+  ultimos4: string;
+  diaCierre: number | null;
+  impuestosCentavos: number;
+  ciclos: CicloFila[];
+};
+
+export async function obtenerTarjeta(
+  sesion: SesionHogar,
+  tarjetaId: string,
+): Promise<DetalleTarjeta | null> {
+  const { data: t } = await supabase
+    .from("tarjetas")
+    .select(
+      "nombre, banco, ultimos4, dia_cierre, impuestos_estimados_centavos, ciclos_tarjeta(id, fecha_cierre, fecha_vencimiento, estado_fechas, estado, total_real_centavos)",
+    )
+    .eq("id", tarjetaId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!t) return null;
+
+  type C = {
+    id: string;
+    fecha_cierre: string;
+    fecha_vencimiento: string;
+    estado_fechas: "estimado" | "confirmado";
+    estado: "abierto" | "cerrado" | "conciliado";
+    total_real_centavos: number | null;
+  };
+  const ciclosDb = ((t.ciclos_tarjeta ?? []) as unknown as C[]).sort((a, b) =>
+    b.fecha_cierre.localeCompare(a.fecha_cierre),
+  );
+
+  // consumos por ciclo, para el proyectado
+  const consumos = new Map<string, number>();
+  if (ciclosDb.length > 0) {
+    const { data } = await supabase
+      .from("movimientos")
+      .select("ciclo_id, importe_centavos")
+      .eq("hogar_id", sesion.hogarId)
+      .eq("tipo", "gasto")
+      .in("ciclo_id", ciclosDb.map((c) => c.id));
+    for (const m of data ?? []) {
+      consumos.set(m.ciclo_id, (consumos.get(m.ciclo_id) ?? 0) + m.importe_centavos);
+    }
+  }
+
+  return {
+    nombre: t.nombre,
+    banco: t.banco,
+    ultimos4: t.ultimos4,
+    diaCierre: t.dia_cierre,
+    impuestosCentavos: t.impuestos_estimados_centavos,
+    ciclos: ciclosDb.map((c) => ({
+      id: c.id,
+      fechaCierre: c.fecha_cierre,
+      fechaVencimiento: c.fecha_vencimiento,
+      estadoFechas: c.estado_fechas,
+      estado: c.estado,
+      totalRealCentavos: c.total_real_centavos,
+      proyectadoCentavos:
+        (consumos.get(c.id) ?? 0) + t.impuestos_estimados_centavos,
+    })),
+  };
+}
+
+export type CompraEnCuotas = {
+  id: string;
+  descripcion: string;
+  totalCentavos: number;
+  nCuotas: number;
+  fecha: string;
+  tarjeta: string | null;
+  /** cuotas ya devengadas (fecha <= hoy) */
+  pagadas: number;
+  restanteCentavos: number;
+};
+
+/** Compras en cuotas con su progreso — pantalla 07. */
+export async function comprasEnCuotas(
+  sesion: SesionHogar,
+): Promise<CompraEnCuotas[]> {
+  const hoy = hoyBA();
+  const { data } = await supabase
+    .from("compras_en_cuotas")
+    .select("id, descripcion, total_centavos, n_cuotas, fecha, tarjetas(nombre), movimientos(fecha, importe_centavos)")
+    .eq("hogar_id", sesion.hogarId)
+    .order("fecha", { ascending: false });
+
+  type Fila = {
+    id: string;
+    descripcion: string;
+    total_centavos: number;
+    n_cuotas: number;
+    fecha: string;
+    tarjetas: { nombre: string } | null;
+    movimientos: Array<{ fecha: string; importe_centavos: number }>;
+  };
+
+  return ((data ?? []) as unknown as Fila[])
+    .map((c) => {
+      const cuotas = c.movimientos ?? [];
+      const pagadas = cuotas.filter((m) => m.fecha <= hoy).length;
+      const restante = cuotas
+        .filter((m) => m.fecha > hoy)
+        .reduce((s, m) => s + m.importe_centavos, 0);
+      return {
+        id: c.id,
+        descripcion: c.descripcion,
+        totalCentavos: c.total_centavos,
+        nCuotas: c.n_cuotas,
+        fecha: c.fecha,
+        tarjeta: c.tarjetas?.nombre ?? null,
+        pagadas,
+        restanteCentavos: restante,
+      };
+    })
+    // las terminadas no interesan: la pantalla es de compromisos vigentes
+    .filter((c) => c.pagadas < c.nCuotas);
+}
+
+// ──────────────────────────────────────────────────────── hogar
+
+export type MiembroFila = {
+  userId: string;
+  nombre: string;
+  rol: "administrador" | "miembro";
+  esUsuarioActual: boolean;
+};
+
+export async function obtenerHogar(
+  sesion: SesionHogar,
+): Promise<{ nombre: string; miembros: MiembroFila[] }> {
+  const [{ data: hogar }, { data: miembros }] = await Promise.all([
+    supabase.from("hogares").select("nombre").eq("id", sesion.hogarId).maybeSingle(),
+    supabase
+      .from("miembros_hogar")
+      .select("user_id, nombre, rol")
+      .eq("hogar_id", sesion.hogarId)
+      .order("creado_el"),
+  ]);
+  return {
+    nombre: hogar?.nombre ?? "Mi hogar",
+    miembros: (miembros ?? []).map((m) => ({
+      userId: m.user_id,
+      nombre: m.nombre,
+      rol: m.rol,
+      esUsuarioActual: m.user_id === sesion.userId,
+    })),
+  };
+}
+
 // ──────────────────────────────────────────────────────── patrimonio
 
 export type TenenciaValuada = {

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import {
   ArrowDownLeft,
   Bike,
@@ -244,10 +244,13 @@ export function EstadoVacio({
   Icono,
   titulo,
   cuerpo,
+  accion,
 }: {
   Icono: LucideIcon;
   titulo: string;
   cuerpo: string;
+  /** CTA opcional: sin esto el estado vacío es solo informativo. */
+  accion?: { texto: string; onPress: () => void };
 }) {
   return (
     <View style={e.vacio}>
@@ -256,6 +259,11 @@ export function EstadoVacio({
       </View>
       <Text style={e.vacioTitulo}>{titulo}</Text>
       <Text style={e.vacioCuerpo}>{cuerpo}</Text>
+      {accion && (
+        <Pressable onPress={accion.onPress} style={e.vacioCta}>
+          <Text style={e.vacioCtaTexto}>{accion.texto}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -470,6 +478,14 @@ const e = StyleSheet.create({
     color: color.tintaSecundaria,
     textAlign: "center",
   },
+  vacioCta: {
+    marginTop: 20,
+    borderRadius: radio.cta,
+    backgroundColor: color.verde,
+    paddingHorizontal: 22,
+    paddingVertical: 13,
+  },
+  vacioCtaTexto: { fontSize: 14.5, fontWeight: "600", color: color.papel },
   partida: { paddingHorizontal: 14, paddingVertical: 11 },
   partidaFila: { flexDirection: "row", alignItems: "center", gap: 10 },
   partidaNombre: {
