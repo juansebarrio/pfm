@@ -17,6 +17,8 @@ export async function preguntarAlAsistente(
   mensajes: MensajeChat[],
   alRecibir: (pedazo: string) => void,
   señal?: AbortSignal,
+  /** apertura: la lectura que da solo al abrir, sin que el usuario escriba */
+  opciones: { apertura?: boolean } = {},
 ): Promise<void> {
   if (!API) throw new Error("Falta EXPO_PUBLIC_API_URL");
 
@@ -32,7 +34,7 @@ export async function preguntarAlAsistente(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ mensajes }),
+    body: JSON.stringify({ mensajes, apertura: opciones.apertura }),
     signal: señal,
   });
 
