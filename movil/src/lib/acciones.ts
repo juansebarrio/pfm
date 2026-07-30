@@ -233,6 +233,8 @@ export type EntradaGasto = {
   cuotas: 1 | 3 | 6 | 12;
   /** yyyy-mm-dd; sin fecha, hoy. Elegir otro mes es "arrastrar" el movimiento. */
   fecha?: string;
+  /** el comercio, cuando se sabe. El alta rápida no lo pide; un comprobante sí. */
+  descripcion?: string;
   nota?: string;
 };
 
@@ -274,9 +276,10 @@ export async function crearGasto(
     if (!categoriaId) return { ok: false, error: "No pudimos crear la categoría" };
   }
 
-  // el nombre de la categoría hace de descripción por defecto (03 no pide comercio)
-  let descripcion: string | undefined;
-  if (categoriaId) {
+  // el comercio manda si lo hay (comprobante); si no, el nombre de la categoría
+  // hace de descripción por defecto (el alta rápida no pide comercio)
+  let descripcion: string | undefined = datos.descripcion?.trim() || undefined;
+  if (!descripcion && categoriaId) {
     const { data: cat } = await supabase
       .from("categorias")
       .select("nombre")

@@ -10,9 +10,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Image } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowUp, ChevronLeft, RotateCcw } from "lucide-react-native";
+import { ArrowUp, Camera, ChevronLeft, Images, RotateCcw, X } from "lucide-react-native";
 import {
   avisosDe,
   parsearRespuesta,
@@ -20,8 +21,16 @@ import {
   sinAvisosRepetidos,
   type BloqueAsistente,
 } from "@dominio/asistente";
-import { obtenerSesionHogar } from "@/lib/datos";
+import { hoyBA } from "@dominio/fechas";
+import { obtenerSesionHogar, type SesionHogar } from "@/lib/datos";
+import { categoriasDelHogar, mediosDePago, type CategoriaSimple, type MedioDePago } from "@/lib/acciones";
 import { preguntarAlAsistente, type MensajeChat } from "@/lib/asistente";
+import {
+  MENSAJE_FALLO,
+  elegirDeGaleria,
+  sacarFoto,
+  type ImagenLista,
+} from "@/lib/imagen";
 import { color, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { BloquesAsistente } from "@/componentes/BloquesAsistente";
@@ -39,9 +48,18 @@ import { BloquesAsistente } from "@/componentes/BloquesAsistente";
 //    se renderizan con los componentes reales — la cifra grande del Resumen,
 //    la barra del Presupuesto. Ver lib/dominio/asistente.ts.
 //
-// El historial vive en memoria: cerrás la pantalla y se termina.
+// 3. LEE COMPROBANTES. Se le puede sacar una foto a un ticket o elegir el
+//    screenshot de un mail, y lo devuelve como un movimiento para confirmar y
+//    cargar. Ver src/componentes/ComprobanteLeido.tsx.
+//
+// El historial vive en memoria: cerrás la pantalla y se termina. La foto se
+// manda SOLO en el turno en que se adjunta: ya leída, no hace falta arrastrarla
+// en cada consulta (y sería caro). La imagen no se guarda en ninguna parte.
 
 const MAX_HISTORIAL = 24;
+
+/** El día de hoy en BA. La pantalla no vive lo suficiente para que cambie. */
+const HOY = hoyBA();
 
 /** Lo que se ofrece tocar cuando el modelo no propuso repreguntas propias. */
 const REPREGUNTAS_BASE = [
@@ -51,37 +69,56 @@ const REPREGUNTAS_BASE = [
 
 type Turno = {
   pregunta: string | null; // null = la apertura, que nadie escribió
+  /** la foto del comprobante de este turno, si llevaba una */
+  miniatura: string | null;
   bloques: BloqueAsistente[];
   crudo: string;
 };
 
 export default function Asistente() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ camara?: string }>();
   const insets = useSafeAreaInsets();
-  const [nombre, setNombre] = useState("");
+  const [sesion, setSesion] = useState<SesionHogar | null>(null);
+  const [medios, setMedios] = useState<MedioDePago[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [borrador, setBorrador] = useState("");
+  const [adjunta, setAdjunta] = useState<ImagenLista | null>(null);
   const [pensando, setPensando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const abortRef = useRef<AbortController | null>(null);
   const arrancado = useRef(false);
+  const camaraAbierta = useRef(false);
 
+  // medios y categorías se traen al entrar: al confirmar un comprobante no
+  // queremos una espera más, y son datos chicos
   useEffect(() => {
-    obtenerSesionHogar().then((s) => s && setNombre(s.nombreMiembro));
+    void (async () => {
+      const s = await obtenerSesionHogar();
+      if (!s) return;
+      setSesion(s);
+      const [m, c] = await Promise.all([mediosDePago(s), categoriasDelHogar(s)]);
+      setMedios(m);
+      setCategorias(c);
+    })();
   }, []);
 
   // al desmontar, cortamos el stream en curso
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const preguntar = useCallback(
-    async (texto: string | null) => {
+    async (texto: string | null, imagen: ImagenLista | null = null) => {
       const limpio = texto?.trim() ?? null;
-      if ((texto !== null && !limpio) || pensando) return;
+      // sin texto se puede preguntar solo si hay una foto (o es la apertura)
+      if (texto !== null && !limpio && !imagen) return;
+      if (pensando) return;
 
       setError(null);
       setPensando(true);
       setBorrador("");
+      setAdjunta(null);
 
       // El server necesita SIEMPRE un último mensaje de usuario; en la apertura
       // lo reemplaza por su propio pedido, así que acá va un marcador cualquiera.
@@ -94,10 +131,13 @@ export default function Asistente() {
                 { rol: "asistente", texto: t.crudo },
               ],
         ),
-        { rol: "usuario" as const, texto: limpio ?? "." },
+        { rol: "usuario" as const, texto: limpio ?? (imagen ? "" : ".") },
       ].slice(-MAX_HISTORIAL);
 
-      setTurnos((prev) => [...prev, { pregunta: limpio, bloques: [], crudo: "" }]);
+      setTurnos((prev) => [
+        ...prev,
+        { pregunta: limpio, miniatura: imagen?.uri ?? null, bloques: [], crudo: "" },
+      ]);
 
       const controlador = new AbortController();
       abortRef.current = controlador;
@@ -114,13 +154,16 @@ export default function Asistente() {
               copia[copia.length - 1] = {
                 ...copia[copia.length - 1],
                 crudo: actual,
-                bloques: parsearRespuesta(actual, { parcial: true }),
+                bloques: parsearRespuesta(actual, { parcial: true, hoy: HOY }),
               };
               return copia;
             });
           },
           controlador.signal,
-          { apertura: limpio === null },
+          {
+            apertura: limpio === null && !imagen,
+            imagen: imagen ? { tipo: imagen.tipo, base64: imagen.base64 } : null,
+          },
         );
         if (acumulado.trim() === "") throw new Error("");
         // cerrado el stream se re-parsea completo: la última línea ya cuenta
@@ -128,7 +171,7 @@ export default function Asistente() {
           const copia = [...prev];
           copia[copia.length - 1] = {
             ...copia[copia.length - 1],
-            bloques: parsearRespuesta(acumulado),
+            bloques: parsearRespuesta(acumulado, { hoy: HOY }),
           };
           return copia;
         });
@@ -146,6 +189,19 @@ export default function Asistente() {
     [pensando, turnos],
   );
 
+  /** Cámara o galería → miniatura lista, o un aviso entendible. */
+  async function adjuntar(pedir: () => Promise<Awaited<ReturnType<typeof sacarFoto>>>) {
+    setError(null);
+    const r = await pedir();
+    if (r.ok) {
+      setAdjunta(r.imagen);
+      tacto.toque();
+    } else if (r.motivo !== "cancelado") {
+      // cancelar no es un error: el usuario cambió de idea y no hay nada que decir
+      setError(MENSAJE_FALLO[r.motivo]);
+    }
+  }
+
   // la lectura de apertura, una sola vez
   useEffect(() => {
     if (arrancado.current) return;
@@ -153,6 +209,16 @@ export default function Asistente() {
     void preguntar(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Entrada por la cámara de la pastilla: se abre la cámara sola. La lectura de
+  // apertura sigue streameando atrás mientras sacás la foto, así que cuando
+  // volvés ya hay algo en pantalla en vez de un blanco.
+  useEffect(() => {
+    if (params.camara !== "1" || camaraAbierta.current) return;
+    camaraAbierta.current = true;
+    void adjuntar(sacarFoto);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.camara]);
 
   const ultimo = turnos[turnos.length - 1];
   const sugerencias =
@@ -171,7 +237,7 @@ export default function Asistente() {
         <View style={{ flex: 1 }}>
           <Text style={e.titulo}>Tus números</Text>
           <Text style={e.subtitulo}>
-            {nombre ? `Al día de hoy, ${nombre}` : "Al día de hoy"}
+            {sesion ? `Al día de hoy, ${sesion.nombreMiembro}` : "Al día de hoy"}
           </Text>
         </View>
         {turnos.length > 1 && !pensando && (
@@ -199,14 +265,26 @@ export default function Asistente() {
             {/* la pregunta va como un encabezado tenue, no como burbuja: lo que
                 importa es la respuesta, no el ida y vuelta */}
             {t.pregunta && <Text style={e.pregunta}>{t.pregunta}</Text>}
+            {/* la foto se muestra sola mientras se lee; una vez que llegó el
+                comprobante, va DENTRO de la tarjeta de confirmación */}
+            {t.miniatura && !t.bloques.some((b) => b.tipo === "comprobante") && (
+              <Image source={{ uri: t.miniatura }} style={e.miniatura} resizeMode="contain" />
+            )}
             {t.bloques.length === 0 && pensando && i === turnos.length - 1 ? (
-              <Text style={e.pensando}>Mirando tus números…</Text>
+              <Text style={e.pensando}>
+                {t.miniatura ? "Leyendo el comprobante…" : "Mirando tus números…"}
+              </Text>
             ) : (
               <BloquesAsistente
                 bloques={sinAvisosRepetidos(
                   t.bloques,
                   turnos.slice(0, i).flatMap((p) => avisosDe(p.bloques)),
                 )}
+                sesion={sesion}
+                medios={medios}
+                categorias={categorias}
+                hoy={HOY}
+                miniatura={t.miniatura}
               />
             )}
           </View>
@@ -226,21 +304,51 @@ export default function Asistente() {
       </ScrollView>
 
       <View style={[e.pie, { paddingBottom: Math.max(14, insets.bottom) }]}>
+        {/* la foto elegida, antes de mandarla: se puede sacar */}
+        {adjunta && (
+          <View style={e.adjunto}>
+            <Image source={{ uri: adjunta.uri }} style={e.adjuntoMini} />
+            <Text style={e.adjuntoTexto}>
+              Comprobante listo. Mandalo y te digo qué movimiento cargar.
+            </Text>
+            <Pressable onPress={() => setAdjunta(null)} hitSlop={12}>
+              <X size={17} color={color.tintaSecundaria} strokeWidth={2} />
+            </Pressable>
+          </View>
+        )}
+
         <View style={e.filaInput}>
+          <Pressable
+            onPress={() => adjuntar(sacarFoto)}
+            disabled={pensando || adjunta !== null}
+            style={[e.secundario, (pensando || adjunta !== null) && { opacity: 0.4 }]}
+          >
+            <Camera size={19} color={color.tinta} strokeWidth={1.6} />
+          </Pressable>
+          <Pressable
+            onPress={() => adjuntar(elegirDeGaleria)}
+            disabled={pensando || adjunta !== null}
+            style={[e.secundario, (pensando || adjunta !== null) && { opacity: 0.4 }]}
+          >
+            <Images size={19} color={color.tinta} strokeWidth={1.6} />
+          </Pressable>
           <TextInput
             value={borrador}
             onChangeText={setBorrador}
             maxLength={2000}
-            placeholder="Preguntá lo que quieras…"
+            placeholder={adjunta ? "Algo que aclarar…" : "Preguntá o mandá un ticket…"}
             placeholderTextColor={color.tintaTerciaria}
             style={e.input}
-            onSubmitEditing={() => preguntar(borrador)}
+            onSubmitEditing={() => preguntar(borrador, adjunta)}
             returnKeyType="send"
           />
           <Pressable
-            onPress={() => preguntar(borrador)}
-            disabled={borrador.trim() === "" || pensando}
-            style={[e.enviar, (borrador.trim() === "" || pensando) && { opacity: 0.5 }]}
+            onPress={() => preguntar(borrador, adjunta)}
+            disabled={(borrador.trim() === "" && !adjunta) || pensando}
+            style={[
+              e.enviar,
+              ((borrador.trim() === "" && !adjunta) || pensando) && { opacity: 0.5 },
+            ]}
           >
             {pensando ? (
               <ActivityIndicator color={color.papel} size="small" />
@@ -251,6 +359,7 @@ export default function Asistente() {
         </View>
         <Text style={e.aviso}>
           Orientación general con IA — no es asesoramiento financiero profesional.
+          {"\n"}Las fotos se leen y se descartan: no se guardan.
         </Text>
       </View>
     </KeyboardAvoidingView>
@@ -293,7 +402,38 @@ const e = StyleSheet.create({
     borderTopColor: color.separador,
     backgroundColor: color.papel,
   },
-  filaInput: { flexDirection: "row", alignItems: "center", gap: 8 },
+  miniatura: {
+    height: 120,
+    width: "60%",
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+  },
+  adjunto: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    padding: 8,
+  },
+  adjuntoMini: { width: 46, height: 46, borderRadius: 8, backgroundColor: color.papel },
+  adjuntoTexto: { flex: 1, fontSize: 12.5, lineHeight: 18, color: color.tintaSecundaria },
+  filaInput: { flexDirection: "row", alignItems: "center", gap: 7 },
+  secundario: {
+    width: 42,
+    height: 44,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   input: {
     flex: 1,
     height: 44,
@@ -317,6 +457,7 @@ const e = StyleSheet.create({
     marginTop: 6,
     textAlign: "center",
     fontSize: 10.5,
+    lineHeight: 15,
     color: color.tintaTerciaria,
   },
 });

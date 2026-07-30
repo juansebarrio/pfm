@@ -1,5 +1,7 @@
 import { TriangleAlert } from "lucide-react";
+import type { CategoriaSimple, MedioDePago } from "@/lib/datos/movimientos";
 import type { BloqueAsistente, TonoDato } from "@/lib/dominio/asistente";
+import { Comprobante } from "./Comprobante";
 
 // Render de los bloques del asistente (ver lib/dominio/asistente.ts): la
 // respuesta de la IA deja de ser texto y usa los componentes reales de la app.
@@ -11,7 +13,17 @@ const TINTA_TONO: Record<TonoDato, string> = {
   neutro: "text-tinta",
 };
 
-export function Bloques({ bloques }: { bloques: BloqueAsistente[] }) {
+export function Bloques({
+  bloques,
+  medios,
+  categorias,
+  hoy,
+}: {
+  bloques: BloqueAsistente[];
+  medios: MedioDePago[];
+  categorias: CategoriaSimple[];
+  hoy: string;
+}) {
   return (
     <div className="flex flex-col gap-2.5">
       {bloques.map((b, i) => {
@@ -75,6 +87,17 @@ export function Bloques({ bloques }: { bloques: BloqueAsistente[] }) {
                 />
                 <p className="text-[12.5px] leading-[1.5] text-ambar-texto">{b.texto}</p>
               </div>
+            );
+
+          case "comprobante":
+            return (
+              <Comprobante
+                key={i}
+                leido={b.leido}
+                medios={medios}
+                categorias={categorias}
+                hoy={hoy}
+              />
             );
 
           // las repreguntas las muestra la pantalla abajo, como chips tocables

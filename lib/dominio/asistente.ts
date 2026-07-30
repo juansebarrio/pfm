@@ -8,16 +8,26 @@
 // prohibirle markdown (que la interfaz no renderiza) se le da un vocabulario
 // mínimo que sí se renderiza, con los componentes que ya existen.
 //
-// El vocabulario es CHICO a propósito: cuatro marcadores. Cada uno agregado es
+// El vocabulario es CHICO a propósito: cinco marcadores. Cada uno agregado es
 // una forma más de que el modelo se equivoque.
 //
 //   #dato Disponible en julio | $ 564.900 | bien
 //   #partida Supermercado | $ 268.400 | $ 520.000
 //   #ojo La Visa cierra mañana
 //   #luego ¿Qué puedo recortar? | ¿Cómo viene la tarjeta?
+//   #comprobante comercio=Coto | monto=$ 84.320 | fecha=2026-07-28 | tipo=gasto
+//
+// El quinto es distinto de los otros cuatro y vale aclarar por qué se sumó: los
+// primeros MUESTRAN, este PROPONE UNA ACCIÓN. Es la lectura de una foto de
+// comprobante convertida en un movimiento para cargar, y por eso no se aplica
+// solo: se renderiza como una tarjeta de confirmación. Ver comprobante.ts.
 //
 // Regla de oro del parser: NUNCA perder contenido. Una línea con marcador que
 // no parsea cae a texto — el usuario ve la oración, no un bloque vacío.
+
+import { parsearComprobante, type ComprobanteLeido } from "./comprobante";
+import { centavosDesdeTexto } from "./dinero";
+import { hoyBA } from "./fechas";
 
 export type TonoDato = "bien" | "atencion" | "mal" | "neutro";
 
@@ -33,36 +43,28 @@ export type BloqueAsistente =
       progreso: number | null;
     }
   | { tipo: "ojo"; texto: string }
-  | { tipo: "luego"; preguntas: string[] };
+  | { tipo: "luego"; preguntas: string[] }
+  | { tipo: "comprobante"; leido: ComprobanteLeido };
 
 const TONOS: TonoDato[] = ["bien", "atencion", "mal", "neutro"];
-
-/**
- * "$ 1.234.567,89" → 123456789 centavos. Devuelve null si no parece un importe.
- * Solo se usa para calcular el ancho de una barra: si falla, la barra no se
- * dibuja y el texto igual se muestra. Nunca alimenta un cálculo de plata.
- */
-export function centavosDesdeTexto(texto: string): number | null {
-  const limpio = texto.trim().replace(/^[−-]\s*/, "").replace(/^(\$|USD)\s*/i, "");
-  if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$/.test(limpio)) return null;
-  const [enteros, decimales = ""] = limpio.split(",");
-  const centavos =
-    Number(enteros.replace(/\./g, "")) * 100 + Number(decimales.padEnd(2, "0"));
-  return Number.isFinite(centavos) ? centavos : null;
-}
 
 function partes(resto: string): string[] {
   return resto.split("|").map((p) => p.trim());
 }
 
 /** Una línea con marcador → bloque, o null si no parsea (cae a texto). */
-function comoBloque(linea: string): BloqueAsistente | null {
-  const m = /^#(dato|partida|ojo|luego)\s+(.+)$/i.exec(linea.trim());
+function comoBloque(linea: string, hoy: string): BloqueAsistente | null {
+  const m = /^#(dato|partida|ojo|luego|comprobante)\s+(.+)$/i.exec(linea.trim());
   if (!m) return null;
   const marcador = m[1].toLowerCase();
   const resto = m[2].trim();
 
   if (marcador === "ojo") return { tipo: "ojo", texto: resto };
+
+  if (marcador === "comprobante") {
+    const leido = parsearComprobante(resto, hoy);
+    return leido ? { tipo: "comprobante", leido } : null;
+  }
 
   if (marcador === "luego") {
     const preguntas = partes(resto).filter((p) => p !== "").slice(0, 3);
@@ -100,10 +102,13 @@ function comoBloque(linea: string): BloqueAsistente | null {
  * `parcial` = el stream sigue abierto. En ese caso la última línea se retiene
  * si empieza con un marcador todavía incompleto: sin esto se vería "#dat"
  * como texto y un instante después saltaría a ser una tarjeta.
+ *
+ * `hoy` (yyyy-mm-dd en BA) lo necesita #comprobante para descartar una fecha
+ * futura leída mal; se inyecta para que los tests no dependan del reloj.
  */
 export function parsearRespuesta(
   respuesta: string,
-  { parcial = false }: { parcial?: boolean } = {},
+  { parcial = false, hoy = hoyBA() }: { parcial?: boolean; hoy?: string } = {},
 ): BloqueAsistente[] {
   const lineas = respuesta.split("\n");
 
@@ -122,7 +127,7 @@ export function parsearRespuesta(
   };
 
   for (const linea of lineas) {
-    const bloque = /^\s*#/.test(linea) ? comoBloque(linea) : null;
+    const bloque = /^\s*#/.test(linea) ? comoBloque(linea, hoy) : null;
     if (bloque) {
       cerrarParrafo();
       bloques.push(bloque);

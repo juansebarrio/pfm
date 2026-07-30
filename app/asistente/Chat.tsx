@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, ChevronLeft, RotateCcw } from "lucide-react";
+import { ArrowUp, Camera, ChevronLeft, RotateCcw, X } from "lucide-react";
+import type { CategoriaSimple, MedioDePago } from "@/lib/datos/movimientos";
 import {
   avisosDe,
   parsearRespuesta,
@@ -10,6 +11,7 @@ import {
   sinAvisosRepetidos,
   type BloqueAsistente,
 } from "@/lib/dominio/asistente";
+import { TIPOS_ACEPTADOS, prepararImagen, type ImagenLista } from "@/lib/imagen";
 import { Bloques } from "./Bloques";
 
 // Asistente financiero.
@@ -25,7 +27,14 @@ import { Bloques } from "./Bloques";
 //    se renderizan con los componentes reales — la cifra grande, la barra del
 //    presupuesto. Ver lib/dominio/asistente.ts.
 //
-// El historial vive en memoria del cliente: recargás y se termina.
+// 3. LEE COMPROBANTES. Se le puede adjuntar la foto de un ticket, un mail de
+//    compra o un screenshot, y lo devuelve como un movimiento para confirmar y
+//    cargar. Ver Comprobante.tsx.
+//
+// El historial vive en memoria del cliente: recargás y se termina. La foto se
+// manda SOLO en el turno en que se adjunta: ya leída, no hace falta arrastrarla
+// en cada consulta siguiente (y sería caro). La imagen no se guarda en ninguna
+// parte — ni en el server ni en la base.
 
 const MAX_HISTORIAL = 24;
 
@@ -39,16 +48,30 @@ type Mensaje = { rol: "usuario" | "asistente"; texto: string };
 
 type Turno = {
   pregunta: string | null; // null = la apertura, que nadie escribió
+  /** miniatura del comprobante adjunto, si el turno llevaba uno */
+  miniatura: string | null;
   bloques: BloqueAsistente[];
   crudo: string;
 };
 
-export function Chat({ nombre }: { nombre: string }) {
+export function Chat({
+  nombre,
+  medios,
+  categorias,
+  hoy,
+}: {
+  nombre: string;
+  medios: MedioDePago[];
+  categorias: CategoriaSimple[];
+  hoy: string;
+}) {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [borrador, setBorrador] = useState("");
+  const [adjunta, setAdjunta] = useState<ImagenLista | null>(null);
   const [pensando, setPensando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
+  const archivoRef = useRef<HTMLInputElement>(null);
   const arrancado = useRef(false);
 
   useEffect(() => {
@@ -56,13 +79,16 @@ export function Chat({ nombre }: { nombre: string }) {
   }, [turnos, pensando]);
 
   const preguntar = useCallback(
-    async (texto: string | null) => {
+    async (texto: string | null, imagen: ImagenLista | null = null) => {
       const limpio = texto?.trim() ?? null;
-      if ((texto !== null && !limpio) || pensando) return;
+      // sin texto se puede preguntar solo si hay una foto (o es la apertura)
+      if (texto !== null && !limpio && !imagen) return;
+      if (pensando) return;
 
       setError(null);
       setPensando(true);
       setBorrador("");
+      setAdjunta(null);
 
       // El server necesita SIEMPRE un último mensaje de usuario; en la apertura
       // lo reemplaza por su propio pedido, así que acá va un marcador cualquiera.
@@ -75,17 +101,29 @@ export function Chat({ nombre }: { nombre: string }) {
                 { rol: "asistente", texto: t.crudo },
               ],
         ),
-        { rol: "usuario" as const, texto: limpio ?? "." },
+        { rol: "usuario" as const, texto: limpio ?? (imagen ? "" : ".") },
       ].slice(-MAX_HISTORIAL);
 
-      setTurnos((prev) => [...prev, { pregunta: limpio, bloques: [], crudo: "" }]);
+      setTurnos((prev) => [
+        ...prev,
+        {
+          pregunta: limpio,
+          miniatura: imagen?.vistaPrevia ?? null,
+          bloques: [],
+          crudo: "",
+        },
+      ]);
 
       let acumulado = "";
       try {
         const respuesta = await fetch("/api/asistente", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mensajes: historial, apertura: limpio === null }),
+          body: JSON.stringify({
+            mensajes: historial,
+            apertura: limpio === null && !imagen,
+            imagenes: imagen ? [{ tipo: imagen.tipo, base64: imagen.base64 }] : undefined,
+          }),
         });
         if (!respuesta.ok || !respuesta.body) {
           const detalle = await respuesta.text().catch(() => "");
@@ -104,7 +142,7 @@ export function Chat({ nombre }: { nombre: string }) {
             copia[copia.length - 1] = {
               ...copia[copia.length - 1],
               crudo: actual,
-              bloques: parsearRespuesta(actual, { parcial: true }),
+              bloques: parsearRespuesta(actual, { parcial: true, hoy }),
             };
             return copia;
           });
@@ -115,7 +153,7 @@ export function Chat({ nombre }: { nombre: string }) {
           const copia = [...prev];
           copia[copia.length - 1] = {
             ...copia[copia.length - 1],
-            bloques: parsearRespuesta(acumulado),
+            bloques: parsearRespuesta(acumulado, { hoy }),
           };
           return copia;
         });
@@ -132,8 +170,19 @@ export function Chat({ nombre }: { nombre: string }) {
         setPensando(false);
       }
     },
-    [pensando, turnos],
+    [pensando, turnos, hoy],
   );
+
+  /** El File del input/cámara → miniatura lista, o un error entendible. */
+  async function adjuntar(archivo: File | undefined) {
+    if (!archivo) return;
+    setError(null);
+    try {
+      setAdjunta(await prepararImagen(archivo));
+    } catch {
+      setError("No pude leer esa imagen. Probá con una foto o un screenshot.");
+    }
+  }
 
   // la lectura de apertura, una sola vez
   useEffect(() => {
@@ -184,14 +233,28 @@ export function Chat({ nombre }: { nombre: string }) {
                 {t.pregunta}
               </p>
             )}
+            {/* el comprobante que mandaste, chico: confirma QUÉ foto se leyó */}
+            {t.miniatura && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={t.miniatura}
+                alt="El comprobante que enviaste"
+                className="max-h-32 w-auto self-start rounded-cta border border-borde object-contain"
+              />
+            )}
             {t.bloques.length === 0 && pensando && i === turnos.length - 1 ? (
-              <p className="text-[13.5px] text-tinta-terciaria">Mirando tus números…</p>
+              <p className="text-[13.5px] text-tinta-terciaria">
+                {t.miniatura ? "Leyendo el comprobante…" : "Mirando tus números…"}
+              </p>
             ) : (
               <Bloques
                 bloques={sinAvisosRepetidos(
                   t.bloques,
                   turnos.slice(0, i).flatMap((p) => avisosDe(p.bloques)),
                 )}
+                medios={medios}
+                categorias={categorias}
+                hoy={hoy}
               />
             )}
           </div>
@@ -222,33 +285,80 @@ export function Chat({ nombre }: { nombre: string }) {
 
       {/* input pegado abajo */}
       <div className="sticky bottom-0 -mx-5 mt-auto bg-papel px-5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))]">
+        {/* la foto elegida, antes de mandarla: se puede sacar */}
+        {adjunta && (
+          <div className="mb-2 flex items-center gap-2.5 rounded-cta border border-borde bg-superficie p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={adjunta.vistaPrevia}
+              alt="Comprobante a enviar"
+              className="size-12 shrink-0 rounded-[8px] object-cover"
+            />
+            <p className="min-w-0 flex-1 text-[12.5px] leading-[1.4] text-tinta-secundaria">
+              Comprobante listo. Mandalo y te digo qué movimiento cargar.
+            </p>
+            <button
+              type="button"
+              onClick={() => setAdjunta(null)}
+              aria-label="Quitar el comprobante"
+              className="hit-44 shrink-0 text-tinta-secundaria"
+            >
+              <X className="size-[17px]" strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            preguntar(borrador);
+            preguntar(borrador, adjunta);
           }}
           className="flex items-center gap-2"
         >
+          {/* capture="environment" abre la cámara de atrás en el celu; en
+              desktop el mismo input ofrece elegir un archivo */}
+          <input
+            ref={archivoRef}
+            type="file"
+            accept={TIPOS_ACEPTADOS.join(",")}
+            capture="environment"
+            onChange={(e) => {
+              void adjuntar(e.target.files?.[0]);
+              e.target.value = ""; // así se puede volver a elegir la misma foto
+            }}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => archivoRef.current?.click()}
+            disabled={pensando || adjunta !== null}
+            aria-label="Adjuntar un comprobante"
+            className="flex size-11 shrink-0 items-center justify-center rounded-cta border border-borde bg-superficie text-tinta disabled:opacity-40"
+          >
+            <Camera className="size-5" strokeWidth={1.6} aria-hidden />
+          </button>
           <input
             type="text"
             value={borrador}
             onChange={(e) => setBorrador(e.target.value)}
             maxLength={2000}
-            placeholder="Preguntá lo que quieras…"
+            placeholder={adjunta ? "Algo que aclarar (opcional)…" : "Preguntá o mandá un ticket…"}
             aria-label="Tu pregunta"
             className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
           />
           <button
             type="submit"
-            disabled={borrador.trim() === "" || pensando}
+            disabled={(borrador.trim() === "" && !adjunta) || pensando}
             aria-label="Enviar"
             className="flex size-11 shrink-0 items-center justify-center rounded-cta bg-verde text-papel disabled:opacity-50"
           >
             <ArrowUp className="size-5" strokeWidth={2} aria-hidden />
           </button>
         </form>
-        <p className="mt-1.5 text-center text-[10.5px] text-tinta-terciaria">
+        <p className="mt-1.5 text-center text-[10.5px] leading-[1.4] text-tinta-terciaria">
           Orientación general con IA — no es asesoramiento financiero profesional.
+          <br />
+          Las fotos se leen y se descartan: no se guardan.
         </p>
       </div>
     </div>

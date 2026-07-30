@@ -1,29 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   avisosDe,
-  centavosDesdeTexto,
   parsearRespuesta,
   repreguntas,
   sinAvisosRepetidos,
 } from "./asistente";
-
-describe("centavosDesdeTexto — solo para el ancho de una barra, nunca para plata", () => {
-  it("lee el formato que emite formatearImporte", () => {
-    expect(centavosDesdeTexto("$ 564.900")).toBe(56490000);
-    expect(centavosDesdeTexto("$ 1.234.567,89")).toBe(123456789);
-    expect(centavosDesdeTexto("$ 6.800")).toBe(680000);
-  });
-
-  it("tolera el negativo con el menos tipográfico del sistema", () => {
-    expect(centavosDesdeTexto("− $ 12.500")).toBe(1250000);
-  });
-
-  it("devuelve null con basura, en vez de inventar un número", () => {
-    expect(centavosDesdeTexto("bastante")).toBeNull();
-    expect(centavosDesdeTexto("")).toBeNull();
-    expect(centavosDesdeTexto("$ mil pesos")).toBeNull();
-  });
-});
 
 describe("parsearRespuesta", () => {
   it("texto suelto queda como un solo párrafo", () => {

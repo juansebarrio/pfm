@@ -9,6 +9,9 @@ const API = process.env.EXPO_PUBLIC_API_URL;
 
 export type MensajeChat = { rol: "usuario" | "asistente"; texto: string };
 
+/** Un comprobante adjunto al último mensaje. Ver src/lib/imagen.ts. */
+export type ImagenAdjunta = { tipo: "image/jpeg"; base64: string };
+
 /**
  * Pide una respuesta al asistente y va entregando el texto por pedazos.
  * La API key de Anthropic vive en Vercel: nunca baja al dispositivo.
@@ -17,8 +20,12 @@ export async function preguntarAlAsistente(
   mensajes: MensajeChat[],
   alRecibir: (pedazo: string) => void,
   señal?: AbortSignal,
-  /** apertura: la lectura que da solo al abrir, sin que el usuario escriba */
-  opciones: { apertura?: boolean } = {},
+  opciones: {
+    /** apertura: la lectura que da solo al abrir, sin que el usuario escriba */
+    apertura?: boolean;
+    /** la foto del comprobante, solo en el turno en que se adjunta */
+    imagen?: ImagenAdjunta | null;
+  } = {},
 ): Promise<void> {
   if (!API) throw new Error("Falta EXPO_PUBLIC_API_URL");
 
@@ -34,7 +41,11 @@ export async function preguntarAlAsistente(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ mensajes, apertura: opciones.apertura }),
+    body: JSON.stringify({
+      mensajes,
+      apertura: opciones.apertura,
+      imagenes: opciones.imagen ? [opciones.imagen] : undefined,
+    }),
     signal: señal,
   });
 

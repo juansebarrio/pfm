@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { arsAUsd, formatearImporte, formatearPorcentaje, usdAArs } from "./dinero";
+import {
+  arsAUsd,
+  centavosDesdeTexto,
+  formatearImporte,
+  formatearPorcentaje,
+  usdAArs,
+} from "./dinero";
 
 describe("formatearImporte", () => {
   it("formatea ARS con miles con punto y sin decimales cuando no hay centavos", () => {
@@ -25,6 +31,36 @@ describe("formatearImporte", () => {
 
   it("rechaza floats: ningún float toca plata", () => {
     expect(() => formatearImporte(100.5)).toThrow();
+  });
+});
+
+describe("centavosDesdeTexto", () => {
+  it("lee de vuelta lo que emite formatearImporte", () => {
+    expect(centavosDesdeTexto("$ 564.900")).toBe(56490000);
+    expect(centavosDesdeTexto("$ 1.234.567,89")).toBe(123456789);
+    expect(centavosDesdeTexto("$ 6.800")).toBe(680000);
+  });
+
+  it("ida y vuelta sobre importes reales", () => {
+    for (const centavos of [1, 99, 100, 680000, 8432000, 123456789]) {
+      expect(centavosDesdeTexto(formatearImporte(centavos))).toBe(centavos);
+    }
+  });
+
+  it("descarta el signo: la dirección la lleva el tipo del movimiento", () => {
+    expect(centavosDesdeTexto("− $ 12.500")).toBe(1250000);
+    expect(centavosDesdeTexto("-$ 12.500")).toBe(1250000);
+  });
+
+  it("devuelve null con basura, en vez de inventar un número", () => {
+    expect(centavosDesdeTexto("bastante")).toBeNull();
+    expect(centavosDesdeTexto("")).toBeNull();
+    expect(centavosDesdeTexto("$ mil pesos")).toBeNull();
+  });
+
+  it("rechaza el formato con otra convención de miles y decimales", () => {
+    // "$ 1,234.56" es inglés: leerlo como argentino daría $ 1,23
+    expect(centavosDesdeTexto("$ 1,234.56")).toBeNull();
   });
 });
 

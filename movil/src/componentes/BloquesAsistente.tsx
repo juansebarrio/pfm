@@ -1,8 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import { TriangleAlert } from "lucide-react-native";
 import type { BloqueAsistente, TonoDato } from "@dominio/asistente";
+import type { CategoriaSimple, MedioDePago } from "@/lib/acciones";
+import type { SesionHogar } from "@/lib/datos";
 import { color, radio } from "@/lib/tema";
 import { BarraAvance } from "@/componentes/sistema";
+import { ComprobanteLeido } from "@/componentes/ComprobanteLeido";
 
 // Render de los bloques del asistente (ver lib/dominio/asistente.ts). Acá la
 // respuesta de la IA deja de ser texto y pasa a usar los componentes reales de
@@ -15,7 +18,22 @@ const TINTA_TONO: Record<TonoDato, string> = {
   neutro: color.tinta,
 };
 
-export function BloquesAsistente({ bloques }: { bloques: BloqueAsistente[] }) {
+export function BloquesAsistente({
+  bloques,
+  sesion,
+  medios,
+  categorias,
+  hoy,
+  miniatura = null,
+}: {
+  bloques: BloqueAsistente[];
+  sesion: SesionHogar | null;
+  medios: MedioDePago[];
+  categorias: CategoriaSimple[];
+  hoy: string;
+  /** la foto de este turno, para mostrarla dentro de la confirmación */
+  miniatura?: string | null;
+}) {
   return (
     <View style={{ gap: 10 }}>
       {bloques.map((b, i) => {
@@ -64,6 +82,21 @@ export function BloquesAsistente({ bloques }: { bloques: BloqueAsistente[] }) {
                 <Text style={e.ojoTexto}>{b.texto}</Text>
               </View>
             );
+
+          case "comprobante":
+            // sin sesión no hay dónde cargarlo; nunca pasa en la práctica, pero
+            // el tipo lo admite mientras la sesión está cargando
+            return sesion ? (
+              <ComprobanteLeido
+                key={i}
+                leido={b.leido}
+                sesion={sesion}
+                medios={medios}
+                categorias={categorias}
+                hoy={hoy}
+                miniatura={miniatura}
+              />
+            ) : null;
 
           // las repreguntas las muestra la pantalla abajo de la burbuja, como
           // chips tocables — acá no se dibujan

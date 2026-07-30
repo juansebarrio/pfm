@@ -1,6 +1,10 @@
 import "server-only";
 import { avisosParaAtender } from "@/app/(tabs)/resumen/datos";
-import { movimientosCategorizados } from "@/lib/datos/movimientos";
+import {
+  categoriasDelHogar,
+  mediosDePago,
+  movimientosCategorizados,
+} from "@/lib/datos/movimientos";
 import { obtenerPatrimonio } from "@/lib/datos/patrimonio";
 import { obtenerPresupuestoMes } from "@/lib/datos/presupuesto";
 import type { SesionHogar } from "@/lib/datos/sesion";
@@ -21,14 +25,23 @@ export async function contextoFinanciero(sesion: SesionHogar): Promise<string> {
   const hoy = hoyBA();
   const mes = mesDe(hoy);
 
-  const [presupuestoHogar, presupuestoPersonal, avisos, ultimos, patrimonio] =
-    await Promise.all([
-      obtenerPresupuestoMes(sesion, mes, "hogar"),
-      obtenerPresupuestoMes(sesion, mes, "personal"),
-      avisosParaAtender(sesion, hoy),
-      movimientosCategorizados(sesion, { limite: MAX_MOVIMIENTOS }),
-      obtenerPatrimonio(sesion),
-    ]);
+  const [
+    presupuestoHogar,
+    presupuestoPersonal,
+    avisos,
+    ultimos,
+    patrimonio,
+    medios,
+    categorias,
+  ] = await Promise.all([
+    obtenerPresupuestoMes(sesion, mes, "hogar"),
+    obtenerPresupuestoMes(sesion, mes, "personal"),
+    avisosParaAtender(sesion, hoy),
+    movimientosCategorizados(sesion, { limite: MAX_MOVIMIENTOS }),
+    obtenerPatrimonio(sesion),
+    mediosDePago(sesion),
+    categoriasDelHogar(sesion),
+  ]);
 
   const partes: string[] = [
     `Fecha de hoy: ${hoy}. Mes en curso: ${formatearMesLargo(mes)}.`,
@@ -70,6 +83,29 @@ export async function contextoFinanciero(sesion: SesionHogar): Promise<string> {
           (m) =>
             `  - ${m.fecha} ${m.descripcion}: ${m.tipo === "ingreso" ? "+" : ""}${$(m.importeCentavos)}${m.categoria ? ` (${m.categoria.nombre})` : " (sin categoría)"}${m.medio ? ` con ${m.medio}` : ""}${m.esCuota && m.nCuota && m.nCuotasTotal ? ` cuota ${m.nCuota}/${m.nCuotasTotal}` : ""} [${m.visibilidad === "compartido" ? "hogar" : "personal"}]`,
         )
+        .join("\n")}`,
+    );
+  }
+
+  // Medios y categorías existentes. Están para que al leer un comprobante el
+  // modelo proponga nombres QUE EXISTEN: "Visa Galicia", no "tarjeta de
+  // crédito". Los últimos 4 van explícitos porque es lo que imprime el ticket.
+  if (medios.length > 0) {
+    partes.push(
+      `Medios de pago del hogar (usá el nombre exacto en medio=):\n${medios
+        .map((m) =>
+          m.tipo === "tarjeta"
+            ? `  - ${m.nombre} (tarjeta, termina en ${m.ultimos4 ?? "?"})`
+            : `  - ${m.nombre} (cuenta)`,
+        )
+        .join("\n")}`,
+    );
+  }
+
+  if (categorias.length > 0) {
+    partes.push(
+      `Categorías existentes (usá el nombre exacto en categoria=):\n${categorias
+        .map((c) => `  - ${c.nombre} [${c.grupo}${c.ambito === "personal" ? ", personal" : ""}]`)
         .join("\n")}`,
     );
   }

@@ -22,6 +22,32 @@ export function formatearImporte(centavos: number, moneda: Moneda = "ARS"): stri
   return `${negativo ? "− " : ""}${simbolo}${miles}${decimales}`;
 }
 
+/**
+ * El inverso de formatearImporte: "$ 1.234.567,89" → 123456789 centavos.
+ * null si el texto no es un importe en formato argentino.
+ *
+ * Vivía en asistente.ts para calcular el ancho de una barra, donde fallar no
+ * costaba nada. Ahora también convierte el monto que el modelo leyó de una foto
+ * de comprobante, y eso SÍ termina siendo el importe de un movimiento. Dos
+ * consecuencias de ese ascenso:
+ *
+ * - Es estricto de entrada: si el formato no es exactamente el argentino,
+ *   devuelve null. Preferimos que la UI pida el monto a mano antes que cargar
+ *   un número interpretado con otra convención de miles y decimales.
+ * - DESCARTA EL SIGNO. Un "−" adelante no vuelve negativo el resultado: la base
+ *   exige importe_centavos > 0 y la dirección la lleva el tipo (gasto/ingreso).
+ *   Quien lea un "-$ 500" de un comprobante tiene que decidir el tipo, no
+ *   esperar un centavo negativo.
+ */
+export function centavosDesdeTexto(texto: string): number | null {
+  const limpio = texto.trim().replace(/^[−-]\s*/, "").replace(/^(\$|USD)\s*/i, "");
+  if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$/.test(limpio)) return null;
+  const [enteros, decimales = ""] = limpio.split(",");
+  const centavos =
+    Number(enteros.replace(/\./g, "")) * 100 + Number(decimales.padEnd(2, "0"));
+  return Number.isFinite(centavos) ? centavos : null;
+}
+
 /** `81 %` — con espacio antes del signo, como el export. */
 export function formatearPorcentaje(valor: number): string {
   return `${Math.round(valor)} %`;

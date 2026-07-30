@@ -69,8 +69,15 @@ export default function Privacidad() {
           <Item t="Números de tarjeta completos">
             Ver arriba: solo los últimos cuatro.
           </Item>
-          <Item t="Ubicación, contactos, fotos ni micrófono">
+          <Item t="Ubicación, contactos ni micrófono">
             La app no los pide.
+          </Item>
+          <Item t="Las fotos de comprobantes">
+            La cámara y tus fotos se piden <em>solo</em> cuando vos elegís
+            mandarle un comprobante al asistente, y la imagen no se guarda: se
+            lee y se descarta. No queda copia en el teléfono, ni en nuestro
+            servidor, ni en la base. Tampoco accedemos a tu galería: elegís vos
+            qué foto mandar, de a una.
           </Item>
           <Item t="Analítica ni publicidad">
             No hay SDK de tracking, ni cookies de terceros, ni perfilado.
@@ -98,6 +105,14 @@ export default function Privacidad() {
           conversación no se guarda en ningún lado: cerrás la pantalla y se
           termina. Anthropic no entrena modelos con los datos que recibe por su
           API. Si nunca abrís el asistente, no sale nada.
+        </p>
+        <p className="mt-3 text-[14px] leading-[1.65] text-tinta-secundaria">
+          Si le mandás la <strong>foto de un comprobante</strong>, esa imagen
+          viaja por la misma vía y con el mismo trato: se usa para leer el
+          movimiento y se descarta cuando termina la respuesta. No la guardamos
+          ni queda adjunta al gasto — del comprobante solo sobrevive lo que vos
+          confirmás cargar (comercio, importe, fecha) y una nota que dice que
+          salió de una foto. La imagen se reduce en tu teléfono antes de salir.
         </p>
       </Seccion>
 

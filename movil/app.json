@@ -49,6 +49,13 @@
           "color": "#1E6E52"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fin de mes accede a tus fotos para leer comprobantes que elijas. La imagen se lee y se descarta: no se guarda.",
+          "cameraPermission": "Fin de mes usa la cámara para que saques la foto de un comprobante. La imagen se lee y se descarta: no se guarda."
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "experiments": {

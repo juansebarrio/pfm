@@ -197,6 +197,8 @@ export type MedioDePago =
       id: string;
       nombre: string;
       etiqueta: string;
+      /** los 4 últimos, sueltos: con eso se matchea un comprobante leído */
+      ultimos4: string | null;
       cicloCierre: string | null; // YYYY-MM-DD del ciclo abierto
       cicloEstado: "estimado" | "confirmado" | null;
     };
@@ -241,6 +243,7 @@ export async function mediosDePago(sesion: SesionHogar): Promise<MedioDePago[]> 
       id: t.id,
       nombre: t.nombre,
       etiqueta: `${t.red === "visa" ? "Visa" : t.red === "mastercard" ? "MC" : t.red} •• ${t.ultimos4}`,
+      ultimos4: t.ultimos4 ?? null,
       cicloCierre: abierto?.fecha_cierre ?? null,
       cicloEstado: abierto?.estado_fechas ?? null,
     });

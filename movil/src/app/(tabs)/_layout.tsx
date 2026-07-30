@@ -1,12 +1,21 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { Redirect, Tabs, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeftRight, House, LineChart, Plus, Wallet } from "lucide-react-native";
+import { ArrowLeftRight, Camera, House, LineChart, Plus, Wallet } from "lucide-react-native";
 import { useSesion } from "@/lib/sesion";
 import { color } from "@/lib/tema";
 
 // Tab bar nativa. En la web esto era un <nav> fijo con CSS; acá lo da el
 // sistema: blur, safe area y comportamiento de scroll nativos, gratis.
+//
+// El botón flotante es DOBLE: una pastilla partida al medio. Izquierda, la
+// cámara: saca la foto de un comprobante y el asistente lo lee. Derecha, el +:
+// el alta a mano de siempre. Las dos formas de cargar un movimiento tienen el
+// mismo peso visual porque tienen el mismo peso real — a veces tenés el ticket
+// en la mano y a veces sabés el número de memoria.
+//
+// La pastilla va MÁS ARRIBA que el + redondo que reemplazó: es más ancha, y a
+// la altura vieja se le comía las etiquetas de Presupuesto y Movimientos.
 
 export default function LayoutTabs() {
   const { sesion, cargando } = useSesion();
@@ -18,15 +27,24 @@ export default function LayoutTabs() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* FAB central del export: flota sobre la tab bar */}
-      <View style={[e.fabCapa, { bottom: insets.bottom + 22 }]} pointerEvents="box-none">
-        <Pressable
-          onPress={() => router.push("/gasto-nuevo")}
-          style={({ pressed }) => [e.fab, pressed && { opacity: 0.85 }]}
-          accessibilityLabel="Nuevo gasto"
-        >
-          <Plus size={26} color={color.papel} strokeWidth={2.5} />
-        </Pressable>
+      <View style={[e.fabCapa, { bottom: insets.bottom + 58 }]} pointerEvents="box-none">
+        <View style={e.pastilla}>
+          <Pressable
+            onPress={() => router.push("/asistente?camara=1")}
+            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityLabel="Sacarle una foto a un comprobante"
+          >
+            <Camera size={23} color={color.papel} strokeWidth={2} />
+          </Pressable>
+          <View style={e.divisor} />
+          <Pressable
+            onPress={() => router.push("/gasto-nuevo")}
+            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityLabel="Cargar un movimiento a mano"
+          >
+            <Plus size={25} color={color.papel} strokeWidth={2.5} />
+          </Pressable>
+        </View>
       </View>
 
     <Tabs
@@ -87,18 +105,23 @@ const e = StyleSheet.create({
     zIndex: 10,
     alignItems: "center",
   },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  pastilla: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    height: 54,
+    borderRadius: 27,
     backgroundColor: color.verde,
-    // resplandor verde del export
+    // el resplandor verde del export, ahora sobre la pastilla entera
     shadowColor: color.verde,
     shadowOpacity: 0.4,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
+  // 58 de ancho por mitad: pasa los 44 pt de Apple con holgura y deja aire
+  // suficiente entre los dos íconos para que se lean como dos botones
+  mitad: { width: 58, height: 54, alignItems: "center", justifyContent: "center" },
+  // el divisor tiene que VERSE: es lo único que dice que son dos botones y no
+  // uno con dos dibujos. A hairline sobre el verde menta desaparecía.
+  divisor: { width: 1, height: 26, backgroundColor: "rgba(0,0,0,0.3)" },
 });
