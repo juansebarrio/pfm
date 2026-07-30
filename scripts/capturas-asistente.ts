@@ -21,6 +21,14 @@ const PUERTO_CDP = 9224;
 const BASE = process.env.BASE_CAPTURAS ?? "http://localhost:3000";
 const SALIDA = path.join(process.cwd(), "docs/presentacion");
 
+/**
+ * El comprobante de muestra que se sube para las capturas 3 y 4. Es un ticket
+ * de supermercado armado a mano (no una foto de un ticket real de nadie), con
+ * datos que existen en el hogar de demo: total $ 84.320, Visa terminada en
+ * 4321. Vive en el repo para que las capturas sean reproducibles.
+ */
+const TICKET = path.join(process.cwd(), "docs/presentacion/muestra-ticket.png");
+
 const esperar = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
 
 async function obtenerCookieSesion(): Promise<string> {
@@ -170,21 +178,25 @@ async function main() {
     });
 
     // El tema NO va por prefers-color-scheme: el toggle escribe data-tema en el
-    // <html> (ver app/globals.css). Se fuerza después de cada navegación.
-    const ponerTema = (t: "claro" | "oscuro") =>
-      evaluar(`document.documentElement.dataset.tema = '${t}'`);
+    // <html> (ver app/globals.css). Se fuerza después de cada navegación, y por
+    // eso aparece repetido: cada Page.navigate lo resetea.
+    //
+    // Todas las capturas van en OSCURO: es el tema con el que se presenta el
+    // producto, y un par claro/oscuro de cada pantalla duplicaba el material
+    // sin agregar nada que contar.
+    const ponerTema = () => evaluar(`document.documentElement.dataset.tema = 'oscuro'`);
 
-    for (const esquema of ["claro", "oscuro"] as const) {
-      console.log(`\n${esquema}:`);
+    {
+      console.log("");
 
       // 1. la lectura de apertura, sin que nadie haya escrito nada
       await pagina.enviar("Page.navigate", { url: `${BASE}/asistente` });
       await esperar(1500);
-      await ponerTema(esquema);
+      await ponerTema();
       await esperarA(TERMINO, "la apertura terminó de streamear");
-      await ponerTema(esquema);
+      await ponerTema();
       await esperar(500);
-      await capturar(`asistente-1-apertura-${esquema}`);
+      await capturar("asistente-1-apertura");
 
       // 2. una repregunta que trae la partida con su barra
       await evaluar(`(() => {
@@ -196,11 +208,56 @@ async function main() {
       })()`);
       await esperar(2000);
       await esperarA(TERMINO, "la respuesta terminó de streamear");
-      await ponerTema(esquema);
+      await ponerTema();
       await esperar(500);
       await evaluar("window.scrollTo(0, document.body.scrollHeight)");
       await esperar(400);
-      await capturar(`asistente-2-partida-${esquema}`);
+      await capturar("asistente-2-partida");
+
+      // 3. y 4. el comprobante: la foto adjunta y la lectura para confirmar.
+      //
+      // La imagen se sube de verdad, por el input real, con DOM.setFileInputFiles
+      // (la única forma de llenar un <input type=file> desde CDP: escribirle
+      // .files desde JS no se puede, es de solo lectura por seguridad).
+      await pagina.enviar("Page.navigate", { url: `${BASE}/asistente` });
+      await esperar(1500);
+      await ponerTema();
+      await esperarA(TERMINO, "la apertura terminó de streamear");
+
+      const { root } = await pagina.enviar<{ root: { nodeId: number } }>("DOM.getDocument");
+      const { nodeId } = await pagina.enviar<{ nodeId: number }>("DOM.querySelector", {
+        nodeId: root.nodeId,
+        selector: 'input[type="file"]',
+      });
+      await pagina.enviar("DOM.setFileInputFiles", { nodeId, files: [TICKET] });
+      await esperarA(
+        "!!document.querySelector('img[alt=\"Comprobante a enviar\"]')",
+        "la miniatura del adjunto apareció",
+        20,
+      );
+      await ponerTema();
+      await esperar(400);
+      await evaluar("window.scrollTo(0, document.body.scrollHeight)");
+      await capturar("asistente-3-adjunto");
+
+      await evaluar("document.querySelector('button[aria-label=\"Enviar\"]').click()");
+      await esperarA(
+        "!!document.querySelector('input[aria-label=\"Importe\"]')",
+        "la tarjeta de confirmación apareció",
+      );
+      // un momento más: los chips de medio y categoría se pintan con el stream
+      await esperar(1500);
+      await ponerTema();
+      // El encuadre se elige por el BOTÓN, no por la tarjeta: "Cargar" es lo
+      // que la captura tiene que contar. Centrar la tarjeta lo dejaba abajo del
+      // compositor pegado, que es la parte más importante escondida.
+      await evaluar(`(() => {
+        const b = [...document.querySelectorAll('button')].find(x => x.textContent.trim().startsWith('Cargar'));
+        b.scrollIntoView({ block: 'end' });
+        window.scrollBy(0, 110); // el compositor sticky mide ~100px
+      })()`);
+      await esperar(500);
+      await capturar("asistente-4-comprobante");
     }
 
     navegador.cerrar();

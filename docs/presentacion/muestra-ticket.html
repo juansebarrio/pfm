@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; background: #888; font-family: -apple-system, system-ui, sans-serif; }
+  .hoja { width: 420px; margin: 0; padding: 0; }
+
+  /* 1. Ticket fiscal de supermercado */
+  #ticket {
+    background: #f4f2ec; color: #1a1a1a; padding: 22px 26px;
+    font-family: "Courier New", monospace; font-size: 13px; line-height: 1.55;
+  }
+  #ticket .centro { text-align: center; }
+  #ticket .grande { font-size: 17px; font-weight: bold; }
+  #ticket hr { border: none; border-top: 1px dashed #999; margin: 10px 0; }
+  #ticket .fila { display: flex; justify-content: space-between; }
+  #ticket .total { font-size: 19px; font-weight: bold; }
+
+  /* 2. Mail de compra (screenshot de Gmail) */
+  #mail { background: #fff; color: #202124; font-size: 14px; }
+  #mail .barra { background: #f6f8fc; padding: 12px 18px; border-bottom: 1px solid #e0e0e0;
+    font-size: 13px; color: #5f6368; display: flex; gap: 10px; align-items: center; }
+  #mail .cuerpo { padding: 20px 18px; }
+  #mail .marca { color: #00a650; font-weight: 700; font-size: 20px; letter-spacing: -.5px; }
+  #mail h1 { font-size: 17px; margin: 16px 0 4px; }
+  #mail .caja { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px; margin-top: 16px; }
+  #mail .fila { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13.5px; }
+  #mail .fila b { font-weight: 600; }
+  #mail .tot { border-top: 1px solid #e0e0e0; margin-top: 8px; padding-top: 10px; font-size: 16px; }
+  #mail .chico { color: #5f6368; font-size: 12px; }
+
+  /* 3. Comprobante de transferencia recibida (app del banco) */
+  #transfer { background: #0d1b2a; color: #fff; padding: 28px 24px; min-height: 460px; }
+  #transfer .ok { width: 54px; height: 54px; border-radius: 50%; background: #14b866;
+    display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 8px auto 18px; }
+  #transfer .titulo { text-align: center; font-size: 15px; opacity: .8; }
+  #transfer .monto { text-align: center; font-size: 34px; font-weight: 700; margin: 6px 0 24px; }
+  #transfer .fila { display: flex; justify-content: space-between; padding: 11px 0;
+    border-bottom: 1px solid rgba(255,255,255,.12); font-size: 13.5px; }
+  #transfer .fila span:first-child { opacity: .65; }
+</style>
+
+<div class="hoja" id="ticket">
+  <div class="centro">
+    <div class="grande">COTO C.I.C.S.A.</div>
+    <div>Av. Cabildo 2751 - CABA</div>
+    <div>CUIT 30-54660329-9</div>
+    <div>IVA RESPONSABLE INSCRIPTO</div>
+  </div>
+  <hr>
+  <div class="centro grande">TICKET FACTURA B</div>
+  <div class="fila"><span>Nro. 0042-00318877</span></div>
+  <div class="fila"><span>29/07/2026</span><span>19:42</span></div>
+  <hr>
+  <div class="fila"><span>LECHE LA SERENISIMA 1L x3</span><span>4.470,00</span></div>
+  <div class="fila"><span>PAN LACTAL BIMBO</span><span>3.890,00</span></div>
+  <div class="fila"><span>YERBA PLAYADITO 1KG</span><span>8.750,00</span></div>
+  <div class="fila"><span>ACEITE NATURA 900ML x2</span><span>11.980,00</span></div>
+  <div class="fila"><span>POLLO ENTERO 2,4KG</span><span>15.360,00</span></div>
+  <div class="fila"><span>DETERGENTE MAGISTRAL</span><span>6.420,00</span></div>
+  <div class="fila"><span>QUESO CREMOSO 500G</span><span>9.850,00</span></div>
+  <div class="fila"><span>TOMATE PERITA 1KG</span><span>4.200,00</span></div>
+  <div class="fila"><span>FIDEOS MATARAZZO x4</span><span>7.160,00</span></div>
+  <div class="fila"><span>GASEOSA COCA 2,25L x2</span><span>12.240,00</span></div>
+  <hr>
+  <div class="fila"><span>SUBTOTAL</span><span>84.320,00</span></div>
+  <div class="fila"><span>IVA 21% CONTENIDO</span><span>14.632,23</span></div>
+  <div class="fila total"><span>TOTAL</span><span>$ 84.320,00</span></div>
+  <hr>
+  <div class="fila"><span>VISA CREDITO</span><span>84.320,00</span></div>
+  <div class="fila"><span>TARJ. ****4321</span><span>1 PAGO</span></div>
+  <div class="fila"><span>LOTE 0084 CUPON 001233</span></div>
+  <hr>
+  <div class="centro">GRACIAS POR SU COMPRA</div>
+  <div class="centro">CAE 76001234567890</div>
+</div>
