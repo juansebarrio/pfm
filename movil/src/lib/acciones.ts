@@ -1,6 +1,12 @@
 import { generarCuotas } from "@dominio/cuotas";
 import { asignarCiclo, generarCiclosHasta, primerCicloEstimado } from "@dominio/ciclos";
 import { hoyBA } from "@dominio/fechas";
+import {
+  GRUPO_INGRESOS,
+  ICONOS_DISPONIBLES,
+  MENSAJE_ERROR_NOMBRE,
+  validarNombre,
+} from "@dominio/categorias";
 import { supabase } from "./supabase";
 import type { SesionHogar } from "./datos";
 
@@ -411,6 +417,104 @@ export async function repetirPresupuesto(
     return { ok: false, error: "El mes anterior no tiene presupuesto para repetir" };
   }
   return armarPresupuesto(sesion, mes, ambito, partidas);
+}
+
+// ────────────────────────────────────────────── categorías propias
+//
+// Qué permite la RLS (verificado con un usuario real): crear ✓, editar ✓,
+// BORRAR ✗ — no hay policy de delete, a propósito: los movimientos referencian
+// categorias con una FK sin cascade. Espeja app/acciones/categorias.ts.
+
+export type EntradaCategoria = {
+  nombre: string;
+  grupo: string;
+  icono: string;
+  ambito: "hogar" | "personal";
+};
+
+/** Los nombres del ámbito, para detectar repetidos antes de escribir. */
+async function nombresDelAmbito(
+  sesion: SesionHogar,
+  ambito: "hogar" | "personal",
+  excluirId?: string,
+): Promise<string[]> {
+  let consulta = supabase
+    .from("categorias")
+    .select("id, nombre")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("ambito", ambito);
+  if (ambito === "personal") consulta = consulta.eq("user_id", sesion.userId);
+  const { data } = await consulta;
+  return (data ?? []).filter((c) => c.id !== excluirId).map((c) => c.nombre);
+}
+
+export async function crearCategoria(
+  sesion: SesionHogar,
+  datos: EntradaCategoria,
+): Promise<Resultado> {
+  const problema = validarNombre(
+    datos.nombre,
+    await nombresDelAmbito(sesion, datos.ambito),
+  );
+  if (problema) return { ok: false, error: MENSAJE_ERROR_NOMBRE[problema] };
+
+  // orden 500: después de las sugeridas (0-17), antes de las creadas al pasar (999)
+  const { error } = await supabase.from("categorias").insert({
+    hogar_id: sesion.hogarId,
+    user_id: datos.ambito === "personal" ? sesion.userId : null,
+    grupo: datos.grupo,
+    nombre: datos.nombre.trim(),
+    ambito: datos.ambito,
+    icono: ICONOS_DISPONIBLES.includes(datos.icono) ? datos.icono : "tag",
+    orden: 500,
+  });
+  if (error) return { ok: false, error: "No pudimos crear la categoría" };
+  return { ok: true };
+}
+
+/** Renombrar / cambiar ícono / mover de grupo. El ámbito NO se cambia. */
+export async function editarCategoria(
+  sesion: SesionHogar,
+  categoriaId: string,
+  datos: { nombre: string; grupo: string; icono: string },
+): Promise<Resultado> {
+  const { data: actual } = await supabase
+    .from("categorias")
+    .select("id, ambito, grupo")
+    .eq("id", categoriaId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!actual) return { ok: false, error: "No encontramos esa categoría" };
+
+  // cruzar la frontera Ingresos/gasto dejaría movimientos del lado equivocado
+  const eraIngreso = actual.grupo === GRUPO_INGRESOS;
+  const seraIngreso = datos.grupo === GRUPO_INGRESOS;
+  if (eraIngreso !== seraIngreso) {
+    return {
+      ok: false,
+      error: eraIngreso
+        ? "Una categoría de ingreso no puede pasar a gasto"
+        : "Una categoría de gasto no puede pasar a ingreso",
+    };
+  }
+
+  const problema = validarNombre(
+    datos.nombre,
+    await nombresDelAmbito(sesion, actual.ambito as "hogar" | "personal", categoriaId),
+  );
+  if (problema) return { ok: false, error: MENSAJE_ERROR_NOMBRE[problema] };
+
+  const { error } = await supabase
+    .from("categorias")
+    .update({
+      nombre: datos.nombre.trim(),
+      grupo: datos.grupo,
+      icono: ICONOS_DISPONIBLES.includes(datos.icono) ? datos.icono : "tag",
+    })
+    .eq("id", categoriaId)
+    .eq("hogar_id", sesion.hogarId);
+  if (error) return { ok: false, error: "No pudimos guardar los cambios" };
+  return { ok: true };
 }
 
 /** Editar el comentario de un movimiento. Vacío borra la nota. */

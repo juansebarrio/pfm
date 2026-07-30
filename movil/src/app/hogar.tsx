@@ -20,6 +20,7 @@ import {
   Lock,
   ScanFace,
   Sparkles,
+  Tags,
   Users,
   Wallet,
 } from "lucide-react-native";
@@ -201,6 +202,14 @@ export default function Hogar() {
             <Pressable onPress={() => router.push("/asistente")} style={e.navFila}>
               <Sparkles size={17} color={color.verde} strokeWidth={1.5} />
               <Text style={e.navTexto}>Asistente financiero</Text>
+              <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
+            </Pressable>
+            <Pressable onPress={() => router.push("/categorias")} style={[e.navFila, e.conBorde]}>
+              <Tags size={17} color={color.tinta} strokeWidth={1.5} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={e.navTexto}>Categorías</Text>
+                <Text style={e.navAyuda}>Creá las tuyas y ordenalas por grupo</Text>
+              </View>
               <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
             </Pressable>
             <Pressable onPress={() => router.push("/cuentas")} style={[e.navFila, e.conBorde]}>

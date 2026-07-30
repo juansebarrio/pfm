@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Lock, Sparkles, Users, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Sparkles, Tags, Users, Wallet } from "lucide-react";
 import { cerrarSesion } from "@/app/(auth)/acciones";
 import { Badge } from "@/components/sistema/Badge";
 import { Card } from "@/components/sistema/Card";
@@ -121,6 +121,23 @@ export default async function Hogar() {
         <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
           <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
           <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-tinta-terciaria"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
+      </Card>
+
+      <Card className="mt-4">
+        <Link href="/categorias" className="flex items-center gap-2.5 px-4 py-3.5">
+          <Tags className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+          <div className="min-w-0 flex-1">
+            <span className="block text-[14px] font-medium text-tinta">Categorías</span>
+            <span className="block text-[11.5px] text-tinta-secundaria">
+              Creá las tuyas y ordenalas por grupo
+            </span>
+          </div>
           <ChevronRight
             className="size-4 shrink-0 text-tinta-terciaria"
             strokeWidth={1.5}
