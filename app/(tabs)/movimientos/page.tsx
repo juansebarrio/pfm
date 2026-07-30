@@ -8,8 +8,8 @@ import {
   type MovimientoLista,
 } from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
-import { etiquetaDia, hoyBA, mesDe } from "@/lib/dominio/fechas";
-import { NavegadorMes } from "./NavegadorMes";
+import { etiquetaDia, hoyBA, mesDe, mesDesdeParametro } from "@/lib/dominio/fechas";
+import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
 import { TotalizadorMes } from "./TotalizadorMes";
 import { Filtros } from "./Filtros";
@@ -48,12 +48,6 @@ function comoTipo(valor: string | undefined): "gasto" | "ingreso" | undefined {
   return valor === "gasto" || valor === "ingreso" ? valor : undefined;
 }
 
-/** "2026-07" → "2026-07-01". Un mes inventado cae al mes en curso. */
-function comoMes(valor: string | undefined, hoy: string): string {
-  if (!valor || !/^\d{4}-(0[1-9]|1[0-2])$/.test(valor)) return mesDe(hoy);
-  return `${valor}-01`;
-}
-
 const soloChip = ({ id, nombre, icono, grupo }: { id: string; nombre: string; icono: string; grupo: string }) =>
   ({ id, nombre, icono, grupo }) satisfies CategoriaChip;
 
@@ -73,7 +67,7 @@ export default async function PaginaMovimientos({
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
   const mesActual = mesDe(hoy);
-  const mes = comoMes(uno(parametros.mes), hoy);
+  const mes = mesDesdeParametro(uno(parametros.mes)) ?? mesActual;
   const esMesActual = mes === mesActual;
 
   const totalesPedido = totalesDelMes(sesion, mes);
@@ -124,6 +118,7 @@ export default async function PaginaMovimientos({
       <NavegadorMes
         mes={mes}
         mesActual={mesActual}
+        ruta="/movimientos"
         otrosParametros={Object.fromEntries(
           Object.entries({
             q,

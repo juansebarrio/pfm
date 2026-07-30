@@ -21,6 +21,7 @@ import {
   formatearMesSolo,
   hoyBA,
   mesAnterior,
+  mesDesdeParametro,
   mesDe,
   mesSiguiente,
 } from "@/lib/dominio/fechas";
@@ -79,8 +80,7 @@ export default async function PaginaPresupuesto({
 }) {
   const params = await searchParams;
   const hoy = hoyBA();
-  const mes =
-    params.mes && /^\d{4}-\d{2}-01$/.test(params.mes) ? params.mes : mesDe(hoy);
+  const mes = mesDesdeParametro(params.mes) ?? mesDe(hoy);
   const ambito: Ambito = params.ambito === "personal" ? "personal" : "hogar";
   const mesProximo = mesSiguiente(mes);
 
@@ -92,7 +92,6 @@ export default async function PaginaPresupuesto({
     existePresupuesto(sesion, mesAnterior(mes), ambito),
   ]);
 
-  const urlMes = (m: string) => `/presupuesto?mes=${m}&ambito=${ambito}`;
   const mesTitulo = formatearMesLargo(mes);
   const mesNombre = formatearMesSolo(mes);
   const inicial = (sesion.nombreMiembro.trim().charAt(0) || "Y").toUpperCase();
@@ -100,8 +99,8 @@ export default async function PaginaPresupuesto({
   const encabezado = (
     <EncabezadoPresupuesto
       mesTitulo={mesTitulo}
-      hrefMesAnterior={urlMes(mesAnterior(mes))}
-      hrefMesSiguiente={urlMes(mesProximo)}
+      mes={mes}
+      mesActual={mesDe(hoy)}
       inicial={inicial}
       ambito={ambito}
       hrefHogar={`/presupuesto?mes=${mes}&ambito=hogar`}

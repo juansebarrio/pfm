@@ -11,17 +11,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight, Wallet } from "lucide-react-native";
+import { Wallet } from "lucide-react-native";
 import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
   diaDelMes,
   diasDelMes,
-  formatearMesLargo,
   formatearMesSolo,
   hoyBA,
   mesAnterior,
   mesDe,
-  mesSiguiente,
 } from "@dominio/fechas";
 import { repetirPresupuesto } from "@/lib/acciones";
 import {
@@ -31,6 +29,7 @@ import {
   type PresupuestoMes,
   type SesionHogar,
 } from "@/lib/datos";
+import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { color, radio } from "@/lib/tema";
 import {
   Card,
@@ -130,17 +129,13 @@ export default function Presupuesto() {
 
   return (
     <View style={e.pantalla}>
-      {/* Encabezado: navegación de mes + segmented de ámbito */}
+      {/* Encabezado: título + navegación de mes + segmented de ámbito.
+          El cambio de mes usa el MISMO componente que Movimientos: antes eran
+          dos chevrons pegados al título y allá una fila centrada, y dos formas
+          de hacer lo mismo en pantallas hermanas se leen como dos apps. */}
       <View style={[e.encabezado, { paddingTop: insets.top + 12 }]}>
-        <View style={e.navMes}>
-          <Pressable onPress={() => setMes(mesAnterior(mes))} hitSlop={12}>
-            <ChevronLeft size={20} color={color.tinta} strokeWidth={1.5} />
-          </Pressable>
-          <Text style={e.mesTitulo}>{formatearMesLargo(mes)}</Text>
-          <Pressable onPress={() => setMes(mesSiguiente(mes))} hitSlop={12}>
-            <ChevronRight size={20} color={color.tinta} strokeWidth={1.5} />
-          </Pressable>
-        </View>
+        <Text style={e.titulo}>Presupuesto</Text>
+        <NavegadorMes mes={mes} mesActual={mesDe(hoy)} alCambiar={setMes} />
         <View style={e.segmented}>
           {(["hogar", "personal"] as const).map((a) => (
             <Pressable
@@ -279,17 +274,7 @@ const e = StyleSheet.create({
     borderBottomColor: color.separador,
     gap: 10,
   },
-  navMes: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  mesTitulo: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: color.tinta,
-    textTransform: "capitalize",
-  },
+  titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
   segmented: {
     flexDirection: "row",
     borderRadius: radio.chipChico,

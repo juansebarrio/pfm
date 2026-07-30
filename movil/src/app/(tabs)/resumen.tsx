@@ -76,7 +76,7 @@ export default function Resumen() {
     const [p, a, m] = await Promise.all([
       obtenerPresupuestoMes(s, mes, "hogar"),
       avisosParaAtender(s),
-      movimientosCategorizados(s, 3),
+      movimientosCategorizados(s, { limite: 3 }),
     ]);
     setPresupuesto(p);
     setAvisos(a);

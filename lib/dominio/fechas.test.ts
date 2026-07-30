@@ -3,6 +3,7 @@ import {
   diasDelMes,
   mesAnterior,
   mesDe,
+  mesDesdeParametro,
   mesSiguiente,
   ultimoDiaDelMes,
 } from "./fechas";
@@ -45,6 +46,31 @@ describe("ultimoDiaDelMes", () => {
       expect(dia).toBe(diasDelMes(mes));
       expect(dia).toBeGreaterThanOrEqual(28);
       expect(dia).toBeLessThanOrEqual(31);
+    }
+  });
+});
+
+describe("mesDesdeParametro", () => {
+  it("acepta las dos formas que conviven en la app", () => {
+    // la corta la escribe el navegador de meses; la larga, el resto de los links
+    expect(mesDesdeParametro("2026-06")).toBe("2026-06-01");
+    expect(mesDesdeParametro("2026-06-01")).toBe("2026-06-01");
+  });
+
+  it("rechaza lo que no es un mes", () => {
+    expect(mesDesdeParametro(undefined)).toBeNull();
+    expect(mesDesdeParametro("")).toBeNull();
+    expect(mesDesdeParametro("2026-13")).toBeNull();
+    expect(mesDesdeParametro("2026-00")).toBeNull();
+    expect(mesDesdeParametro("2026-06-15")).toBeNull(); // un día suelto no es un mes
+    expect(mesDesdeParametro("junio")).toBeNull();
+    expect(mesDesdeParametro("2026")).toBeNull();
+  });
+
+  it("cubre los doce meses", () => {
+    for (let m = 1; m <= 12; m++) {
+      const mm = String(m).padStart(2, "0");
+      expect(mesDesdeParametro(`2026-${mm}`)).toBe(`2026-${mm}-01`);
     }
   });
 });

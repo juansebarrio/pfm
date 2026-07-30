@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Inbox } from "lucide-react-native";
+import { Inbox, ListChecks } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
-import { etiquetaDia, hoyBA, mesDe } from "@dominio/fechas";
+import { etiquetaDia, formatearDiaCorto, hoyBA, mesDe } from "@dominio/fechas";
 import {
   bandejaDeEntrada,
   movimientosCategorizados,
@@ -24,12 +24,15 @@ import {
   type TotalesMes,
 } from "@/lib/datos";
 import {
+  actualizarFechasEnLote,
   borrarMovimiento,
   categoriasDelHogar,
   categorizarMovimiento,
   type CategoriaSimple,
 } from "@/lib/acciones";
 import { color, radio } from "@/lib/tema";
+import { useModoSeleccion } from "@/lib/modo-seleccion";
+import { tacto } from "@/lib/tacto";
 import {
   Card,
   EstadoVacio,
@@ -38,10 +41,19 @@ import {
 } from "@/componentes/sistema";
 import { FilaSwipe } from "@/componentes/FilaSwipe";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
+import { NavegadorMes } from "@/componentes/NavegadorMes";
+import {
+  BarraSeleccion,
+  FilaSeleccionable,
+} from "@/componentes/SeleccionMovimientos";
 
 // 05 — Movimientos: bandeja de entrada (lo que llegó sin categoría) arriba, y
 // abajo el historial agrupado por día. La bandeja lleva el borde cálido, único
 // en el sistema (§3.8).
+//
+// Con flechas para moverse mes a mes y un modo SELECCIÓN para cambiarle la
+// fecha a varios de una — que es como se arrastra medio mes al siguiente sin
+// abrir uno por uno. Paridad con la web; el cambio de a uno sigue en el detalle.
 
 /** Agrupa el historial por fecha, conservando el orden. */
 function porDia(movimientos: MovimientoFila[], hoy: string) {
@@ -70,6 +82,16 @@ export default function Movimientos() {
   const [totales, setTotales] = useState<TotalesMes | null>(null);
 
   const hoy = hoyBA();
+  const mesActual = mesDe(hoy);
+  const [mes, setMes] = useState(mesActual);
+  const esMesActual = mes === mesActual;
+
+  // el layout de las tabs esconde la pastilla flotante mientras seleccionás
+  const { activo: seleccionando, setActivo: setSeleccionando } = useModoSeleccion();
+  const [elegidos, setElegidos] = useState<string[]>([]);
+  const [fechaDestino, setFechaDestino] = useState(hoy);
+  const [moviendo, setMoviendo] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     const s = await obtenerSesionHogar();
@@ -77,16 +99,16 @@ export default function Movimientos() {
     setSesion(s);
     const [b, h, c, t] = await Promise.all([
       bandejaDeEntrada(s),
-      movimientosCategorizados(s, 40),
+      movimientosCategorizados(s, { mes }),
       categoriasDelHogar(s),
-      totalesDelMes(s, mesDe(hoyBA())),
+      totalesDelMes(s, mes),
     ]);
     setBandeja(b);
     setHistorial(h);
     setCategorias(c);
     setTotales(t);
     setOcultos([]);
-  }, []);
+  }, [mes]);
 
   useEffect(() => {
     cargar().finally(() => setCargando(false));
@@ -98,7 +120,13 @@ export default function Movimientos() {
   useFocusEffect(
     useCallback(() => {
       cargar();
-      return () => setDetalle(null);
+      return () => {
+        setDetalle(null);
+        // al irse de la pantalla se sale del modo: si no, la pastilla se
+        // quedaría escondida en las otras tabs
+        setSeleccionando(false);
+        setElegidos([]);
+      };
     }, [cargar]),
   );
 
@@ -131,6 +159,39 @@ export default function Movimientos() {
     }
   }
 
+  function alternar(id: string) {
+    setElegidos((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function salirDeSeleccion() {
+    setSeleccionando(false);
+    setElegidos([]);
+  }
+
+  async function mover() {
+    if (!sesion || elegidos.length === 0 || moviendo) return;
+    setMoviendo(true);
+    setAviso(null);
+    const r = await actualizarFechasEnLote(sesion, elegidos, fechaDestino);
+    setMoviendo(false);
+    if (!r.ok) {
+      Alert.alert("No pudimos moverlos", r.error);
+      return;
+    }
+    tacto.guardado();
+    // el resultado se cuenta como pasó: si alguna cuota se coló, se dice
+    setAviso(
+      `${r.movidos === 1 ? "Moviste 1 movimiento" : `Moviste ${r.movidos} movimientos`} al ${formatearDiaCorto(fechaDestino)}` +
+        (r.omitidos > 0
+          ? ` · ${r.omitidos === 1 ? "1 cuota quedó" : `${r.omitidos} cuotas quedaron`} afuera`
+          : ""),
+    );
+    salirDeSeleccion();
+    await cargar();
+  }
+
   if (cargando) {
     return (
       <View style={e.centrado}>
@@ -140,6 +201,12 @@ export default function Movimientos() {
   }
 
   const visiblesBandeja = bandeja.filter((m) => !ocultos.includes(m.id));
+  // las cuotas no entran: su fecha la manda la serie de la compra
+  const seleccionables = historial.filter(
+    (m) => !m.badgeCuota && !ocultos.includes(m.id),
+  );
+  const todosElegidos =
+    seleccionables.length > 0 && elegidos.length === seleccionables.length;
   const grupos = porDia(
     historial.filter((m) => !ocultos.includes(m.id)),
     hoy,
@@ -163,6 +230,17 @@ export default function Movimientos() {
       }
     >
       <Text style={e.titulo}>Movimientos</Text>
+
+      <NavegadorMes
+        mes={mes}
+        mesActual={mesActual}
+        alCambiar={(nuevo) => {
+          salirDeSeleccion();
+          setMes(nuevo);
+        }}
+      />
+
+      {aviso && <Text style={e.aviso}>{aviso}</Text>}
 
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo. Es caja
           (ingresos − gastos), no el "disponible" del presupuesto. */}
@@ -201,8 +279,10 @@ export default function Movimientos() {
       )}
 
       {/* Bandeja de entrada: borde cálido + contador ámbar. Tocar un ítem
-          despliega las categorías; al asignar, pasa al historial. */}
-      {visiblesBandeja.length > 0 && (
+          despliega las categorías; al asignar, pasa al historial.
+          Solo en el mes en curso: es una lista de PENDIENTES, no un corte
+          histórico — verla mirando mayo haría pensar que son de mayo. */}
+      {visiblesBandeja.length > 0 && esMesActual && !seleccionando && (
         <View style={e.bandeja}>
           <View style={e.bandejaEncabezado}>
             <Inbox size={15} color={color.ambar} strokeWidth={1.5} />
@@ -264,6 +344,34 @@ export default function Movimientos() {
       )}
 
       {/* Historial agrupado por día */}
+      {grupos.length > 0 && (
+        <View style={e.filaSeleccion}>
+          {seleccionando && seleccionables.length > 0 && (
+            <Pressable
+              onPress={() => {
+                tacto.toque();
+                setElegidos(todosElegidos ? [] : seleccionables.map((m) => m.id));
+              }}
+              hitSlop={10}
+            >
+              <Text style={e.accionSeleccion}>{todosElegidos ? "Ninguno" : "Todos"}</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => {
+              tacto.toque();
+              if (seleccionando) salirDeSeleccion();
+              else setSeleccionando(true);
+            }}
+            hitSlop={10}
+            style={e.botonSeleccionar}
+          >
+            <ListChecks size={15} color={color.tintaSecundaria} strokeWidth={1.8} />
+            <Text style={e.textoSeleccionar}>{seleccionando ? "Salir" : "Seleccionar"}</Text>
+          </Pressable>
+        </View>
+      )}
+
       {grupos.length === 0 ? (
         <View style={{ marginTop: 48 }}>
           <EstadoVacio
@@ -277,29 +385,54 @@ export default function Movimientos() {
           <View key={g.etiqueta}>
             <Text style={e.dia}>{g.etiqueta}</Text>
             <Card>
-              {g.items.map((m, i) => (
-                <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
-                  <FilaSwipe
-                    datos={{
-                      descripcion: m.descripcion,
-                      icono: m.icono,
-                      metadata: [m.categoria, m.medio].filter(Boolean).join(" · "),
-                      importeCentavos: m.importeCentavos,
-                      esIngreso: m.esIngreso,
-                      ambito: m.ambito,
-                      badgeCuota: m.badgeCuota,
-                    }}
-                    etiquetaBorrar={m.badgeCuota ? "Borrar compra" : "Borrar"}
-                    alBorrar={() => borrar(m.id)}
-                    alTocar={() => setDetalle(m)}
-                  />
-                </View>
-              ))}
+              {g.items.map((m, i) => {
+                const datos = {
+                  descripcion: m.descripcion,
+                  icono: m.icono,
+                  metadata: [m.categoria, m.medio].filter(Boolean).join(" · "),
+                  importeCentavos: m.importeCentavos,
+                  esIngreso: m.esIngreso,
+                  ambito: m.ambito,
+                  badgeCuota: m.badgeCuota,
+                };
+                return (
+                  <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
+                    {seleccionando ? (
+                      <FilaSeleccionable
+                        datos={datos}
+                        elegido={elegidos.includes(m.id)}
+                        seleccionable={!m.badgeCuota}
+                        alAlternar={() => alternar(m.id)}
+                      />
+                    ) : (
+                      <FilaSwipe
+                        datos={datos}
+                        etiquetaBorrar={m.badgeCuota ? "Borrar compra" : "Borrar"}
+                        alBorrar={() => borrar(m.id)}
+                        alTocar={() => setDetalle(m)}
+                      />
+                    )}
+                  </View>
+                );
+              })}
             </Card>
           </View>
         ))
       )}
+      {seleccionando && <View style={{ height: 130 }} />}
     </ScrollView>
+
+    {seleccionando && (
+      <BarraSeleccion
+        cantidad={elegidos.length}
+        fecha={fechaDestino}
+        pendiente={moviendo}
+        abajo={insets.bottom}
+        alElegirFecha={setFechaDestino}
+        alMover={mover}
+        alCancelar={salirDeSeleccion}
+      />
+    )}
 
     <DetalleMovimiento
       movimiento={detalle}
@@ -318,6 +451,24 @@ export default function Movimientos() {
 
 const e = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: color.papel },
+  filaSeleccion: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 14,
+  },
+  accionSeleccion: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  botonSeleccionar: { flexDirection: "row", alignItems: "center", gap: 6 },
+  textoSeleccionar: { fontSize: 12.5, fontWeight: "500", color: color.tintaSecundaria },
+  aviso: {
+    marginTop: 10,
+    textAlign: "center",
+    fontSize: 12.5,
+    lineHeight: 19,
+    fontWeight: "500",
+    color: color.verde,
+  },
   centrado: {
     flex: 1,
     alignItems: "center",

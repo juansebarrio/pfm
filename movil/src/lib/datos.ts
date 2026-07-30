@@ -408,19 +408,28 @@ function aFila(m: FilaMovimientoDb): MovimientoFila {
   };
 }
 
-/** Historial: movimientos ya categorizados, del más nuevo al más viejo. */
+/**
+ * Historial: movimientos ya categorizados, del más nuevo al más viejo.
+ *
+ * Con `mes` (aaaa-mm-01) el historial se recorta a ese mes y el tope sube: el
+ * límite natural pasa a ser el mes entero, y 40 cortaría en silencio uno cargado.
+ */
 export async function movimientosCategorizados(
   sesion: SesionHogar,
-  limite = 40,
+  opciones: { limite?: number; mes?: string } = {},
 ): Promise<MovimientoFila[]> {
-  const { data } = await supabase
+  let consulta = supabase
     .from("movimientos")
     .select(SELECT_MOVIMIENTO)
     .eq("hogar_id", sesion.hogarId)
     .not("categoria_id", "is", null)
     .order("fecha", { ascending: false })
     .order("creado_el", { ascending: false })
-    .limit(limite);
+    .limit(opciones.limite ?? (opciones.mes ? 300 : 40));
+  if (opciones.mes) {
+    consulta = consulta.gte("fecha", opciones.mes).lte("fecha", ultimoDiaDelMes(opciones.mes));
+  }
+  const { data } = await consulta;
   return ((data ?? []) as unknown as FilaMovimientoDb[]).map(aFila);
 }
 

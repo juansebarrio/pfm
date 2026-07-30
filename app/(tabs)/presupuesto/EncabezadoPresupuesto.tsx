@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import { formatearImporte } from "@/lib/dominio/dinero";
 
 // Header de la pantalla de presupuesto (01a) + barra condensada de scroll (01b):
-// chevrons de mes, "julio 2026" 600 17px, avatar 34px, segmented Hogar/Personal.
+// título + avatar 34px, el navegador de mes, y el segmented Hogar/Personal.
 // Pasados ~120px de scroll aparece la barra fija "julio 2026 · Hogar / queda $ X"
 // — "mes y disponible siempre a la vista" (DESIGN_AUDIT.md §3.17.5).
+//
+// El cambio de mes usa el MISMO componente que Movimientos (NavegadorMes): antes
+// eran dos chevrons pegados al título a la izquierda, y en la otra pantalla una
+// fila centrada. Dos formas de hacer lo mismo en dos pantallas hermanas se leen
+// como dos apps. De paso la pantalla gana un título, que no tenía: el mes hacía
+// de título y por eso el mes no podía ir centrado como corresponde.
 
 type Props = {
-  /** "julio 2026" */
+  /** "julio 2026", para la barra condensada */
   mesTitulo: string;
-  hrefMesAnterior: string;
-  hrefMesSiguiente: string;
+  /** aaaa-mm-01 */
+  mes: string;
+  mesActual: string;
   /** inicial del miembro para el avatar (link a /hogar) */
   inicial: string;
   ambito: "hogar" | "personal";
@@ -40,25 +47,8 @@ export function EncabezadoPresupuesto(p: Props) {
 
   return (
     <>
-      <header className="flex items-center px-5 pt-14">
-        <div className="flex items-center gap-2">
-          <Link
-            href={p.hrefMesAnterior}
-            aria-label="Mes anterior"
-            className="hit-44 text-tinta-secundaria"
-          >
-            <ChevronLeft className="size-[18px]" strokeWidth={1.5} aria-hidden />
-          </Link>
-          <h1 className="text-[17px] font-semibold text-tinta">{p.mesTitulo}</h1>
-          <Link
-            href={p.hrefMesSiguiente}
-            aria-label="Mes siguiente"
-            className="hit-44 text-tinta-secundaria"
-          >
-            <ChevronRight className="size-[18px]" strokeWidth={1.5} aria-hidden />
-          </Link>
-        </div>
-        <div className="flex-1" />
+      <header className="flex items-center justify-between px-5 pt-14">
+        <h1 className="text-[22px] font-semibold text-tinta">Presupuesto</h1>
         <Link
           href="/hogar"
           aria-label={`Hogar y perfil de ${p.inicial}`}
@@ -67,6 +57,15 @@ export function EncabezadoPresupuesto(p: Props) {
           {p.inicial}
         </Link>
       </header>
+
+      <div className="px-5">
+        <NavegadorMes
+          mes={p.mes}
+          mesActual={p.mesActual}
+          ruta="/presupuesto"
+          otrosParametros={{ ambito: p.ambito }}
+        />
+      </div>
 
       <nav
         aria-label="Ámbito del presupuesto"

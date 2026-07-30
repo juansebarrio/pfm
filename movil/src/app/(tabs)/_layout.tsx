@@ -3,6 +3,10 @@ import { Redirect, Tabs, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeftRight, Camera, House, LineChart, Plus, Wallet } from "lucide-react-native";
 import { useSesion } from "@/lib/sesion";
+import {
+  ProveedorModoSeleccion,
+  useModoSeleccion,
+} from "@/lib/modo-seleccion";
 import { color } from "@/lib/tema";
 
 // Tab bar nativa. En la web esto era un <nav> fijo con CSS; acá lo da el
@@ -18,15 +22,27 @@ import { color } from "@/lib/tema";
 // la altura vieja se le comía las etiquetas de Presupuesto y Movimientos.
 
 export default function LayoutTabs() {
+  return (
+    <ProveedorModoSeleccion>
+      <Tabs_ />
+    </ProveedorModoSeleccion>
+  );
+}
+
+function Tabs_() {
   const { sesion, cargando } = useSesion();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // mientras una pantalla está seleccionando, la pastilla se esconde: si no,
+  // le queda encima a la barra de acción y tapa el botón que hay que tocar
+  const { activo: seleccionando } = useModoSeleccion();
 
   // sin sesión no se entra a las tabs (equivalente al middleware de la web)
   if (!cargando && !sesion) return <Redirect href="/login" />;
 
   return (
     <View style={{ flex: 1 }}>
+      {!seleccionando && (
       <View style={[e.fabCapa, { bottom: insets.bottom + 58 }]} pointerEvents="box-none">
         <View style={e.pastilla}>
           <Pressable
@@ -46,6 +62,7 @@ export default function LayoutTabs() {
           </Pressable>
         </View>
       </View>
+      )}
 
     <Tabs
       screenOptions={{

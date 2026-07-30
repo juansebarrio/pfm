@@ -17,6 +17,10 @@ import type { SesionHogar } from "./datos";
 
 export type Resultado = { ok: true } | { ok: false; error: string };
 
+export type ResultadoLote =
+  | { ok: true; movidos: number; omitidos: number }
+  | { ok: false; error: string };
+
 // ────────────────────────────────────────────── ciclos de tarjeta
 
 /**
@@ -370,6 +374,69 @@ export async function crearGasto(
  * anterior a hoy: ese resumen ya cerró). Las cuotas quedan afuera: su fecha la
  * define la serie de la compra. Espeja actualizarFecha de la web.
  */
+/**
+ * Mover VARIOS movimientos a una fecha, de una. Espeja actualizarFechasEnLote
+ * de app/acciones/movimientos.ts y comparte su regla: si el movimiento es de
+ * tarjeta se le reasigna el ciclo de la fecha nueva, nunca uno anterior a hoy.
+ *
+ * Las CUOTAS se omiten de la escritura pero se CUENTAN y se devuelven en
+ * `omitidos`: su fecha la manda la serie de la compra. Que la pantalla pueda
+ * decir "moví 6, dejé 2 cuotas afuera" es mejor que fallar entero o mentir.
+ *
+ * Los ciclos se resuelven UNA vez por tarjeta: todos los consumos de la misma
+ * tarjeta con la misma fecha caen en el mismo ciclo.
+ */
+export async function actualizarFechasEnLote(
+  sesion: SesionHogar,
+  movimientoIds: string[],
+  fecha: string,
+): Promise<ResultadoLote> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { ok: false, error: "Fecha inválida" };
+  if (movimientoIds.length === 0) return { ok: false, error: "No elegiste ninguno" };
+
+  const { data: movimientos } = await supabase
+    .from("movimientos")
+    .select("id, compra_id, tarjeta_id")
+    .in("id", movimientoIds)
+    .eq("hogar_id", sesion.hogarId);
+  if (!movimientos?.length) return { ok: false, error: "No encontramos esos movimientos" };
+
+  const movibles = movimientos.filter((m) => !m.compra_id);
+  const omitidos = movimientos.length - movibles.length;
+  if (movibles.length === 0) {
+    return { ok: false, error: "La fecha de una cuota la maneja la compra" };
+  }
+
+  const hoy = hoyBA();
+  const porTarjeta = new Map<string | null, string[]>();
+  for (const m of movibles) {
+    const clave = (m.tarjeta_id as string | null) ?? null;
+    porTarjeta.set(clave, [...(porTarjeta.get(clave) ?? []), m.id as string]);
+  }
+
+  let movidos = 0;
+  for (const [tarjetaId, ids] of porTarjeta) {
+    const cambios: { fecha: string; ciclo_id?: string | null } = { fecha };
+    if (tarjetaId) {
+      cambios.ciclo_id = await asegurarCicloParaFecha(
+        sesion,
+        tarjetaId,
+        fechaParaCiclo(fecha, hoy),
+      );
+    }
+    const { data, error } = await supabase
+      .from("movimientos")
+      .update(cambios)
+      .in("id", ids)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos mover los movimientos" };
+    movidos += data?.length ?? 0;
+  }
+
+  return { ok: true, movidos, omitidos };
+}
+
 export async function actualizarFecha(
   sesion: SesionHogar,
   movimientoId: string,
