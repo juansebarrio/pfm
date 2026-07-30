@@ -31,6 +31,19 @@ export function diasDelMes(fecha: string): number {
   return new Date(Date.UTC(anio, mes, 0)).getUTCDate();
 }
 
+/**
+ * Último día real del mes: 2026-02-01 → "2026-02-28", 2026-07-01 → "2026-07-31".
+ *
+ * Existe porque `${mes}-31` PARECE un tope inofensivo para un rango de fechas y
+ * no lo es: Postgres rechaza "2026-02-31" con "date/time field value out of
+ * range" y la consulta entera falla. Si el llamador no mira el error —el patrón
+ * habitual es `const { data } = await ...`— el resultado es peor que un error:
+ * la pantalla muestra cero en los cinco meses de 30 días o menos.
+ */
+export function ultimoDiaDelMes(mes: string): string {
+  return `${mes.slice(0, 7)}-${String(diasDelMes(mes)).padStart(2, "0")}`;
+}
+
 export function mesAnterior(mes: string): string {
   const [anio, m] = mes.split("-").map(Number);
   const total = anio * 12 + (m - 1) - 1;

@@ -1,5 +1,5 @@
 import "server-only";
-import { formatearDiaCorto, hoyBA } from "@/lib/dominio/fechas";
+import { formatearDiaCorto, hoyBA, ultimoDiaDelMes } from "@/lib/dominio/fechas";
 import type { SesionHogar } from "./sesion";
 
 export type MovimientoLista = {
@@ -173,7 +173,7 @@ export type TotalesMes = {
  * Incluye lo compartido y lo personal tuyo — es "tu mes", no el del hogar.
  */
 export async function totalesDelMes(sesion: SesionHogar, mes: string): Promise<TotalesMes> {
-  const hasta = `${mes.slice(0, 7)}-31`;
+  const hasta = ultimoDiaDelMes(mes);
   const { data } = await sesion.supabase
     .from("movimientos")
     .select("tipo, importe_centavos")

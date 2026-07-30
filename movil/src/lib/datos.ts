@@ -7,6 +7,7 @@ import {
   hoyBA,
   mesAnterior,
   mesDe,
+  ultimoDiaDelMes,
 } from "@dominio/fechas";
 import { supabase } from "./supabase";
 
@@ -131,7 +132,7 @@ export type TotalesMes = { ingresosCentavos: number; gastosCentavos: number };
  * ingreso; transferencias y pagos de resumen no son ni una cosa ni la otra).
  */
 export async function totalesDelMes(sesion: SesionHogar, mes: string): Promise<TotalesMes> {
-  const hasta = `${mes.slice(0, 7)}-31`;
+  const hasta = ultimoDiaDelMes(mes);
   const { data } = await supabase
     .from("movimientos")
     .select("tipo, importe_centavos")

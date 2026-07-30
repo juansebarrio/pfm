@@ -9,6 +9,7 @@ import {
 } from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { etiquetaDia, hoyBA, mesDe } from "@/lib/dominio/fechas";
+import { NavegadorMes } from "./NavegadorMes";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
 import { TotalizadorMes } from "./TotalizadorMes";
 import { Filtros } from "./Filtros";
@@ -47,6 +48,12 @@ function comoTipo(valor: string | undefined): "gasto" | "ingreso" | undefined {
   return valor === "gasto" || valor === "ingreso" ? valor : undefined;
 }
 
+/** "2026-07" → "2026-07-01". Un mes inventado cae al mes en curso. */
+function comoMes(valor: string | undefined, hoy: string): string {
+  if (!valor || !/^\d{4}-(0[1-9]|1[0-2])$/.test(valor)) return mesDe(hoy);
+  return `${valor}-01`;
+}
+
 const soloChip = ({ id, nombre, icono, grupo }: { id: string; nombre: string; icono: string; grupo: string }) =>
   ({ id, nombre, icono, grupo }) satisfies CategoriaChip;
 
@@ -65,12 +72,15 @@ export default async function PaginaMovimientos({
 
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
+  const mesActual = mesDe(hoy);
+  const mes = comoMes(uno(parametros.mes), hoy);
+  const esMesActual = mes === mesActual;
 
-  const totalesPedido = totalesDelMes(sesion, mesDe(hoy));
+  const totalesPedido = totalesDelMes(sesion, mes);
   const [bandeja, historial, categorias, medios, miembros, recientesHogar, recientesPersonal] =
     await Promise.all([
       bandejaDeEntrada(sesion),
-      movimientosFiltrados(sesion, { buscar: q, ambito, categoriaId, miembroId, medio, tipo }),
+      movimientosFiltrados(sesion, { buscar: q, ambito, categoriaId, miembroId, medio, tipo, mes }),
       categoriasDelHogar(sesion),
       mediosDePago(sesion),
       miembrosDelHogar(sesion),
@@ -111,6 +121,21 @@ export default async function PaginaMovimientos({
         </Link>
       </header>
 
+      <NavegadorMes
+        mes={mes}
+        mesActual={mesActual}
+        otrosParametros={Object.fromEntries(
+          Object.entries({
+            q,
+            ambito,
+            medio: medio ? `${medio.tipo}:${medio.id}` : undefined,
+            categoria: categoriaId,
+            miembro: miembroId,
+            tipo,
+          }).filter((par): par is [string, string] => par[1] !== undefined),
+        )}
+      />
+
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo entre ambos.
           No es el "disponible" del presupuesto (eso vive en Resumen): es caja. */}
       <TotalizadorMes totales={await totalesPedido} />
@@ -129,9 +154,11 @@ export default async function PaginaMovimientos({
         />
       </div>
 
-      {/* la bandeja se corre al filtrar por tipo: el historial ya muestra todo
-          ese tipo (incluido lo sin categorizar) y así no se duplica */}
-      {itemsBandeja.length > 0 && !tipo && (
+      {/* La bandeja se corre al filtrar por tipo (el historial ya muestra todo
+          ese tipo, incluido lo sin categorizar) y también fuera del mes en
+          curso: es una lista de PENDIENTES, no un corte histórico — verla
+          mientras mirás mayo haría pensar que esos movimientos son de mayo. */}
+      {itemsBandeja.length > 0 && !tipo && esMesActual && (
         <div className="mt-4">
           <Bandeja
             items={itemsBandeja}

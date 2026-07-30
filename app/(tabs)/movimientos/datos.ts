@@ -1,7 +1,7 @@
 import "server-only";
 import type { MovimientoLista } from "@/lib/datos/movimientos";
 import type { SesionHogar } from "@/lib/datos/sesion";
-import { formatearDiaCorto } from "@/lib/dominio/fechas";
+import { formatearDiaCorto, ultimoDiaDelMes } from "@/lib/dominio/fechas";
 
 // Helpers propios de la pantalla 05: el historial con los filtros de la fila
 // de chips (cuenta/tarjeta, categoría, miembro) que lib/datos/movimientos.ts
@@ -77,6 +77,8 @@ export type FiltrosHistorial = {
   medio?: { tipo: "cuenta" | "tarjeta"; id: string };
   /** filtrar solo gastos o solo ingresos (por defecto, ambos) */
   tipo?: "gasto" | "ingreso";
+  /** mes a mostrar (aaaa-mm-01). Sin mes, el historial es de todo el tiempo. */
+  mes?: string;
 };
 
 /** Historial con los filtros de la pantalla 05, más nuevo primero. */
@@ -91,7 +93,12 @@ export async function movimientosFiltrados(
     .in("tipo", ["gasto", "ingreso"])
     .order("fecha", { ascending: false })
     .order("creado_el", { ascending: false })
-    .limit(60);
+    // Con un mes elegido el tope natural es el mes entero: 300 es holgado para
+    // un hogar y evita cortar en silencio. Sin mes, 60 alcanza para "lo último".
+    .limit(filtros.mes ? 300 : 60);
+  if (filtros.mes) {
+    consulta = consulta.gte("fecha", filtros.mes).lte("fecha", ultimoDiaDelMes(filtros.mes));
+  }
   // Por defecto el historial es lo ya categorizado (lo sin categorizar vive en
   // la bandeja). Pero al filtrar por tipo el usuario pide "mostrame todo esto":
   // los ingresos no se categorizan (las categorías son partidas de gasto), así

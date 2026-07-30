@@ -305,6 +305,81 @@ export async function actualizarFecha(entrada: unknown): Promise<ResultadoAccion
   return { ok: true };
 }
 
+const esquemaFechasEnLote = z.object({
+  movimientoIds: z.array(z.uuid()).min(1).max(200),
+  fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export type ResultadoLote =
+  | { ok: true; movidos: number; omitidos: number }
+  | { ok: false; error: string };
+
+/**
+ * Mover VARIOS movimientos a una fecha, de una. Es la versión masiva de
+ * actualizarFecha y comparte su regla: si el movimiento es de tarjeta, se le
+ * reasigna el ciclo que corresponde a la fecha nueva, nunca uno anterior a hoy.
+ *
+ * Las CUOTAS se omiten en silencio de la escritura pero se CUENTAN y se
+ * devuelven en `omitidos`: su fecha la manda la serie de la compra, y mover una
+ * cuota suelta rompería la serie. Que la pantalla pueda decir "moví 6, dejé 2
+ * cuotas afuera" es mejor que fallar entero o que mentir con un "listo".
+ *
+ * Los ciclos se resuelven UNA vez por tarjeta, no una por movimiento: todos los
+ * consumos de la misma tarjeta con la misma fecha caen en el mismo ciclo.
+ */
+export async function actualizarFechasEnLote(entrada: unknown): Promise<ResultadoLote> {
+  const parseo = esquemaFechasEnLote.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const { movimientoIds, fecha } = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+  const { data: movimientos } = await sesion.supabase
+    .from("movimientos")
+    .select("id, compra_id, tarjeta_id")
+    .in("id", movimientoIds)
+    .eq("hogar_id", sesion.hogarId);
+  if (!movimientos?.length) return { ok: false, error: "No encontramos esos movimientos" };
+
+  const movibles = movimientos.filter((m) => !m.compra_id);
+  const omitidos = movimientos.length - movibles.length;
+  if (movibles.length === 0) {
+    return { ok: false, error: "La fecha de una cuota la maneja la compra" };
+  }
+
+  const hoy = hoyBA();
+  // agrupados por tarjeta (null = de cuenta, no llevan ciclo)
+  const porTarjeta = new Map<string | null, string[]>();
+  for (const m of movibles) {
+    const clave = m.tarjeta_id ?? null;
+    porTarjeta.set(clave, [...(porTarjeta.get(clave) ?? []), m.id]);
+  }
+
+  let movidos = 0;
+  for (const [tarjetaId, ids] of porTarjeta) {
+    const cambios: { fecha: string; ciclo_id?: string | null } = { fecha };
+    if (tarjetaId) {
+      cambios.ciclo_id = await asegurarCicloParaFecha(
+        sesion,
+        tarjetaId,
+        fechaParaCiclo(fecha, hoy),
+      );
+    }
+    const { data, error } = await sesion.supabase
+      .from("movimientos")
+      .update(cambios)
+      .in("id", ids)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos mover los movimientos" };
+    movidos += data?.length ?? 0;
+  }
+
+  revalidatePath("/movimientos");
+  revalidatePath("/resumen");
+  revalidatePath("/presupuesto");
+  return { ok: true, movidos, omitidos };
+}
+
 const esquemaBorrar = z.object({ movimientoId: z.uuid() });
 
 /**
