@@ -153,6 +153,50 @@ body {
   outline-offset: 2px;
 }
 
+/* ───────────────────────────── zoom no deseado en el teléfono
+ *
+ * Dos zooms distintos arruinaban la experiencia en el celular, y ninguno es el
+ * que el usuario pide a propósito:
+ *
+ * 1. AL ENFOCAR UN CAMPO. iOS Safari agranda toda la página cuando enfocás un
+ *    input con fuente menor a 16px — y al salir NO vuelve. Tocabas "Buscar
+ *    comercio" y la app quedaba al 115 % para siempre. Había 14 campos así
+ *    (13,5px, 14px, 15px). Se arregla acá y no campo por campo para que el
+ *    número 15 no vuelva a traer el problema.
+ *
+ *    Solo en punteros gruesos: en desktop no existe el zoom al enfocar y la
+ *    tipografía chica de los formularios se conserva. En el teléfono un campo
+ *    de 13,5px era incómodo de todos modos.
+ *
+ * 2. AL TOCAR DOS VECES RÁPIDO. El navegador espera ~300 ms por si el segundo
+ *    toque llega, y si llega, hace zoom. En una app de tocar botones eso es
+ *    siempre un accidente: tocás "Cargar" dos veces y la pantalla se agranda.
+ *
+ * Lo que SÍ se conserva: el zoom con dos dedos. Sacarlo (maximum-scale=1) es la
+ * receta corta y es la que rompe la app para quien ve poco; además Safari la
+ * ignora desde iOS 10. Estas dos reglas matan el zoom accidental sin tocar el
+ * intencional.
+ */
+@media (pointer: coarse) {
+  /* :where() no suma especificidad, pero el selector va sin capa: le gana a las
+     utilidades de Tailwind, que sí están en @layer */
+  :where(input, select, textarea):not([type="file"]) {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Sin espera de doble toque: el toque responde al instante y no hay zoom */
+button,
+a,
+label,
+summary,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
 /* Target táctil mínimo de 44px sin cambiar el dibujo (mejora directa §7.1) */
 .hit-44 {
   position: relative;

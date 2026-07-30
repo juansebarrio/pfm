@@ -263,20 +263,28 @@ export function FormularioArmado({
                       {formatearImporte(p.asignadoAnteriorCentavos)}
                     </p>
                   )}
+                  {/* La nota va en su PROPIA línea, no inline al lado del
+                      "desactivada este mes ·". Estaba inline dentro de un
+                      párrafo de 11px, y en el teléfono los campos van a 16px
+                      como mínimo (si no, iOS agranda la página al enfocarlos):
+                      inline quedaba el placeholder cortado contra el importe.
+                      Un campo de 11px tampoco se podía tocar bien en un celu. */}
                   {!fila.activa && (
-                    <p className="mt-0.5 flex items-baseline gap-1 text-[11px] text-tinta-terciaria">
-                      <span className="flex-none">desactivada este mes ·</span>
+                    <>
+                      <p className="mt-0.5 text-[11px] text-tinta-terciaria">
+                        desactivada este mes
+                      </p>
                       <input
                         value={fila.nota}
                         maxLength={120}
                         onChange={(e) =>
                           actualizarFila(i, { nota: e.target.value })
                         }
-                        placeholder="agregá una nota"
+                        placeholder="Agregá una nota"
                         aria-label={`Nota para ${p.nombre}`}
-                        className="w-full min-w-0 bg-transparent text-[11px] text-tinta-terciaria outline-none placeholder:text-tinta-muda"
+                        className="mt-1 w-full min-w-0 bg-transparent text-[13px] text-tinta-secundaria outline-none placeholder:text-tinta-muda"
                       />
-                    </p>
+                    </>
                   )}
                 </div>
 
