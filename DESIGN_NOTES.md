@@ -292,6 +292,35 @@ solo aplica cuando el usuario lo elige (`[data-tema="claro"]`). Detalles:
 - `--borde-bandeja` pasó a tener valor propio en oscuro (`#4d4028`); antes se
   heredaba del bloque claro por accidente.
 
+### 1.21 Ícono nuevo: la hoja que se arranca (y qué NO tocar)
+El ícono dejó de ser el sobre de mail —resto de cuando el producto se llamaba
+"Sobres"— y pasó a ser **una hoja que se arranca** sobre tile verde. Fuente
+vectorial versionada en `design/icono/`, con el README del diseñador tal cual lo
+mandó. Lo que hay que saber para no romperlo:
+
+- **El tile es `#4FA37F` y no se re-tinta nunca.** No es un verde nuevo: es
+  exactamente `--verde` del modo oscuro y `color.verde` del nativo. El
+  `#1E6E52` que había antes en el splash y en las notificaciones era el verde de
+  modo *claro*, y ahí no tenía sentido: el ícono no cambia con el tema.
+- **La marca es siempre hoja crema `#F2EFE9` + pliegue `#2F6F55`, en los dos
+  temas.** El logo anterior de /login usaba `text-papel`, que se invierte con el
+  tema — la marca quedaba oscura sobre verde en claro, al revés que el ícono. El
+  componente `MarcaFinDeMes` (uno en web y su espejo en nativo) fija los colores
+  a propósito.
+- **Un solo tamaño de ícono para iOS.** El asset catalog lleva únicamente el
+  1024 universal y Xcode deriva el resto al compilar; el prebuild reescribe ese
+  `Contents.json` en cada corrida, así que copiar los 10 tamaños a mano es
+  trabajo que se pierde.
+- **El fuente `movil/assets/images/icono.png` es RGBA a propósito**: es el master
+  del diseñador byte a byte. Lo que Apple valida es el archivo generado, y eso lo
+  chequea `pnpm icono:alfa`. Ver `docs/APP-STORE.md`.
+- **`theme_color` y `background_color` del manifest pasaron a `#141312`.** Tenían
+  el verde claro y el papel claro de una época en que el default era claro:
+  `background_color` pinta la splash de la PWA en Android, así que en crema hacía
+  un flash blanco antes de una app oscura, y `theme_color` contradecía al
+  `viewport.themeColor` de `layout.tsx`. Los dos roles son distintos, pero acá los
+  dos quieren el fondo real de la app.
+
 ## 4. Extrapolaciones de dark mode (pantalla 10 solo valida 01a)
 Los tokens dark de chips/estados no dibujados se derivan así y se validan en
 `/sistema`: semánticos "aclarados" siguiendo los dos ejemplos del export

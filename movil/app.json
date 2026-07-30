@@ -8,7 +8,7 @@
     "scheme": "findemes",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#141312",
-    "primaryColor": "#1E6E52",
+    "primaryColor": "#4FA37F",
     "ios": {
       "bundleIdentifier": "com.juansebarrio.findemes",
       "buildNumber": "1",
@@ -32,7 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1E6E52",
+          "backgroundColor": "#4FA37F",
           "image": "./assets/images/marca-splash.png",
           "imageWidth": 120
         }
@@ -46,7 +46,7 @@
       [
         "expo-notifications",
         {
-          "color": "#1E6E52"
+          "color": "#4FA37F"
         }
       ],
       [

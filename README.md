@@ -71,3 +71,11 @@ Instalable en Android e iOS (manifest + service worker mínimo). En iOS las
 PWA tienen limitaciones conocidas: sin push, almacenamiento evictable si la
 app no se usa por semanas, y la instalación es manual desde Compartir →
 "Agregar a inicio". Offline real queda para una fase siguiente.
+
+Sobre los íconos: si cambia el ícono, quien ya tenga la PWA **instalada** puede
+seguir viendo el viejo. En iOS el ícono de "Agregar a inicio" se congela al
+instalar y solo se actualiza volviendo a agregar la app; en Android, Chrome
+compara el *texto* del manifest para decidir si actualiza el WebAPK, así que los
+`src` llevan `?v=N` — cambiar los PNG sin cambiar el manifest no alcanza. Los
+`app/icon.*` de la web no tienen ese problema: Next les pone hash de contenido en
+el `href` y el navegador los refresca solo.

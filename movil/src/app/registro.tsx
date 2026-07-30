@@ -10,10 +10,10 @@ import {
   View,
 } from "react-native";
 import { Redirect, useRouter } from "expo-router";
-import { Mail } from "lucide-react-native";
 import { useSesion } from "@/lib/sesion";
 import { supabase } from "@/lib/supabase";
 import { color, radio } from "@/lib/tema";
+import { MarcaFinDeMes } from "@/componentes/MarcaFinDeMes";
 
 // Registro nativo. Espeja registrarse() de app/(auth)/acciones.ts: mismos
 // mensajes de error y el mismo aviso cuando el proyecto exige confirmar el
@@ -74,9 +74,7 @@ export default function Registro() {
     >
       <View style={e.encabezado}>
         <View style={e.filaMarca}>
-          <View style={e.logo}>
-            <Mail size={20} color={color.papel} strokeWidth={2} />
-          </View>
+          <MarcaFinDeMes />
           <Text style={e.marca}>Fin de mes</Text>
         </View>
         <Text style={e.subtitulo}>
@@ -145,14 +143,6 @@ const e = StyleSheet.create({
   },
   encabezado: { marginBottom: 32 },
   filaMarca: { flexDirection: "row", alignItems: "center", gap: 12 },
-  logo: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: color.verde,
-  },
   marca: { fontSize: 25, fontWeight: "600", color: color.tinta },
   subtitulo: {
     marginTop: 16,

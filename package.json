@@ -10,7 +10,8 @@
     "test": "vitest run",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "rls:check": "tsx --env-file=.env.local scripts/rls-check.ts",
-    "prueba:borrado": "tsx --env-file=.env.local scripts/prueba-borrado-cuenta.ts"
+    "prueba:borrado": "tsx --env-file=.env.local scripts/prueba-borrado-cuenta.ts",
+    "icono:alfa": "tsx scripts/icono-alfa.ts movil/ios/Findemes/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

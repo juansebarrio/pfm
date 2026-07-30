@@ -43,35 +43,40 @@ a ser traducir cada `className` a un objeto de estilo. Es la razón principal
 por la que la estimación sube (ver abajo). A cambio: los tokens quedan tipados
 (el compilador avisa si se usa uno que no existe) y hay una dependencia menos.
 
-### Modo de ejecución: Expo Go (sin `prebuild`)
+### Dos modos de ejecución: Expo Go para iterar, build nativo para lo demás
 
-El proyecto es **managed**: no existe `movil/ios/` ni `movil/android/`, no hay
-Podfile ni `.xcworkspace`, y en el simulador solo está instalada Expo Go
-(`host.exp.Exponent`). Nada nativo se compiló todavía.
+**Expo Go** sigue siendo el modo de todos los días, y funciona porque *todos los
+paquetes nativos que usa el proyecto vienen dentro de Expo Go* (AsyncStorage,
+react-native-svg, gesture-handler, reanimated, screens): el JS se carga por red y
+los módulos nativos ya están ahí. Cualquier cambio que sea JavaScript —incluido
+el logo de la marca, que es un SVG— se ve ahí sin recompilar nada.
 
-Funciona porque **todos los paquetes nativos que usa el proyecto vienen dentro
-de Expo Go** (AsyncStorage, react-native-svg, gesture-handler, reanimated,
-screens): el JS se carga por red y los módulos nativos ya están ahí.
-
-**Es deliberado, y conviene sostenerlo.** `prebuild` agrega fricción real
-(recompilar ante cada cambio nativo, iteración más lenta, y la decisión de
-versionar `ios/` o regenerarlo). Las fases 3–5 son 100 % JavaScript y salen más
-rápido sobre Expo Go.
+**Pero `movil/ios/` YA EXISTE.** Se generó con `expo prebuild` para las fases 6 y
+7, y contiene `Findemes.xcworkspace`, `Podfile`, `Pods/` y `build/`. Está
+**gitignorada a propósito** (`movil/.gitignore` → `/ios`): es una carpeta
+generada, no fuente. Consecuencia práctica: nada de lo que hay abajo de
+`movil/ios/` aparece en un diff, y editar a mano cualquier archivo de ahí es
+trabajo que el próximo prebuild tira.
 
 | Fase | ¿Alcanza Expo Go? |
 |---|---|
 | 3 · las cuatro tabs | ✅ hecho |
 | 4 · pantallas de escritura | ✅ todo JS |
-| 5 · asistente + sugerencias | ✅ salvo que el streaming pida algo fuera del SDK |
-| **6 · Face ID, push, widget, ícono** | ❌ **requiere prebuild + build nativo** |
-| **7 · App Store** | ❌ imposible sin build nativo |
+| 5 · asistente + sugerencias | ✅ hecho |
+| 6 · Face ID, notificaciones, ícono | ⚙️ requiere prebuild + build nativo — **hecho, local** |
+| 7 · App Store | ⚙️ requiere build nativo — pendiente solo la cuenta de Apple |
 
-**Cuando llegue el prebuild, aparece el problema de Xcode** (26.3 local vs 26.4+
-que pide SDK 57). Dos salidas:
-1. Actualizar Xcode antes de la Fase 6.
-2. **EAS Build** (nube de Expo) — compila con el Xcode correcto del lado de
-   Expo, saca al Mac local de la ecuación y es el camino natural a TestFlight.
-   **Recomendada**: con esto el Xcode local deja de ser bloqueante.
+**El build local funciona con el Xcode que hay** (26.3, SDK de iPhone 26.2): la
+app está compilada e instalada en un iPhone físico con un Apple ID gratuito. La
+preocupación vieja de este documento —que hiciera falta Xcode 26.4+ y por eso
+EAS Build fuera obligatorio— no se cumplió. EAS sigue siendo la salida natural
+**para TestFlight y App Store**, no un requisito por versión de Xcode.
+
+Ojo con una diferencia real entre los dos caminos: las imágenes de build de EAS
+traen `sharp` global, y esa rama de `@expo/image-utils` le deja canal alfa al
+ícono de 1024 → rechazo `ITMS-90717`. Por eso `eas.json` fija
+`EXPO_IMAGE_UTILS_NO_SHARP=1` en `preview` y `production`. La máquina local no
+tiene sharp, así que ahí el problema no aparece.
 
 ### Otros hallazgos
 

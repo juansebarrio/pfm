@@ -12,8 +12,8 @@ mirar en cada paso.
 | Ya está | Detalle |
 |---|---|
 | Identidad de la app | `Fin de mes`, bundle `com.juansebarrio.findemes`, slug `fin-de-mes` |
-| Ícono 1024×1024 | Generado del mismo SVG que el ícono de la PWA. Verificado: el prebuild lo aplana **sin canal alfa**, que es lo que rechaza App Store Connect |
-| Splash | Marca sobre el verde de la app |
+| Ícono 1024×1024 | La hoja que se arranca sobre tile verde. Fuente vectorial en `design/icono/AppIcon-1024.svg`; el raster `movil/assets/images/icono.png` es el master del diseñador **byte a byte**. El prebuild lo aplana **sin canal alfa**, que es lo que rechaza App Store Connect — verificable con `pnpm icono:alfa` |
+| Splash | La misma marca del ícono (`design/icono/marca-splash.svg`) sobre el verde del tile, `#4FA37F` |
 | Permiso de Face ID | En español rioplatense, en `movil/locales/es.json`. Verificado: llega a `NSFaceIDUsageDescription` y a `es.lproj/InfoPlist.strings` |
 | Idioma | `CFBundleLocalizations: ["es-AR"]` |
 | Cifrado | `usesNonExemptEncryption: false` — solo HTTPS estándar, así que no hay papeleo de exportación |
@@ -47,7 +47,7 @@ código o en el simulador — no es una lista de deseos, es lo que se comprobó.
 | **2.5.4 / background** | Modos de background que no se usan | ✅ Ninguno declarado. Avisos = notificaciones LOCALES, sin push remoto ni entitlement de aps |
 | **Export compliance** | Cifrado | ✅ `usesNonExemptEncryption: false` (solo HTTPS estándar) |
 | **Privacy manifests** | Required-Reason APIs de los SDKs | ✅ Los pods de Expo SDK 57 / RN traen sus `PrivacyInfo.xcprivacy`; no hay SDKs de terceros fuera de eso |
-| **App icon** | 1024 sin canal alfa | ✅ Verificado en el prebuild: `hasAlpha: no` |
+| **App icon** | 1024 sin canal alfa | ✅ `pnpm icono:alfa` mide el archivo que se sube (`movil/ios/.../App-Icon-1024x1024@1x.png`), no el fuente. Ojo: el fuente **sí** es RGBA a propósito (es el master del diseñador) y aplanarlo no protegería nada — con `sharp` instalado, `@expo/image-utils` le vuelve a poner el canal. Por eso `eas.json` fija `EXPO_IMAGE_UTILS_NO_SHARP=1` en los perfiles de nube, que es donde sharp existe |
 | **ATS** | Nada de HTTP plano | ✅ Todos los endpoints de build son HTTPS (`eas.json`); `http://localhost` solo existe en desarrollo |
 | **iPad** | Si no es universal, que escale bien | ✅ `supportsTablet: false` → corre en modo iPhone escalado, aceptado por revisión |
 
