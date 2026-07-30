@@ -44,3 +44,6 @@ example
 
 # copia generada del dominio compartido (la escribe metro.config.js)
 src/dominio/
+
+# worktrees de tareas en paralelo (Claude Code)
+.claude/worktrees/
