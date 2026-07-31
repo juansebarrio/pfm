@@ -35,7 +35,9 @@ import {
   borrarMovimiento,
   categoriasDelHogar,
   categorizarMovimiento,
+  mediosDePago,
   type CategoriaSimple,
+  type MedioDePago,
 } from "@/lib/acciones";
 import { color, radio } from "@/lib/tema";
 import { useModoSeleccion } from "@/lib/modo-seleccion";
@@ -82,6 +84,7 @@ export default function Movimientos() {
   const [bandeja, setBandeja] = useState<MovimientoFila[]>([]);
   const [historial, setHistorial] = useState<MovimientoFila[]>([]);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
+  const [medios, setMedios] = useState<MedioDePago[]>([]);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   // categorización inline: qué ítem está abierto y cuáles ya se ocultaron
@@ -110,14 +113,16 @@ export default function Movimientos() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [b, h, c, t, pc] = await Promise.all([
+    const [b, h, c, t, pc, md] = await Promise.all([
       bandejaDeEntrada(s),
       movimientosCategorizados(s, { mes }),
       categoriasDelHogar(s),
       totalesDelMes(s, mes),
       gastosPorCategoria(s, mes),
+      mediosDePago(s),
     ]);
     setPorCategoria(pc);
+    setMedios(md);
     setBandeja(b);
     setHistorial(h);
     setCategorias(c);
@@ -474,6 +479,8 @@ export default function Movimientos() {
     <DetalleMovimiento
       movimiento={detalle}
       sesion={sesion}
+      categorias={categorias}
+      medios={medios}
       alCambiar={cargar}
       alCerrar={() => setDetalle(null)}
       alBorrar={() => {

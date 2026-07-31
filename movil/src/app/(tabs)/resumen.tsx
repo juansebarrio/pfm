@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -46,6 +47,14 @@ import {
   FilaMovimiento,
   Importe,
 } from "@/componentes/sistema";
+import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
+import {
+  borrarMovimiento,
+  categoriasDelHogar,
+  mediosDePago,
+  type CategoriaSimple,
+  type MedioDePago,
+} from "@/lib/acciones";
 
 // 04 — Resumen. Corta a propósito: disponible del mes, qué atender hoy y los
 // últimos 3 movimientos. Nada más.
@@ -63,6 +72,9 @@ export default function Resumen() {
   const [presupuesto, setPresupuesto] = useState<PresupuestoMes | null>(null);
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [movimientos, setMovimientos] = useState<MovimientoFila[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
+  const [medios, setMedios] = useState<MedioDePago[]>([]);
+  const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
 
@@ -73,14 +85,18 @@ export default function Resumen() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [p, a, m] = await Promise.all([
+    const [p, a, m, c, md] = await Promise.all([
       obtenerPresupuestoMes(s, mes, "hogar"),
       avisosParaAtender(s),
       movimientosCategorizados(s, { limite: 3 }),
+      categoriasDelHogar(s),
+      mediosDePago(s),
     ]);
     setPresupuesto(p);
     setAvisos(a);
     setMovimientos(m);
+    setCategorias(c);
+    setMedios(md);
   }, [mes]);
 
   useEffect(() => {
@@ -115,6 +131,7 @@ export default function Resumen() {
       : 0;
 
   return (
+    <>
     <ScrollView
       style={e.pantalla}
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20 }}
@@ -216,7 +233,11 @@ export default function Resumen() {
           <EncabezadoSeccion>Últimos movimientos</EncabezadoSeccion>
           <Card>
             {movimientos.map((m, i) => (
-              <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
+              <Pressable
+                key={m.id}
+                onPress={() => setDetalle(m)}
+                style={i > 0 ? e.conBorde : undefined}
+              >
                 <FilaMovimiento
                   descripcion={m.descripcion}
                   icono={m.icono}
@@ -226,7 +247,7 @@ export default function Resumen() {
                   ambito={m.ambito}
                   badgeCuota={m.badgeCuota}
                 />
-              </View>
+              </Pressable>
             ))}
           </Card>
         </>
@@ -234,6 +255,24 @@ export default function Resumen() {
 
       <View style={{ height: insets.bottom + 24 }} />
     </ScrollView>
+
+    <DetalleMovimiento
+      movimiento={detalle}
+      sesion={sesion}
+      categorias={categorias}
+      medios={medios}
+      alCambiar={cargar}
+      alCerrar={() => setDetalle(null)}
+      alBorrar={async () => {
+        const id = detalle?.id;
+        setDetalle(null);
+        if (!id || !sesion) return;
+        const r = await borrarMovimiento(sesion, id);
+        if (!r.ok) Alert.alert("No pudimos borrarlo", r.error);
+        else await cargar();
+      }}
+    />
+    </>
   );
 }
 

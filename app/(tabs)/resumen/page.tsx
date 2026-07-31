@@ -3,9 +3,13 @@ import { CalendarClock, ChevronRight, CreditCard, Inbox, Mail, Sparkles, Zap, ty
 import { Badge } from "@/components/sistema/Badge";
 import { BarraAvance } from "@/components/sistema/BarraAvance";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
-import { FilaMovimiento } from "@/components/sistema/FilaMovimiento";
 import { Importe } from "@/components/sistema/Importe";
-import { movimientosCategorizados } from "@/lib/datos/movimientos";
+import {
+  categoriasDelHogar,
+  mediosDePago,
+  movimientosCategorizados,
+} from "@/lib/datos/movimientos";
+import { ListaMovimientosTocables } from "@/components/sistema/ListaMovimientosTocables";
 import { obtenerPresupuestoMes } from "@/lib/datos/presupuesto";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { formatearImporte, formatearPorcentaje } from "@/lib/dominio/dinero";
@@ -34,10 +38,12 @@ export default async function Resumen() {
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
   const mesActual = mesDe(hoy);
-  const [presupuesto, avisos, ultimos] = await Promise.all([
+  const [presupuesto, avisos, ultimos, categorias, medios] = await Promise.all([
     obtenerPresupuestoMes(sesion, mesActual, "hogar"),
     avisosParaAtender(sesion, hoy),
     movimientosCategorizados(sesion, { limite: 3 }),
+    categoriasDelHogar(sesion),
+    mediosDePago(sesion),
   ]);
 
   const nombreMes = formatearMesSolo(mesActual);
@@ -186,24 +192,11 @@ export default async function Resumen() {
       {ultimos.length > 0 && (
         <>
           <EncabezadoSeccion>Últimos movimientos</EncabezadoSeccion>
-          <Card className="divide-y divide-separador">
-            {ultimos.map((m) => (
-              <FilaMovimiento
-                key={m.id}
-                descripcion={m.descripcion}
-                icono={m.categoria?.icono}
-                metadata={[m.categoria?.nombre, m.medio].filter(Boolean).join(" · ")}
-                importeCentavos={m.importeCentavos}
-                esIngreso={m.tipo === "ingreso"}
-                ambito={m.visibilidad === "compartido" ? "hogar" : "personal"}
-                badgeCuota={
-                  m.esCuota && m.nCuota && m.nCuotasTotal
-                    ? `CUOTA ${m.nCuota}/${m.nCuotasTotal}`
-                    : undefined
-                }
-              />
-            ))}
-          </Card>
+          <ListaMovimientosTocables
+            movimientos={ultimos}
+            categorias={categorias}
+            medios={medios}
+          />
         </>
       )}
     </div>

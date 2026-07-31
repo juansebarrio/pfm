@@ -375,6 +375,91 @@ export async function crearGasto(
  * define la serie de la compra. Espeja actualizarFecha de la web.
  */
 /**
+ * Editar un movimiento desde su detalle: descripción, importe, categoría,
+ * medio y ámbito. Espeja actualizarMovimiento de app/acciones/movimientos.ts,
+ * incluidas las reglas de cuotas: importe y medio los define la serie, y lo
+ * demás se propaga a las hermanas y a la compra.
+ */
+export async function actualizarMovimiento(
+  sesion: SesionHogar,
+  datos: {
+    movimientoId: string;
+    descripcion: string;
+    importeCentavos: number;
+    categoriaId: string | null;
+    medioTipo: "cuenta" | "tarjeta";
+    medioId: string;
+    ambito: "hogar" | "personal";
+  },
+): Promise<Resultado> {
+  const descripcion = datos.descripcion.trim();
+  if (!descripcion) return { ok: false, error: "Poné una descripción" };
+  if (!Number.isInteger(datos.importeCentavos) || datos.importeCentavos <= 0) {
+    return { ok: false, error: "El importe tiene que ser mayor a cero" };
+  }
+
+  const { data: mov } = await supabase
+    .from("movimientos")
+    .select("id, tipo, fecha, compra_id, cuenta_id, tarjeta_id, importe_centavos")
+    .eq("id", datos.movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+  if (mov.tipo !== "gasto" && mov.tipo !== "ingreso") {
+    return { ok: false, error: "Este tipo de movimiento no se edita desde acá" };
+  }
+  if (mov.tipo === "ingreso" && datos.medioTipo !== "cuenta") {
+    return { ok: false, error: "Un ingreso entra a una cuenta, no a una tarjeta" };
+  }
+
+  const visibilidad = datos.ambito === "hogar" ? "compartido" : "personal";
+
+  if (mov.compra_id) {
+    const medioActual = mov.tarjeta_id ?? mov.cuenta_id;
+    if (datos.importeCentavos !== mov.importe_centavos || datos.medioId !== medioActual) {
+      return { ok: false, error: "El importe y el medio de una cuota los maneja la compra" };
+    }
+    const [{ error: errCuotas }, { error: errCompra }] = await Promise.all([
+      supabase
+        .from("movimientos")
+        .update({ descripcion, categoria_id: datos.categoriaId, visibilidad })
+        .eq("compra_id", mov.compra_id)
+        .eq("hogar_id", sesion.hogarId),
+      supabase
+        .from("compras_en_cuotas")
+        .update({ descripcion, visibilidad })
+        .eq("id", mov.compra_id)
+        .eq("hogar_id", sesion.hogarId),
+    ]);
+    if (errCuotas || errCompra) return { ok: false, error: "No pudimos guardar los cambios" };
+    return { ok: true };
+  }
+
+  const esTarjeta = datos.medioTipo === "tarjeta";
+  const { error } = await supabase
+    .from("movimientos")
+    .update({
+      descripcion,
+      importe_centavos: datos.importeCentavos,
+      categoria_id: datos.categoriaId,
+      visibilidad,
+      cuenta_id: esTarjeta ? null : datos.medioId,
+      tarjeta_id: esTarjeta ? datos.medioId : null,
+      ciclo_id: esTarjeta
+        ? await asegurarCicloParaFecha(
+            sesion,
+            datos.medioId,
+            fechaParaCiclo(mov.fecha as string, hoyBA()),
+          )
+        : null,
+    })
+    .eq("id", mov.id)
+    .eq("hogar_id", sesion.hogarId);
+  if (error) return { ok: false, error: "No pudimos guardar los cambios" };
+  return { ok: true };
+}
+
+/**
  * Mover VARIOS movimientos a una fecha, de una. Espeja actualizarFechasEnLote
  * de app/acciones/movimientos.ts y comparte su regla: si el movimiento es de
  * tarjeta se le reasigna el ciclo de la fecha nueva, nunca uno anterior a hoy.

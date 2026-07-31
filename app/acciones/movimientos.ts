@@ -305,6 +305,105 @@ export async function actualizarFecha(entrada: unknown): Promise<ResultadoAccion
   return { ok: true };
 }
 
+const esquemaMovimiento = z.object({
+  movimientoId: z.uuid(),
+  descripcion: z.string().trim().min(1).max(80),
+  importeCentavos: z.number().int().positive().max(100_000_000_000),
+  categoriaId: z.uuid().nullable(),
+  medioTipo: z.enum(["cuenta", "tarjeta"]),
+  medioId: z.uuid(),
+  ambito: z.enum(["hogar", "personal"]),
+});
+
+/**
+ * Editar un movimiento desde su detalle: descripción, importe, categoría,
+ * medio y ámbito. La fecha tiene su propia acción (actualizarFecha) porque se
+ * edita inline en el detalle desde antes.
+ *
+ * Las CUOTAS tienen reglas propias: el importe y el medio los define la serie
+ * (cambiarlos en una sola rompería la suma de la compra), pero descripción,
+ * categoría y ámbito se editan Y SE PROPAGAN a las hermanas y a la compra —
+ * renombrar "Notebook" en la cuota 3 y que las otras cinco sigan diciendo lo
+ * viejo sería peor que no dejar editar.
+ *
+ * Si el medio pasa a otra tarjeta, el ciclo se reasigna con la fecha del
+ * movimiento (nunca a un resumen que ya cerró); si pasa a cuenta, ciclo null.
+ */
+export async function actualizarMovimiento(entrada: unknown): Promise<ResultadoAccion> {
+  const parseo = esquemaMovimiento.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const datos = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+  const { data: mov } = await sesion.supabase
+    .from("movimientos")
+    .select("id, tipo, fecha, compra_id, cuenta_id, tarjeta_id, importe_centavos")
+    .eq("id", datos.movimientoId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!mov) return { ok: false, error: "No encontramos ese movimiento" };
+  if (mov.tipo !== "gasto" && mov.tipo !== "ingreso") {
+    return { ok: false, error: "Este tipo de movimiento no se edita desde acá" };
+  }
+  if (mov.tipo === "ingreso" && datos.medioTipo !== "cuenta") {
+    return { ok: false, error: "Un ingreso entra a una cuenta, no a una tarjeta" };
+  }
+
+  const visibilidad = datos.ambito === "hogar" ? "compartido" : "personal";
+
+  if (mov.compra_id) {
+    const medioActual = mov.tarjeta_id ?? mov.cuenta_id;
+    if (datos.importeCentavos !== mov.importe_centavos || datos.medioId !== medioActual) {
+      return { ok: false, error: "El importe y el medio de una cuota los maneja la compra" };
+    }
+    const [{ error: errCuotas }, { error: errCompra }] = await Promise.all([
+      sesion.supabase
+        .from("movimientos")
+        .update({
+          descripcion: datos.descripcion,
+          categoria_id: datos.categoriaId,
+          visibilidad,
+        })
+        .eq("compra_id", mov.compra_id)
+        .eq("hogar_id", sesion.hogarId),
+      sesion.supabase
+        .from("compras_en_cuotas")
+        .update({ descripcion: datos.descripcion, visibilidad })
+        .eq("id", mov.compra_id)
+        .eq("hogar_id", sesion.hogarId),
+    ]);
+    if (errCuotas || errCompra) return { ok: false, error: "No pudimos guardar los cambios" };
+  } else {
+    const esTarjeta = datos.medioTipo === "tarjeta";
+    const { error } = await sesion.supabase
+      .from("movimientos")
+      .update({
+        descripcion: datos.descripcion,
+        importe_centavos: datos.importeCentavos,
+        categoria_id: datos.categoriaId,
+        visibilidad,
+        cuenta_id: esTarjeta ? null : datos.medioId,
+        tarjeta_id: esTarjeta ? datos.medioId : null,
+        ciclo_id: esTarjeta
+          ? await asegurarCicloParaFecha(
+              sesion,
+              datos.medioId,
+              fechaParaCiclo(mov.fecha, hoyBA()),
+            )
+          : null,
+      })
+      .eq("id", mov.id)
+      .eq("hogar_id", sesion.hogarId);
+    if (error) return { ok: false, error: "No pudimos guardar los cambios" };
+  }
+
+  revalidatePath("/movimientos");
+  revalidatePath("/resumen");
+  revalidatePath("/presupuesto");
+  revalidatePath("/cuotas");
+  return { ok: true };
+}
+
 const esquemaFechasEnLote = z.object({
   movimientoIds: z.array(z.uuid()).min(1).max(200),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

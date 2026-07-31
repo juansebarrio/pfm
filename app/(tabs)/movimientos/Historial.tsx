@@ -6,7 +6,7 @@ import { ListChecks } from "lucide-react";
 import { actualizarFechasEnLote, borrarMovimiento } from "@/app/acciones/movimientos";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
 import type { DatosFilaMovimiento } from "@/components/sistema/FilaMovimiento";
-import type { MovimientoLista } from "@/lib/datos/movimientos";
+import type { CategoriaSimple, MedioDePago, MovimientoLista } from "@/lib/datos/movimientos";
 import { etiquetaDia, formatearDiaCorto } from "@/lib/dominio/fechas";
 import { BarraSeleccion } from "./BarraSeleccion";
 import { DetalleMovimiento } from "./DetalleMovimiento";
@@ -23,7 +23,18 @@ import { FilaSwipe } from "./FilaSwipe";
 
 type Dia = { fecha: string; movimientos: MovimientoLista[] };
 
-export function Historial({ dias, hoy }: { dias: Dia[]; hoy: string }) {
+export function Historial({
+  dias,
+  hoy,
+  categorias = [],
+  medios = [],
+}: {
+  dias: Dia[];
+  hoy: string;
+  /** para el formulario de edición del detalle */
+  categorias?: CategoriaSimple[];
+  medios?: MedioDePago[];
+}) {
   const router = useRouter();
   const [, iniciar] = useTransition();
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
@@ -214,6 +225,8 @@ export function Historial({ dias, hoy }: { dias: Dia[]; hoy: string }) {
 
       <DetalleMovimiento
         movimiento={detalle}
+        categorias={categorias}
+        medios={medios}
         onCerrar={() => setDetalle(null)}
         onBorrar={() => detalle && borrar(detalle)}
       />

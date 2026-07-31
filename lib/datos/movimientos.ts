@@ -13,6 +13,9 @@ export type MovimientoLista = {
   esPropio: boolean;
   categoria: { id: string; nombre: string; icono: string } | null;
   medio: string | null; // "Visa •• 4321", "Mercado Pago", "Galicia"
+  /** para preseleccionar el medio al editar */
+  medioTipo: "cuenta" | "tarjeta" | null;
+  medioId: string | null;
   cierreCiclo: string | null; // "cierra 28 jul"
   esCuota: boolean;
   nCuota: number | null;
@@ -23,7 +26,7 @@ export type MovimientoLista = {
 
 const CAMPOS = `
   id, tipo, descripcion, importe_centavos, fecha, creado_el, visibilidad, user_id,
-  n_cuota, compra_id, nota,
+  n_cuota, compra_id, nota, cuenta_id, tarjeta_id,
   categorias(id, nombre, icono),
   cuentas!movimientos_cuenta_id_fkey(nombre),
   tarjetas(nombre, red, ultimos4),
@@ -43,6 +46,8 @@ type FilaCruda = {
   n_cuota: number | null;
   compra_id: string | null;
   nota: string | null;
+  cuenta_id: string | null;
+  tarjeta_id: string | null;
   categorias: { id: string; nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; red: string; ultimos4: string } | null;
@@ -73,12 +78,35 @@ function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
       fila.ciclos_tarjeta && fila.ciclos_tarjeta.estado === "abierto"
         ? `cierra ${formatearDiaCorto(fila.ciclos_tarjeta.fecha_cierre)}`
         : null,
+    medioTipo: fila.tarjeta_id ? "tarjeta" : fila.cuenta_id ? "cuenta" : null,
+    medioId: fila.tarjeta_id ?? fila.cuenta_id,
     esCuota: fila.compra_id !== null,
     nCuota: fila.n_cuota,
     nCuotasTotal: fila.compras_en_cuotas?.n_cuotas ?? null,
     compraId: fila.compra_id,
     nota: fila.nota,
   };
+}
+
+/**
+ * Los gastos de un ciclo de tarjeta, con TODOS los campos del detalle. Los
+ * totales del ciclo los sigue calculando detalleCiclo (tarjetas.ts): esto
+ * existe para que las filas del detalle de tarjeta abran el mismo detalle de
+ * movimiento que el resto de la app.
+ */
+export async function movimientosDeCiclo(
+  sesion: SesionHogar,
+  cicloId: string,
+): Promise<MovimientoLista[]> {
+  const { data } = await sesion.supabase
+    .from("movimientos")
+    .select(CAMPOS)
+    .eq("hogar_id", sesion.hogarId)
+    .eq("ciclo_id", cicloId)
+    .eq("tipo", "gasto")
+    .order("fecha", { ascending: false })
+    .order("creado_el", { ascending: false });
+  return ((data ?? []) as unknown as FilaCruda[]).map((f) => aMovimiento(f, sesion.userId));
 }
 
 /** Bandeja de entrada: sin categorizar (las cuotas hijas no cuentan). */

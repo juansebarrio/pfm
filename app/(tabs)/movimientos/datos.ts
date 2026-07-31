@@ -10,7 +10,7 @@ import { formatearDiaCorto, ultimoDiaDelMes } from "@/lib/dominio/fechas";
 
 const CAMPOS = `
   id, tipo, descripcion, importe_centavos, fecha, creado_el, visibilidad, user_id,
-  n_cuota, compra_id, nota,
+  n_cuota, compra_id, nota, cuenta_id, tarjeta_id,
   categorias(id, nombre, icono),
   cuentas!movimientos_cuenta_id_fkey(nombre),
   tarjetas(nombre, red, ultimos4),
@@ -30,6 +30,8 @@ type FilaCruda = {
   n_cuota: number | null;
   compra_id: string | null;
   nota: string | null;
+  cuenta_id: string | null;
+  tarjeta_id: string | null;
   categorias: { id: string; nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; red: string; ultimos4: string } | null;
@@ -60,6 +62,8 @@ function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
       fila.ciclos_tarjeta && fila.ciclos_tarjeta.estado === "abierto"
         ? `cierra ${formatearDiaCorto(fila.ciclos_tarjeta.fecha_cierre)}`
         : null,
+    medioTipo: fila.tarjeta_id ? "tarjeta" : fila.cuenta_id ? "cuenta" : null,
+    medioId: fila.tarjeta_id ?? fila.cuenta_id,
     esCuota: fila.compra_id !== null,
     nCuota: fila.n_cuota,
     nCuotasTotal: fila.compras_en_cuotas?.n_cuotas ?? null,

@@ -215,6 +215,33 @@ textarea {
   touch-action: manipulation;
 }
 
+/* ───────────────────────────── hoja inferior animada
+ *
+ * El <dialog> nativo no anima solo: sin esto la hoja aparece y desaparece de
+ * golpe. El componente maneja el ciclo (abrir → data-visible al frame
+ * siguiente; cerrar → sacar data-visible y close() al terminar) y acá viven
+ * solo las transiciones. La curva es la del sheet de iOS.
+ *
+ * Se eligió la variante clásica (clase + transición) y no @starting-style /
+ * allow-discrete A PROPÓSITO: el pipeline de CSS del build descarta esas
+ * reglas en silencio — se verificó leyendo el CSSOM: cero reglas llegaban al
+ * navegador. Si algún día el pipeline las soporta, esto se puede simplificar.
+ */
+dialog.hoja-inferior {
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0.28, 1);
+}
+dialog.hoja-inferior[data-visible="true"] {
+  transform: translateY(0);
+}
+dialog.hoja-inferior::backdrop {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+dialog.hoja-inferior[data-visible="true"]::backdrop {
+  opacity: 1;
+}
+
 /* Target táctil mínimo de 44px sin cambiar el dibujo (mejora directa §7.1) */
 .hit-44 {
   position: relative;

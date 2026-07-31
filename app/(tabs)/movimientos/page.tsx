@@ -211,7 +211,7 @@ export default async function PaginaMovimientos({
         </div>
       )}
 
-      <Historial dias={dias} hoy={hoy} />
+      <Historial dias={dias} hoy={hoy} categorias={categorias} medios={medios} />
         </>
       )}
 

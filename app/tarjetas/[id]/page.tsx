@@ -9,17 +9,21 @@ import { ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
 import { Badge } from "@/components/sistema/Badge";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
 import { Importe } from "@/components/sistema/Importe";
-import { categoriasDelHogar, mediosDePago } from "@/lib/datos/movimientos";
+import {
+  categoriasDelHogar,
+  mediosDePago,
+  movimientosDeCiclo,
+} from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { detalleCiclo, obtenerTarjeta } from "@/lib/datos/tarjetas";
 import { formatearImporte } from "@/lib/dominio/dinero";
-import { diasEntre, etiquetaDia, formatearDiaCorto, hoyBA } from "@/lib/dominio/fechas";
+import { diasEntre, formatearDiaCorto, hoyBA } from "@/lib/dominio/fechas";
 import { diferenciaConciliacion } from "@/lib/dominio/tarjetas";
 import { BotonVolver } from "./BotonVolver";
 import { Conciliacion } from "./Conciliacion";
 import { ConfirmarFecha } from "./ConfirmarFecha";
 import { ImpuestosEditable } from "./ImpuestosEditable";
-import { ListaConsumos, type FilaConsumo } from "./ListaConsumos";
+import { ListaConsumos } from "./ListaConsumos";
 import { PagoResumen } from "./PagoResumen";
 import { indiceCicloVigente, sumarDias } from "./datos";
 
@@ -70,8 +74,9 @@ export default async function DetalleTarjeta({ params, searchParams }: Props) {
   const anterior = indice > 0 ? tarjeta.ciclos[indice - 1] : null;
   const siguiente = indice < tarjeta.ciclos.length - 1 ? tarjeta.ciclos[indice + 1] : null;
 
-  const [detalle, medios, categorias] = await Promise.all([
+  const [detalle, movimientosCiclo, medios, categorias] = await Promise.all([
     detalleCiclo(sesion, ciclo.id, tarjeta.impuestosEstimadosCentavos),
+    movimientosDeCiclo(sesion, ciclo.id),
     mediosDePago(sesion),
     categoriasDelHogar(sesion),
   ]);
@@ -107,23 +112,6 @@ export default async function DetalleTarjeta({ params, searchParams }: Props) {
     ciclo.fechaCierre <= hoy ||
     (esVigente && diasEntre(hoy, ciclo.fechaVencimiento) <= 7);
   const totalAPagar = realCentavos ?? detalle.proyectadoCentavos;
-
-  // Filas de consumos: "hoy · Supermercado" (relativa + categoría o "sin
-  // categorizar"); cuotas: "1 jul · Hogar/Personal" — sin badge de ámbito.
-  const iconoPorNombre = new Map(categorias.map((c) => [c.nombre, c.icono]));
-  const filas: FilaConsumo[] = detalle.consumos.map((c) => ({
-    id: c.id,
-    descripcion: c.descripcion,
-    icono: c.categoriaNombre ? iconoPorNombre.get(c.categoriaNombre) : undefined,
-    metadata: c.esCuota
-      ? `${formatearDiaCorto(c.fecha)} · ${c.visibilidad === "compartido" ? "Hogar" : "Personal"}`
-      : `${etiquetaDia(c.fecha, hoy).toLowerCase()} · ${c.categoriaNombre ?? "sin categorizar"}`,
-    importeCentavos: c.importeCentavos,
-    badgeCuota:
-      c.esCuota && c.nCuota && c.nCuotasTotal
-        ? `CUOTA ${c.nCuota}/${c.nCuotasTotal}`
-        : undefined,
-  }));
 
   return (
     <div className="px-5 pt-14 pb-10">
@@ -286,13 +274,17 @@ export default async function DetalleTarjeta({ params, searchParams }: Props) {
       )}
 
       {/* Consumos del ciclo · N (§3.34, con contador) */}
-      <EncabezadoSeccion>Consumos del ciclo · {filas.length}</EncabezadoSeccion>
-      {filas.length === 0 ? (
+      <EncabezadoSeccion>Consumos del ciclo · {movimientosCiclo.length}</EncabezadoSeccion>
+      {movimientosCiclo.length === 0 ? (
         <Card className="px-3.5 py-3">
           <p className="text-[13px] text-tinta-secundaria">Sin consumos en este ciclo.</p>
         </Card>
       ) : (
-        <ListaConsumos filas={filas} />
+        <ListaConsumos
+          movimientos={movimientosCiclo}
+          categorias={categorias}
+          medios={medios}
+        />
       )}
     </div>
   );

@@ -359,6 +359,11 @@ export type MovimientoFila = {
   tipo: "gasto" | "ingreso" | "transferencia" | "pago_resumen";
   nota: string | null;
   nCuotasTotal: number | null;
+  /** para el formulario de edición */
+  categoriaId: string | null;
+  medioTipo: "cuenta" | "tarjeta" | null;
+  medioId: string | null;
+  esCuota: boolean;
 };
 
 type FilaMovimientoDb = {
@@ -370,7 +375,10 @@ type FilaMovimientoDb = {
   visibilidad: string;
   n_cuota: number | null;
   nota: string | null;
-  categorias: { nombre: string; icono: string } | null;
+  compra_id: string | null;
+  cuenta_id: string | null;
+  tarjeta_id: string | null;
+  categorias: { id: string; nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; ultimos4: string } | null;
   compras_en_cuotas: { n_cuotas: number } | null;
@@ -380,7 +388,8 @@ type FilaMovimientoDb = {
 // que el embed hay que desambiguarlo por nombre de constraint o PostgREST falla.
 const SELECT_MOVIMIENTO =
   "id, descripcion, importe_centavos, fecha, tipo, visibilidad, n_cuota, nota, " +
-  "categorias(nombre, icono), cuentas!movimientos_cuenta_id_fkey(nombre), " +
+  "compra_id, cuenta_id, tarjeta_id, " +
+  "categorias(id, nombre, icono), cuentas!movimientos_cuenta_id_fkey(nombre), " +
   "tarjetas(nombre, ultimos4), compras_en_cuotas(n_cuotas)";
 
 function aFila(m: FilaMovimientoDb): MovimientoFila {
@@ -405,6 +414,10 @@ function aFila(m: FilaMovimientoDb): MovimientoFila {
     tipo: m.tipo as MovimientoFila["tipo"],
     nota: m.nota ?? null,
     nCuotasTotal: m.compras_en_cuotas?.n_cuotas ?? null,
+    categoriaId: m.categorias?.id ?? null,
+    medioTipo: m.tarjeta_id ? "tarjeta" : m.cuenta_id ? "cuenta" : null,
+    medioId: m.tarjeta_id ?? m.cuenta_id ?? null,
+    esCuota: m.compra_id !== null,
   };
 }
 
