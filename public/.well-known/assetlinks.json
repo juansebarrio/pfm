@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "studio.js80.pfm.twa",
+      "sha256_cert_fingerprints": [
+        "AC:89:DB:78:3B:D8:2B:86:EF:AF:A3:35:E5:31:A1:F0:18:8F:98:89:BE:C2:EC:B7:9A:39:00:95:56:2C:72:99"
+      ]
+    }
+  }
+]

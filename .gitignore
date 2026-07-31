@@ -43,3 +43,10 @@ next-env.d.ts
 
 # worktrees de tareas en paralelo (Claude Code)
 .claude/worktrees/
+
+# Play Store: keystore y claves de firma (NUNCA commitear)
+play/findemes.keystore
+play/CLAVES-KEYSTORE.txt
+play/build/
+play/app/build/
+play/.gradle/

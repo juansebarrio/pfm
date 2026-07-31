@@ -1,0 +1,43 @@
+{
+  "packageId": "studio.js80.pfm.twa",
+  "host": "pfm.js80.studio",
+  "name": "Fin de mes",
+  "launcherName": "Fin de mes",
+  "display": "standalone",
+  "themeColor": "#141312",
+  "themeColorDark": "#141312",
+  "navigationColor": "#141312",
+  "navigationColorDark": "#141312",
+  "navigationDividerColor": "#141312",
+  "navigationDividerColorDark": "#141312",
+  "backgroundColor": "#141312",
+  "enableNotifications": false,
+  "startUrl": "/resumen",
+  "iconUrl": "https://pfm.js80.studio/iconos/icono-512.png",
+  "maskableIconUrl": "https://pfm.js80.studio/iconos/icono-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./findemes.keystore",
+    "alias": "findemes"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://pfm.js80.studio/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://pfm.js80.studio/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.0.0"
+}
