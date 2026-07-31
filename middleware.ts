@@ -86,8 +86,9 @@ export const config = {
   matcher: [
     /*
      * Todo salvo estáticos y assets de PWA:
-     * _next/static, _next/image, favicon, manifest, sw, iconos e imágenes.
+     * _next/static, _next/image, favicon, manifest, sw, iconos, imágenes y
+     * .well-known (assetlinks.json de Android debe responder sin sesión).
      */
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|iconos/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|iconos/|\\.well-known/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
