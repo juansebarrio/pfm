@@ -1,6 +1,13 @@
 import "server-only";
 import { estadoPartida, type ResultadoEstadoPartida } from "@/lib/dominio/presupuesto";
-import { diaDelMes, diasDelMes, hoyBA, mesAnterior, mesDe } from "@/lib/dominio/fechas";
+import {
+  diaDelMes,
+  diasDelMes,
+  hoyBA,
+  mesAnterior,
+  mesDe,
+  ultimoDiaDelMes,
+} from "@/lib/dominio/fechas";
 import type { SesionHogar } from "./sesion";
 
 export type PartidaConEstado = {
@@ -37,7 +44,7 @@ async function gastadosPorCategoria(
   mes: string,
   ambito: Ambito,
 ): Promise<Map<string, number>> {
-  const hasta = `${mes.slice(0, 7)}-${String(diasDelMes(mes)).padStart(2, "0")}`;
+  const hasta = ultimoDiaDelMes(mes);
   let consulta = sesion.supabase
     .from("movimientos")
     .select("categoria_id, importe_centavos, visibilidad, user_id")
@@ -229,7 +236,7 @@ export async function sugerenciasRecurrentes(
     .eq("activa", true);
   if (!recurrentes || recurrentes.length === 0) return [];
 
-  const hasta = `${mes.slice(0, 7)}-${String(diasDelMes(mes)).padStart(2, "0")}`;
+  const hasta = ultimoDiaDelMes(mes);
   const { data: movsDelMes } = await sesion.supabase
     .from("movimientos")
     .select("categoria_id")

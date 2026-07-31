@@ -23,6 +23,7 @@ import {
 } from "@dominio/fechas";
 import { repetirPresupuesto } from "@/lib/acciones";
 import {
+  gastosPorCategoria,
   obtenerPresupuestoMes,
   obtenerSesionHogar,
   type PartidaConEstado,
@@ -30,6 +31,8 @@ import {
   type SesionHogar,
 } from "@/lib/datos";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
+import { PorCategoria } from "@/componentes/PorCategoria";
+import { Solapas } from "@/componentes/Solapas";
 import { color, radio } from "@/lib/tema";
 import {
   Card,
@@ -72,6 +75,10 @@ export default function Presupuesto() {
   const insets = useSafeAreaInsets();
   const hoy = hoyBA();
   const [mes, setMes] = useState(mesDe(hoy));
+  const [vista, setVista] = useState<"partidas" | "categorias">("partidas");
+  const [porCategoria, setPorCategoria] = useState<
+    Array<{ clave: string; nombre: string; icono: string | null; centavos: number }>
+  >([]);
   const [ambito, setAmbito] = useState<Ambito>("hogar");
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [presupuesto, setPresupuesto] = useState<PresupuestoMes | null>(null);
@@ -94,8 +101,12 @@ export default function Presupuesto() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const p = await obtenerPresupuestoMes(s, mes, ambito);
+    const [p, pc] = await Promise.all([
+      obtenerPresupuestoMes(s, mes, ambito),
+      gastosPorCategoria(s, mes, ambito),
+    ]);
     setPresupuesto(p);
+    setPorCategoria(pc);
     // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
     setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
@@ -136,6 +147,14 @@ export default function Presupuesto() {
       <View style={[e.encabezado, { paddingTop: insets.top + 12 }]}>
         <Text style={e.titulo}>Presupuesto</Text>
         <NavegadorMes mes={mes} mesActual={mesDe(hoy)} alCambiar={setMes} />
+        <Solapas
+          activa={vista}
+          opciones={[
+            { clave: "partidas" as const, etiqueta: "Partidas" },
+            { clave: "categorias" as const, etiqueta: "Por categoría" },
+          ]}
+          alElegir={setVista}
+        />
         <View style={e.segmented}>
           {(["hogar", "personal"] as const).map((a) => (
             <Pressable
@@ -155,6 +174,18 @@ export default function Presupuesto() {
         <View style={e.centrado}>
           <ActivityIndicator color={color.verde} />
         </View>
+      ) : vista === "categorias" ? (
+        /* Va antes del caso "sin presupuesto" a propósito: podés haber gastado
+           sin haber armado el presupuesto del mes, y ahí el reparto por
+           categoría es la única foto útil que la pantalla puede dar. */
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
+        >
+          <PorCategoria
+            items={porCategoria}
+            vacio={`No hay gastos ${ambito === "hogar" ? "del hogar" : "personales"} en ${formatearMesSolo(mes)}.`}
+          />
+        </ScrollView>
       ) : !presupuesto ? (
         <View style={e.centrado}>
           <EstadoVacio

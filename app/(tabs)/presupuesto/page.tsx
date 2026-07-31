@@ -28,6 +28,8 @@ import {
 import { existePresupuesto } from "./datos";
 import { BotonRepetir } from "./BotonRepetir";
 import { EncabezadoPresupuesto } from "./EncabezadoPresupuesto";
+import { PorCategoria } from "@/components/sistema/PorCategoria";
+import { gastosPorCategoria } from "@/lib/datos/movimientos";
 import { SugerenciaRecurrente } from "./SugerenciaRecurrente";
 
 // Pantalla 01 — Presupuesto (01a/01b/01c del export). Server Component:
@@ -76,12 +78,13 @@ function aDatosPartida(
 export default async function PaginaPresupuesto({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string; ambito?: string }>;
+  searchParams: Promise<{ mes?: string; ambito?: string; vista?: string }>;
 }) {
   const params = await searchParams;
   const hoy = hoyBA();
   const mes = mesDesdeParametro(params.mes) ?? mesDe(hoy);
   const ambito: Ambito = params.ambito === "personal" ? "personal" : "hogar";
+  const vista = params.vista === "categorias" ? "categorias" : "partidas";
   const mesProximo = mesSiguiente(mes);
 
   const sesion = await obtenerSesionHogar();
@@ -91,6 +94,10 @@ export default async function PaginaPresupuesto({
     existePresupuesto(sesion, mesProximo, ambito),
     existePresupuesto(sesion, mesAnterior(mes), ambito),
   ]);
+
+  // solo en su solapa: es una consulta más que en "Partidas" no se usa
+  const porCategoria =
+    vista === "categorias" ? await gastosPorCategoria(sesion, mes, ambito) : [];
 
   const mesTitulo = formatearMesLargo(mes);
   const mesNombre = formatearMesSolo(mes);
@@ -103,13 +110,30 @@ export default async function PaginaPresupuesto({
       mesActual={mesDe(hoy)}
       inicial={inicial}
       ambito={ambito}
-      hrefHogar={`/presupuesto?mes=${mes}&ambito=hogar`}
-      hrefPersonal={`/presupuesto?mes=${mes}&ambito=personal`}
+      hrefHogar={`/presupuesto?mes=${mes}&ambito=hogar${vista === "categorias" ? "&vista=categorias" : ""}`}
+      hrefPersonal={`/presupuesto?mes=${mes}&ambito=personal${vista === "categorias" ? "&vista=categorias" : ""}`}
       quedaCentavos={presupuesto?.disponibleCentavos ?? null}
+      vista={vista}
+      mesEnUrl={mes === mesDe(hoy) ? undefined : mes.slice(0, 7)}
     />
   );
 
   // 01c — sin presupuesto del mes: estado vacío con CTA al armado
+  // Va antes del early-return de "sin presupuesto" a propósito: podés haber
+  // gastado sin haber armado el presupuesto del mes, y en ese caso el reparto
+  // por categoría sigue siendo la única foto útil que la pantalla puede dar.
+  if (vista === "categorias") {
+    return (
+      <div className="px-5 pb-10">
+        {encabezado}
+        <PorCategoria
+          items={porCategoria}
+          vacio={`No hay gastos ${ambito === "hogar" ? "del hogar" : "personales"} en ${mesTitulo}.`}
+        />
+      </div>
+    );
+  }
+
   if (!presupuesto) {
     return (
       <div>

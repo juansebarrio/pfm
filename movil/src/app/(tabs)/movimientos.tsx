@@ -13,9 +13,16 @@ import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Inbox, ListChecks } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
-import { etiquetaDia, formatearDiaCorto, hoyBA, mesDe } from "@dominio/fechas";
+import {
+  etiquetaDia,
+  formatearDiaCorto,
+  formatearMesLargo,
+  hoyBA,
+  mesDe,
+} from "@dominio/fechas";
 import {
   bandejaDeEntrada,
+  gastosPorCategoria,
   movimientosCategorizados,
   obtenerSesionHogar,
   totalesDelMes,
@@ -42,6 +49,8 @@ import {
 import { FilaSwipe } from "@/componentes/FilaSwipe";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
+import { PorCategoria } from "@/componentes/PorCategoria";
+import { Solapas } from "@/componentes/Solapas";
 import {
   BarraSeleccion,
   FilaSeleccionable,
@@ -80,6 +89,10 @@ export default function Movimientos() {
   const [ocultos, setOcultos] = useState<string[]>([]);
   const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
   const [totales, setTotales] = useState<TotalesMes | null>(null);
+  const [vista, setVista] = useState<"lista" | "categorias">("lista");
+  const [porCategoria, setPorCategoria] = useState<
+    Array<{ clave: string; nombre: string; icono: string | null; centavos: number }>
+  >([]);
 
   const hoy = hoyBA();
   const mesActual = mesDe(hoy);
@@ -97,12 +110,14 @@ export default function Movimientos() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [b, h, c, t] = await Promise.all([
+    const [b, h, c, t, pc] = await Promise.all([
       bandejaDeEntrada(s),
       movimientosCategorizados(s, { mes }),
       categoriasDelHogar(s),
       totalesDelMes(s, mes),
+      gastosPorCategoria(s, mes),
     ]);
+    setPorCategoria(pc);
     setBandeja(b);
     setHistorial(h);
     setCategorias(c);
@@ -240,8 +255,28 @@ export default function Movimientos() {
         }}
       />
 
+      <Solapas
+        activa={vista}
+        opciones={[
+          { clave: "lista" as const, etiqueta: "Lista" },
+          { clave: "categorias" as const, etiqueta: "Por categoría" },
+        ]}
+        alElegir={(v) => {
+          salirDeSeleccion();
+          setVista(v);
+        }}
+      />
+
       {aviso && <Text style={e.aviso}>{aviso}</Text>}
 
+      {vista === "categorias" ? (
+        <PorCategoria
+          items={porCategoria}
+          totalGastosCentavos={totales?.gastosCentavos}
+          vacio={`No cargaste gastos en ${formatearMesLargo(mes)}. Cuando cargues alguno, acá vas a ver en qué se te fue.`}
+        />
+      ) : (
+        <>
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo. Es caja
           (ingresos − gastos), no el "disponible" del presupuesto. */}
       {totales && (
@@ -420,6 +455,8 @@ export default function Movimientos() {
         ))
       )}
       {seleccionando && <View style={{ height: 130 }} />}
+        </>
+      )}
     </ScrollView>
 
     {seleccionando && (

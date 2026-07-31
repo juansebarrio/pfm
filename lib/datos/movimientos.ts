@@ -250,3 +250,49 @@ export async function mediosDePago(sesion: SesionHogar): Promise<MedioDePago[]> 
   }
   return medios;
 }
+
+/**
+ * Gastos del mes agrupados por categoría, para la vista "Por categoría".
+ *
+ * Solo GASTOS: un ingreso no es algo "en lo que se te va la plata", y mezclarlo
+ * daría porcentajes sin sentido. Lo sin categorizar tampoco entra — vive en la
+ * bandeja y todavía no es nada.
+ *
+ * Sin `ambito` devuelve tu mes completo (lo compartido más lo tuyo personal),
+ * que es lo que corresponde en Movimientos; con ámbito, se recorta como el
+ * presupuesto de esa solapa.
+ */
+export async function gastosPorCategoria(
+  sesion: SesionHogar,
+  mes: string,
+  ambito?: "hogar" | "personal",
+): Promise<Array<{ clave: string; nombre: string; icono: string | null; centavos: number }>> {
+  let consulta = sesion.supabase
+    .from("movimientos")
+    .select("categoria_id, importe_centavos, categorias(nombre, icono)")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("tipo", "gasto")
+    .gte("fecha", mes)
+    .lte("fecha", ultimoDiaDelMes(mes))
+    .not("categoria_id", "is", null);
+  if (ambito === "hogar") consulta = consulta.eq("visibilidad", "compartido");
+  if (ambito === "personal") {
+    consulta = consulta.eq("visibilidad", "personal").eq("user_id", sesion.userId);
+  }
+
+  const { data } = await consulta;
+  const porCategoria = new Map<string, { nombre: string; icono: string | null; centavos: number }>();
+  for (const m of (data ?? []) as unknown as Array<{
+    categoria_id: string;
+    importe_centavos: number;
+    categorias: { nombre: string; icono: string } | null;
+  }>) {
+    const previo = porCategoria.get(m.categoria_id);
+    porCategoria.set(m.categoria_id, {
+      nombre: previo?.nombre ?? m.categorias?.nombre ?? "Sin categoría",
+      icono: previo?.icono ?? m.categorias?.icono ?? null,
+      centavos: (previo?.centavos ?? 0) + m.importe_centavos,
+    });
+  }
+  return [...porCategoria].map(([clave, v]) => ({ clave, ...v }));
+}

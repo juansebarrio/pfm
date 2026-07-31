@@ -36,6 +36,16 @@
   --toggle-apagado: #3a3733;
   --barra-futura: #3a3733;
   --borde-bandeja: #4d4028; /* hairline cálido de la bandeja, versión oscura */
+  /* Rampa de la vista "Por categoría": verde de marca desvaneciéndose a gris.
+     NO usa rojo ni ámbar a propósito: en esta app significan "excedido" y
+     "atención", y una categoría no está en problemas por ser la más grande. */
+  --reparto-1: #4fa37f;
+  --reparto-2: #6cab8d;
+  --reparto-3: #87b39c;
+  --reparto-4: #a0b6a8;
+  --reparto-5: #aba8a0;
+  --reparto-6: #938d84;
+  --reparto-7: #6b665e;
   --seleccion-texto: #2c4438;
   --sombra-card: none;
   --sombra-thumb: none;
@@ -71,6 +81,14 @@
   --toggle-apagado: #d8d4cb;
   --barra-futura: #ddd9cf;
   --borde-bandeja: #dcceb0;
+  /* misma rampa, versión clara: parte del verde de modo claro */
+  --reparto-1: #1e6e52;
+  --reparto-2: #3d8168;
+  --reparto-3: #5c947f;
+  --reparto-4: #7ba090;
+  --reparto-5: #96a099;
+  --reparto-6: #a39d93;
+  --reparto-7: #bdb8ae;
   --seleccion-texto: #d9e8e1;
   --sombra-card: 0 1px 2px rgba(26, 25, 23, 0.04);
   --sombra-thumb: 0 1px 2px rgba(26, 25, 23, 0.08);

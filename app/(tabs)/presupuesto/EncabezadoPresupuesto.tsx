@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
+import { Solapas } from "@/components/sistema/Solapas";
 import { formatearImporte } from "@/lib/dominio/dinero";
 
 // Header de la pantalla de presupuesto (01a) + barra condensada de scroll (01b):
@@ -29,9 +30,20 @@ type Props = {
   hrefPersonal: string;
   /** disponible del mes para la barra condensada; null si no hay presupuesto */
   quedaCentavos: number | null;
+  vista: "partidas" | "categorias";
+  /** aaaa-mm, solo si NO es el mes en curso (así el link queda limpio) */
+  mesEnUrl?: string;
 };
 
 const UMBRAL_SCROLL = 120;
+
+/** El link de una solapa conservando mes y ámbito. */
+function hrefVista(p: Props, vista: string): string {
+  const params = new URLSearchParams({ ambito: p.ambito });
+  if (p.mesEnUrl) params.set("mes", p.mesEnUrl);
+  if (vista !== "partidas") params.set("vista", vista);
+  return `/presupuesto?${params.toString()}`;
+}
 
 export function EncabezadoPresupuesto(p: Props) {
   const [condensado, setCondensado] = useState(false);
@@ -63,7 +75,20 @@ export function EncabezadoPresupuesto(p: Props) {
           mes={p.mes}
           mesActual={p.mesActual}
           ruta="/presupuesto"
-          otrosParametros={{ ambito: p.ambito }}
+          otrosParametros={{
+            ambito: p.ambito,
+            ...(p.vista === "categorias" ? { vista: p.vista } : {}),
+          }}
+        />
+      </div>
+
+      <div className="px-5">
+        <Solapas
+          activa={p.vista}
+          opciones={[
+            { clave: "partidas", etiqueta: "Partidas", href: hrefVista(p, "partidas") },
+            { clave: "categorias", etiqueta: "Por categoría", href: hrefVista(p, "categorias") },
+          ]}
         />
       </div>
 

@@ -4,12 +4,21 @@ import {
   categoriasDelHogar,
   categoriasRecientes,
   mediosDePago,
+  gastosPorCategoria,
   totalesDelMes,
   type MovimientoLista,
 } from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
-import { etiquetaDia, hoyBA, mesDe, mesDesdeParametro } from "@/lib/dominio/fechas";
+import {
+  etiquetaDia,
+  formatearMesLargo,
+  hoyBA,
+  mesDe,
+  mesDesdeParametro,
+} from "@/lib/dominio/fechas";
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
+import { PorCategoria } from "@/components/sistema/PorCategoria";
+import { Solapas } from "@/components/sistema/Solapas";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
 import { TotalizadorMes } from "./TotalizadorMes";
 import { Filtros } from "./Filtros";
@@ -63,6 +72,7 @@ export default async function PaginaMovimientos({
   const categoriaId = comoUuid(uno(parametros.categoria));
   const miembroId = comoUuid(uno(parametros.miembro));
   const tipo = comoTipo(uno(parametros.tipo));
+  const vista = uno(parametros.vista) === "categorias" ? "categorias" : "lista";
 
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
@@ -71,6 +81,9 @@ export default async function PaginaMovimientos({
   const esMesActual = mes === mesActual;
 
   const totalesPedido = totalesDelMes(sesion, mes);
+  // se pide solo en su solapa: es una consulta más y en "Lista" no se usa
+  const porCategoria =
+    vista === "categorias" ? await gastosPorCategoria(sesion, mes) : [];
   const [bandeja, historial, categorias, medios, miembros, recientesHogar, recientesPersonal] =
     await Promise.all([
       bandejaDeEntrada(sesion),
@@ -100,6 +113,25 @@ export default async function PaginaMovimientos({
   }
 
   const hayFiltros = Boolean(q || ambito || medio || categoriaId || miembroId || tipo);
+
+  // lo que hay que arrastrar al cambiar de mes o de solapa
+  const comunes: Record<string, string> = Object.fromEntries(
+    Object.entries({
+      q,
+      ambito,
+      medio: medio ? `${medio.tipo}:${medio.id}` : undefined,
+      categoria: categoriaId,
+      miembro: miembroId,
+      tipo,
+      ...(mes === mesActual ? {} : { mes: mes.slice(0, 7) }),
+    }).filter((par): par is [string, string] => par[1] !== undefined),
+  );
+  const hrefVista = (v: string) => {
+    const params = new URLSearchParams(comunes);
+    if (v !== "lista") params.set("vista", v);
+    const cadena = params.toString();
+    return `/movimientos${cadena ? `?${cadena}` : ""}`;
+  };
   const inicial = (sesion.nombreMiembro[0] ?? "?").toUpperCase();
 
   return (
@@ -119,22 +151,32 @@ export default async function PaginaMovimientos({
         mes={mes}
         mesActual={mesActual}
         ruta="/movimientos"
-        otrosParametros={Object.fromEntries(
-          Object.entries({
-            q,
-            ambito,
-            medio: medio ? `${medio.tipo}:${medio.id}` : undefined,
-            categoria: categoriaId,
-            miembro: miembroId,
-            tipo,
-          }).filter((par): par is [string, string] => par[1] !== undefined),
-        )}
+        otrosParametros={{
+          ...comunes,
+          ...(vista === "categorias" ? { vista } : {}),
+        }}
+      />
+
+      <Solapas
+        activa={vista}
+        opciones={[
+          { clave: "lista", etiqueta: "Lista", href: hrefVista("lista") },
+          { clave: "categorias", etiqueta: "Por categoría", href: hrefVista("categorias") },
+        ]}
       />
 
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo entre ambos.
           No es el "disponible" del presupuesto (eso vive en Resumen): es caja. */}
       <TotalizadorMes totales={await totalesPedido} />
 
+      {vista === "categorias" ? (
+        <PorCategoria
+          items={porCategoria}
+          totalGastosCentavos={(await totalesPedido).gastosCentavos}
+          vacio={`No cargaste gastos en ${formatearMesLargo(mes)}. Cuando cargues alguno, acá vas a ver en qué se te fue.`}
+        />
+      ) : (
+        <>
       <div className="mt-4">
         <Filtros
           q={q ?? ""}
@@ -170,6 +212,8 @@ export default async function PaginaMovimientos({
       )}
 
       <Historial dias={dias} hoy={hoy} />
+        </>
+      )}
 
       {historial.length === 0 && (
         <p className="mt-8 text-center text-[13.5px] leading-[1.55] text-tinta-secundaria">
