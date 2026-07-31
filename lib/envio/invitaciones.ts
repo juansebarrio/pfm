@@ -27,7 +27,10 @@ export async function enviarEmailInvitacion(entrada: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Fin de mes <invitaciones@resend.dev>",
+      // RESEND_FROM: el remitente verificado en Resend (p. ej.
+      // "Fin de mes <hola@findemes.juansebarrio.com>"). Sin la variable cae al
+      // sandbox de Resend, que solo entrega a tu propia casilla.
+      from: process.env.RESEND_FROM ?? "Fin de mes <invitaciones@resend.dev>",
       to: [entrada.email],
       subject: `${entrada.nombreInvita} te invita al hogar ${entrada.nombreHogar} en Fin de mes`,
       text: [
