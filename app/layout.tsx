@@ -39,6 +39,10 @@ export const viewport: Viewport = {
 // Aplica el tema guardado antes del primer paint para evitar flash
 const scriptTema = `try{var t=localStorage.getItem("tema");if(t==="oscuro"||t==="claro")document.documentElement.dataset.tema=t}catch(e){}`;
 
+// Plausible (analytics sin cookies): el stub encola eventos hasta que carga el
+// script; el propio script ignora localhost, así que el dev no ensucia los datos
+const scriptPlausible = `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +52,11 @@ export default function RootLayout({
     <html lang="es-AR" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: scriptTema }} />
+        <script
+          async
+          src="https://plausible.io/js/pa-E8BapwZYnzvcGBQaBJzzN.js"
+        />
+        <script dangerouslySetInnerHTML={{ __html: scriptPlausible }} />
       </head>
       <body
         className={`${rubik.variable} ${splineSansMono.variable} antialiased`}
