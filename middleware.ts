@@ -10,6 +10,7 @@ const RUTAS_PUBLICAS = [
   "/invitacion",
   "/auth",
   "/privacidad",
+  "/soporte",
   "/api/demo",
 ];
 
