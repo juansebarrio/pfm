@@ -23,6 +23,7 @@ import {
   Tags,
   Users,
   Wallet,
+  GraduationCap,
 } from "lucide-react-native";
 import { useBloqueo } from "@/lib/bloqueo";
 import { borrarMiCuenta } from "@/lib/cuenta";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/datos";
 import { supabase } from "@/lib/supabase";
 import { color } from "@/lib/tema";
+import { Onboarding } from "@/componentes/Onboarding";
 import { Badge, Card } from "@/componentes/sistema";
 
 // 09 — Hogar: miembros con su rol, accesos a cuentas y cuotas, el statement de
@@ -54,6 +56,7 @@ function losVen(nombres: string[]): string {
 }
 
 export default function Hogar() {
+  const [onboardingAbierto, setOnboardingAbierto] = useState(false);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const bloqueo = useBloqueo();
@@ -222,6 +225,17 @@ export default function Hogar() {
               <Text style={e.navTexto}>Compras en cuotas</Text>
               <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
             </Pressable>
+            <Pressable
+              onPress={() => setOnboardingAbierto(true)}
+              style={[e.navFila, e.conBorde]}
+            >
+              <GraduationCap size={17} color={color.tinta} strokeWidth={1.5} />
+              <View style={{ flex: 1 }}>
+                <Text style={e.navTexto}>Enseñame a utilizar la app</Text>
+                <Text style={e.navSubtexto}>El recorrido de bienvenida, las veces que quieras</Text>
+              </View>
+              <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
+            </Pressable>
           </Card>
 
           {/* Avisos de tarjeta */}
@@ -315,6 +329,11 @@ export default function Hogar() {
           </Pressable>
         </ScrollView>
       )}
+
+      <Onboarding
+        abierto={onboardingAbierto}
+        alCerrar={() => setOnboardingAbierto(false)}
+      />
     </View>
   );
 }
@@ -365,6 +384,7 @@ const e = StyleSheet.create({
     paddingVertical: 14,
   },
   navTexto: { flex: 1, fontSize: 14, fontWeight: "500", color: color.tinta },
+  navSubtexto: { fontSize: 11.5, color: color.tintaSecundaria },
   navAyuda: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
   lockFila: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   statement: {

@@ -16,6 +16,7 @@ import { AccionesInvitacion } from "./AccionesInvitacion";
 import { BorrarCuenta } from "./BorrarCuenta";
 import { CambiadorTema } from "./CambiadorTema";
 import { Invitar } from "./Invitar";
+import { BotonOnboarding } from "./BotonOnboarding";
 
 function inicial(texto: string): string {
   return (texto.trim()[0] ?? "?").toUpperCase();
@@ -145,6 +146,8 @@ export default async function Hogar() {
           />
         </Link>
       </Card>
+
+      <BotonOnboarding />
 
       {/* Asistente financiero con IA — solo cuando hay API key configurada */}
       {process.env.ANTHROPIC_API_KEY && (

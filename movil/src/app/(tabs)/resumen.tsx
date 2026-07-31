@@ -48,6 +48,7 @@ import {
   Importe,
 } from "@/componentes/sistema";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
+import { OnboardingAuto } from "@/componentes/Onboarding";
 import {
   borrarMovimiento,
   categoriasDelHogar,
@@ -132,6 +133,8 @@ export default function Resumen() {
 
   return (
     <>
+    {/* la bienvenida, solo la primera vez (AsyncStorage) */}
+    <OnboardingAuto />
     <ScrollView
       style={e.pantalla}
       contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20 }}

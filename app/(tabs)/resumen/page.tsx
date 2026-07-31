@@ -10,6 +10,7 @@ import {
   movimientosCategorizados,
 } from "@/lib/datos/movimientos";
 import { ListaMovimientosTocables } from "@/components/sistema/ListaMovimientosTocables";
+import { OnboardingAuto } from "@/components/sistema/Onboarding";
 import { obtenerPresupuestoMes } from "@/lib/datos/presupuesto";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
 import { formatearImporte, formatearPorcentaje } from "@/lib/dominio/dinero";
@@ -51,6 +52,10 @@ export default async function Resumen() {
 
   return (
     <div className="px-5 pt-14">
+      {/* La bienvenida, solo la primera vez (localStorage). Vive acá porque el
+          Resumen es la primera pantalla después de entrar. */}
+      <OnboardingAuto />
+
       {/* Header: saludo + fecha + avatar (§3.17 patrón 1) */}
       <header className="flex items-start justify-between">
         <div>
