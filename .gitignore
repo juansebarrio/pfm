@@ -50,3 +50,6 @@ play/CLAVES-KEYSTORE.txt
 play/build/
 play/app/build/
 play/.gradle/
+play/*.aab
+play/*.apk
+play/*.idsig
