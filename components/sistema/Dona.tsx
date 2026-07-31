@@ -11,8 +11,8 @@ import { formatearImporte } from "@/lib/dominio/dinero";
 // El total va en el centro, que es donde el ojo cae primero y donde el número
 // contesta la pregunta que trajo al usuario ("¿cuánto gasté?").
 
-const TAMANO = 168;
-const GROSOR = 22;
+const TAMANO = 200;
+const GROSOR = 25;
 const RADIO = (TAMANO - GROSOR) / 2;
 const CENTRO = TAMANO / 2;
 
@@ -48,9 +48,12 @@ function arco(desde: number, hasta: number): string {
 export function Dona({
   porciones,
   totalCentavos,
+  etiqueta = "Gastado",
 }: {
   porciones: Porcion[];
   totalCentavos: number;
+  /** "Gastado" en Movimientos, "Asignado" en Presupuesto */
+  etiqueta?: string;
 }) {
   const tramos = arcos(porciones);
 
@@ -62,7 +65,7 @@ export function Dona({
           width={TAMANO}
           height={TAMANO}
           role="img"
-          aria-label={`Gastos por categoría, total ${formatearImporte(totalCentavos)}`}
+          aria-label={`${etiqueta} por categoría, total ${formatearImporte(totalCentavos)}`}
         >
           {/* la pista de atrás: si hay una sola porción, igual se ve un anillo */}
           <circle
@@ -92,8 +95,8 @@ export function Dona({
 
         {/* el total, centrado sobre el anillo */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[10.5px] text-tinta-secundaria">Gastado</p>
-          <p className="cifra text-[17px] font-semibold text-tinta">
+          <p className="text-[10.5px] text-tinta-secundaria">{etiqueta}</p>
+          <p className="cifra text-[19px] font-semibold text-tinta">
             {formatearImporte(totalCentavos)}
           </p>
         </div>

@@ -29,7 +29,6 @@ import { existePresupuesto } from "./datos";
 import { BotonRepetir } from "./BotonRepetir";
 import { EncabezadoPresupuesto } from "./EncabezadoPresupuesto";
 import { PorCategoria } from "@/components/sistema/PorCategoria";
-import { gastosPorCategoria } from "@/lib/datos/movimientos";
 import { SugerenciaRecurrente } from "./SugerenciaRecurrente";
 
 // Pantalla 01 — Presupuesto (01a/01b/01c del export). Server Component:
@@ -95,12 +94,23 @@ export default async function PaginaPresupuesto({
     existePresupuesto(sesion, mesAnterior(mes), ambito),
   ]);
 
-  // solo en su solapa: es una consulta más que en "Partidas" no se usa
-  const porCategoria =
-    vista === "categorias" ? await gastosPorCategoria(sesion, mes, ambito) : [];
 
   const mesTitulo = formatearMesLargo(mes);
   const mesNombre = formatearMesSolo(mes);
+
+  // El reparto del presupuesto muestra el PLAN (lo asignado por partida), no lo
+  // gastado — eso vive en Movimientos. Presupuesto es a dónde querés que vaya
+  // la plata; Movimientos, a dónde fue. Dos anillos con la misma semántica en
+  // dos pantallas hubieran sido la misma pantalla dos veces.
+  const itemsAsignado = (presupuesto?.grupos ?? [])
+    .flatMap((g) => g.partidas)
+    .filter((pa) => pa.activa && pa.asignadoCentavos > 0)
+    .map((pa) => ({
+      clave: pa.categoriaId,
+      nombre: pa.nombre,
+      icono: pa.icono,
+      centavos: pa.asignadoCentavos,
+    }));
   const inicial = (sesion.nombreMiembro.trim().charAt(0) || "Y").toUpperCase();
 
   const encabezado = (
@@ -119,21 +129,6 @@ export default async function PaginaPresupuesto({
   );
 
   // 01c — sin presupuesto del mes: estado vacío con CTA al armado
-  // Va antes del early-return de "sin presupuesto" a propósito: podés haber
-  // gastado sin haber armado el presupuesto del mes, y en ese caso el reparto
-  // por categoría sigue siendo la única foto útil que la pantalla puede dar.
-  if (vista === "categorias") {
-    return (
-      <div className="px-5 pb-10">
-        {encabezado}
-        <PorCategoria
-          items={porCategoria}
-          vacio={`No hay gastos ${ambito === "hogar" ? "del hogar" : "personales"} en ${mesTitulo}.`}
-        />
-      </div>
-    );
-  }
-
   if (!presupuesto) {
     return (
       <div>
@@ -161,6 +156,20 @@ export default async function PaginaPresupuesto({
             />
           )}
         </div>
+      </div>
+    );
+  }
+
+  if (vista === "categorias") {
+    return (
+      <div className="px-5 pb-10">
+        {encabezado}
+        <PorCategoria
+          items={itemsAsignado}
+          etiquetaTotal="Asignado"
+          tituloVacio="Nada asignado todavía"
+          vacio={`Activá partidas con monto en ${mesTitulo} y acá vas a ver cómo se reparte el presupuesto.`}
+        />
       </div>
     );
   }

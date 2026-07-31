@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Wallet } from "lucide-react-native";
+import { ChartPie, List, Wallet } from "lucide-react-native";
 import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
   diaDelMes,
@@ -23,7 +23,6 @@ import {
 } from "@dominio/fechas";
 import { repetirPresupuesto } from "@/lib/acciones";
 import {
-  gastosPorCategoria,
   obtenerPresupuestoMes,
   obtenerSesionHogar,
   type PartidaConEstado,
@@ -32,8 +31,8 @@ import {
 } from "@/lib/datos";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
-import { Solapas } from "@/componentes/Solapas";
 import { color, radio } from "@/lib/tema";
+import { tacto } from "@/lib/tacto";
 import {
   Card,
   CardPartida,
@@ -76,9 +75,6 @@ export default function Presupuesto() {
   const hoy = hoyBA();
   const [mes, setMes] = useState(mesDe(hoy));
   const [vista, setVista] = useState<"partidas" | "categorias">("partidas");
-  const [porCategoria, setPorCategoria] = useState<
-    Array<{ clave: string; nombre: string; icono: string | null; centavos: number }>
-  >([]);
   const [ambito, setAmbito] = useState<Ambito>("hogar");
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [presupuesto, setPresupuesto] = useState<PresupuestoMes | null>(null);
@@ -101,12 +97,8 @@ export default function Presupuesto() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [p, pc] = await Promise.all([
-      obtenerPresupuestoMes(s, mes, ambito),
-      gastosPorCategoria(s, mes, ambito),
-    ]);
+    const p = await obtenerPresupuestoMes(s, mes, ambito);
     setPresupuesto(p);
-    setPorCategoria(pc);
     // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
     setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
@@ -147,26 +139,50 @@ export default function Presupuesto() {
       <View style={[e.encabezado, { paddingTop: insets.top + 12 }]}>
         <Text style={e.titulo}>Presupuesto</Text>
         <NavegadorMes mes={mes} mesActual={mesDe(hoy)} alCambiar={setMes} />
-        <Solapas
-          activa={vista}
-          opciones={[
-            { clave: "partidas" as const, etiqueta: "Partidas" },
-            { clave: "categorias" as const, etiqueta: "Por categoría" },
-          ]}
-          alElegir={setVista}
-        />
-        <View style={e.segmented}>
-          {(["hogar", "personal"] as const).map((a) => (
-            <Pressable
-              key={a}
-              onPress={() => setAmbito(a)}
-              style={[e.segmentoBoton, ambito === a && e.segmentoActivo]}
-            >
-              <Text style={[e.segmentoTexto, ambito === a && e.segmentoTextoActivo]}>
-                {a === "hogar" ? "Hogar" : "Personal"}
-              </Text>
-            </Pressable>
-          ))}
+        {/* Una sola fila para los dos ejes. Son preguntas distintas y por eso
+            se ven distintas: Hogar/Personal elige QUÉ plata (texto, ancho) y el
+            conmutador de íconos elige CÓMO verla (lista o anillo). Dos
+            segmented apilados se leían como el mismo control dos veces. */}
+        <View style={e.filaControles}>
+          <View style={[e.segmented, { flex: 1, marginTop: 0 }]}>
+            {(["hogar", "personal"] as const).map((a) => (
+              <Pressable
+                key={a}
+                onPress={() => setAmbito(a)}
+                style={[e.segmentoBoton, ambito === a && e.segmentoActivo]}
+              >
+                <Text style={[e.segmentoTexto, ambito === a && e.segmentoTextoActivo]}>
+                  {a === "hogar" ? "Hogar" : "Personal"}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={e.conmutadorVista}>
+            {(
+              [
+                { clave: "partidas", Icono: List, etiqueta: "Ver partidas" },
+                { clave: "categorias", Icono: ChartPie, etiqueta: "Ver por categoría" },
+              ] as const
+            ).map(({ clave, Icono, etiqueta }) => (
+              <Pressable
+                key={clave}
+                onPress={() => {
+                  if (vista !== clave) {
+                    tacto.toque();
+                    setVista(clave);
+                  }
+                }}
+                accessibilityLabel={etiqueta}
+                style={[e.botonVista, vista === clave && e.segmentoActivo]}
+              >
+                <Icono
+                  size={17}
+                  color={vista === clave ? color.tinta : color.tintaSecundaria}
+                  strokeWidth={1.8}
+                />
+              </Pressable>
+            ))}
+          </View>
         </View>
       </View>
 
@@ -174,16 +190,39 @@ export default function Presupuesto() {
         <View style={e.centrado}>
           <ActivityIndicator color={color.verde} />
         </View>
-      ) : vista === "categorias" ? (
-        /* Va antes del caso "sin presupuesto" a propósito: podés haber gastado
-           sin haber armado el presupuesto del mes, y ahí el reparto por
-           categoría es la única foto útil que la pantalla puede dar. */
+      ) : !presupuesto && vista === "categorias" ? (
+        /* sin presupuesto no hay plan que repartir: el CTA de armar aplica igual */
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
         >
           <PorCategoria
-            items={porCategoria}
-            vacio={`No hay gastos ${ambito === "hogar" ? "del hogar" : "personales"} en ${formatearMesSolo(mes)}.`}
+            items={[]}
+            tituloVacio="Nada asignado todavía"
+            etiquetaTotal="Asignado"
+            vacio={`Armá el presupuesto de ${formatearMesSolo(mes)} y acá vas a ver cómo se reparte.`}
+          />
+        </ScrollView>
+      ) : vista === "categorias" && presupuesto ? (
+        /* El reparto del presupuesto muestra el PLAN (lo asignado por partida),
+           no lo gastado — eso vive en Movimientos. Presupuesto es a dónde
+           querés que vaya la plata; Movimientos, a dónde fue. */
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
+        >
+          <PorCategoria
+            items={presupuesto.grupos
+              .flatMap((g) => g.partidas)
+              // las inactivas ya vienen filtradas por la capa de datos
+              .filter((pa) => pa.asignadoCentavos > 0)
+              .map((pa) => ({
+                clave: pa.categoriaId,
+                nombre: pa.nombre,
+                icono: pa.icono,
+                centavos: pa.asignadoCentavos,
+              }))}
+            etiquetaTotal="Asignado"
+            tituloVacio="Nada asignado todavía"
+            vacio={`Activá partidas con monto en ${formatearMesSolo(mes)} y acá vas a ver cómo se reparte.`}
           />
         </ScrollView>
       ) : !presupuesto ? (
@@ -306,6 +345,25 @@ const e = StyleSheet.create({
     gap: 10,
   },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  filaControles: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  conmutadorVista: {
+    flexDirection: "row",
+    borderRadius: 11,
+    backgroundColor: color.fondoSegmented,
+    padding: 2,
+  },
+  botonVista: {
+    width: 44,
+    height: 33,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9,
+  },
   segmented: {
     flexDirection: "row",
     borderRadius: radio.chipChico,

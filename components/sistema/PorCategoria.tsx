@@ -17,11 +17,16 @@ export function PorCategoria({
   items,
   /** texto del estado vacío, que cambia según la pantalla */
   vacio,
+  tituloVacio = "Todavía no hay gastos",
+  /** "Gastado" en Movimientos, "Asignado" en Presupuesto */
+  etiquetaTotal = "Gastado",
   /** total de gastos del mes, incluido lo que NO tiene categoría */
   totalGastosCentavos,
 }: {
   items: ItemReparto[];
   vacio: string;
+  tituloVacio?: string;
+  etiquetaTotal?: string;
   totalGastosCentavos?: number;
 }) {
   const porciones = repartir(items);
@@ -35,14 +40,14 @@ export function PorCategoria({
   if (porciones.length === 0) {
     return (
       <div className="mt-8">
-        <EstadoVacio Icono={ChartPie} titulo="Todavía no hay gastos" cuerpo={vacio} />
+        <EstadoVacio Icono={ChartPie} titulo={tituloVacio} cuerpo={vacio} />
       </div>
     );
   }
 
   return (
     <div className="mt-5">
-      <Dona porciones={porciones} totalCentavos={total} />
+      <Dona porciones={porciones} totalCentavos={total} etiqueta={etiquetaTotal} />
 
       {sinCategorizar > 0 && (
         <p className="mt-3 text-center text-[11.5px] leading-[1.5] text-tinta-terciaria">
@@ -51,7 +56,7 @@ export function PorCategoria({
         </p>
       )}
 
-      <Card className="mt-5 divide-y divide-separador">
+      <Card className="mt-7 divide-y divide-separador">
         {porciones.map((p) => (
           <div key={p.clave} className="flex items-center gap-3 px-4 py-3">
             <span

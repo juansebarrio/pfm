@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ChartPie, List } from "lucide-react";
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
-import { Solapas } from "@/components/sistema/Solapas";
 import { formatearImporte } from "@/lib/dominio/dinero";
 
 // Header de la pantalla de presupuesto (01a) + barra condensada de scroll (01b):
@@ -82,43 +82,70 @@ export function EncabezadoPresupuesto(p: Props) {
         />
       </div>
 
-      <div className="px-5">
-        <Solapas
-          activa={p.vista}
-          opciones={[
-            { clave: "partidas", etiqueta: "Partidas", href: hrefVista(p, "partidas") },
-            { clave: "categorias", etiqueta: "Por categoría", href: hrefVista(p, "categorias") },
-          ]}
-        />
-      </div>
+      {/* Una sola fila para los dos ejes. Son preguntas distintas y por eso se
+          ven distintas: Hogar/Personal elige QUÉ plata (texto, ancho, es la
+          decisión principal) y el conmutador de íconos elige CÓMO verla
+          (lista o anillo). Dos segmented apilados se leían como el mismo
+          control dos veces. */}
+      <div className="mx-5 mt-4 flex items-center gap-2">
+        <nav
+          aria-label="Ámbito del presupuesto"
+          className="grid flex-1 grid-cols-2 rounded-[11px] bg-fondo-segmented p-[2px]"
+        >
+          <Link
+            href={p.hrefHogar}
+            aria-current={p.ambito === "hogar" ? "true" : undefined}
+            className={`rounded-[9px] py-2 text-center text-[13px] ${
+              p.ambito === "hogar"
+                ? "bg-segmented-activo font-semibold text-tinta shadow-thumb"
+                : "font-medium text-tinta-secundaria"
+            }`}
+          >
+            Hogar
+          </Link>
+          <Link
+            href={p.hrefPersonal}
+            aria-current={p.ambito === "personal" ? "true" : undefined}
+            className={`rounded-[9px] py-2 text-center text-[13px] ${
+              p.ambito === "personal"
+                ? "bg-segmented-activo font-semibold text-tinta shadow-thumb"
+                : "font-medium text-tinta-secundaria"
+            }`}
+          >
+            Personal
+          </Link>
+        </nav>
 
-      <nav
-        aria-label="Ámbito del presupuesto"
-        className="mx-5 mt-4 grid grid-cols-2 rounded-[11px] bg-fondo-segmented p-[2px]"
-      >
-        <Link
-          href={p.hrefHogar}
-          aria-current={p.ambito === "hogar" ? "true" : undefined}
-          className={`rounded-[9px] py-2 text-center text-[13px] ${
-            p.ambito === "hogar"
-              ? "bg-segmented-activo font-semibold text-tinta shadow-thumb"
-              : "font-medium text-tinta-secundaria"
-          }`}
+        <nav
+          aria-label="Vista"
+          className="flex shrink-0 rounded-[11px] bg-fondo-segmented p-[2px]"
         >
-          Hogar
-        </Link>
-        <Link
-          href={p.hrefPersonal}
-          aria-current={p.ambito === "personal" ? "true" : undefined}
-          className={`rounded-[9px] py-2 text-center text-[13px] ${
-            p.ambito === "personal"
-              ? "bg-segmented-activo font-semibold text-tinta shadow-thumb"
-              : "font-medium text-tinta-secundaria"
-          }`}
-        >
-          Personal
-        </Link>
-      </nav>
+          <Link
+            href={hrefVista(p, "partidas")}
+            aria-label="Ver partidas"
+            aria-current={p.vista === "partidas" ? "true" : undefined}
+            className={`flex h-[33px] w-11 items-center justify-center rounded-[9px] ${
+              p.vista === "partidas"
+                ? "bg-segmented-activo text-tinta shadow-thumb"
+                : "text-tinta-secundaria"
+            }`}
+          >
+            <List className="size-[17px]" strokeWidth={1.8} aria-hidden />
+          </Link>
+          <Link
+            href={hrefVista(p, "categorias")}
+            aria-label="Ver por categoría"
+            aria-current={p.vista === "categorias" ? "true" : undefined}
+            className={`flex h-[33px] w-11 items-center justify-center rounded-[9px] ${
+              p.vista === "categorias"
+                ? "bg-segmented-activo text-tinta shadow-thumb"
+                : "text-tinta-secundaria"
+            }`}
+          >
+            <ChartPie className="size-[17px]" strokeWidth={1.8} aria-hidden />
+          </Link>
+        </nav>
+      </div>
 
       {p.quedaCentavos !== null && (
         <div

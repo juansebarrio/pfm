@@ -16,8 +16,8 @@ import { Card, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
 
 const RAMPA = ["#4fa37f", "#6cab8d", "#87b39c", "#a0b6a8", "#aba8a0", "#938d84", "#6b665e"];
 
-const TAMANO = 168;
-const GROSOR = 22;
+const TAMANO = 200;
+const GROSOR = 25;
 const RADIO = (TAMANO - GROSOR) / 2;
 const CENTRO = TAMANO / 2;
 const HUECO_GRADOS = 1.4;
@@ -45,7 +45,15 @@ function arco(desde: number, hasta: number): string {
   return `M ${x1} ${y1} A ${RADIO} ${RADIO} 0 ${barrido > 180 ? 1 : 0} 1 ${x2} ${y2}`;
 }
 
-function Dona({ porciones, totalCentavos }: { porciones: Porcion[]; totalCentavos: number }) {
+function Dona({
+  porciones,
+  totalCentavos,
+  etiqueta,
+}: {
+  porciones: Porcion[];
+  totalCentavos: number;
+  etiqueta: string;
+}) {
   const tramos = arcos(porciones);
   return (
     <View style={e.dona}>
@@ -75,7 +83,7 @@ function Dona({ porciones, totalCentavos }: { porciones: Porcion[]; totalCentavo
         })}
       </Svg>
       <View style={e.centroDona} pointerEvents="none">
-        <Text style={e.centroEtiqueta}>Gastado</Text>
+        <Text style={e.centroEtiqueta}>{etiqueta}</Text>
         <Text style={e.centroCifra}>{formatearImporte(totalCentavos)}</Text>
       </View>
     </View>
@@ -85,10 +93,15 @@ function Dona({ porciones, totalCentavos }: { porciones: Porcion[]; totalCentavo
 export function PorCategoria({
   items,
   vacio,
+  tituloVacio = "Todavía no hay gastos",
+  etiquetaTotal = "Gastado",
   totalGastosCentavos,
 }: {
   items: ItemReparto[];
   vacio: string;
+  tituloVacio?: string;
+  /** "Gastado" en Movimientos, "Asignado" en Presupuesto */
+  etiquetaTotal?: string;
   totalGastosCentavos?: number;
 }) {
   const porciones = repartir(items);
@@ -100,14 +113,14 @@ export function PorCategoria({
   if (porciones.length === 0) {
     return (
       <View style={{ marginTop: 40 }}>
-        <EstadoVacio Icono={ChartPie} titulo="Todavía no hay gastos" cuerpo={vacio} />
+        <EstadoVacio Icono={ChartPie} titulo={tituloVacio} cuerpo={vacio} />
       </View>
     );
   }
 
   return (
     <View style={{ marginTop: 18 }}>
-      <Dona porciones={porciones} totalCentavos={total} />
+      <Dona porciones={porciones} totalCentavos={total} etiqueta={etiquetaTotal} />
 
       {sinCategorizar > 0 && (
         <Text style={e.nota}>
@@ -135,7 +148,7 @@ export function PorCategoria({
 }
 
 const e = StyleSheet.create({
-  dona: { alignItems: "center", justifyContent: "center" },
+  dona: { alignItems: "center", justifyContent: "center", marginBottom: 22 },
   centroDona: {
     position: "absolute",
     top: 0,
@@ -146,9 +159,10 @@ const e = StyleSheet.create({
     justifyContent: "center",
   },
   centroEtiqueta: { fontSize: 10.5, color: color.tintaSecundaria },
-  centroCifra: { fontSize: 17, fontWeight: "600", color: color.tinta },
+  centroCifra: { fontSize: 19, fontWeight: "600", color: color.tinta },
   nota: {
-    marginTop: 12,
+    marginTop: -8,
+    marginBottom: 14,
     textAlign: "center",
     fontSize: 11.5,
     lineHeight: 18,
