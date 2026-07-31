@@ -11,7 +11,7 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://pfm-mu.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://pfm.js80.studio",
         "EXPO_PUBLIC_DEMO": "true"
       }
     },
@@ -21,7 +21,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://pfm-mu.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://pfm.js80.studio",
         "EXPO_PUBLIC_DEMO": "true",
         "EXPO_IMAGE_UTILS_NO_SHARP": "1"
       }
@@ -29,7 +29,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://pfm-mu.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://pfm.js80.studio",
         "EXPO_PUBLIC_DEMO": "true",
         "EXPO_IMAGE_UTILS_NO_SHARP": "1"
       }
