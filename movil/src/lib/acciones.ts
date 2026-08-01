@@ -574,6 +574,29 @@ export async function repetirPresupuesto(
   return armarPresupuesto(sesion, mes, ambito, partidas);
 }
 
+
+/**
+ * Cambiar el monto asignado de una partida de un presupuesto YA armado — el
+ * sobre se ajusta tocandolo, sin rearmar el mes. Espeja actualizarPartida de
+ * app/acciones/presupuesto.ts; RLS garantiza que la partida sea del hogar.
+ */
+export async function actualizarPartida(
+  _sesion: SesionHogar,
+  datos: { partidaId: string; asignadoCentavos: number },
+): Promise<Resultado> {
+  if (!Number.isInteger(datos.asignadoCentavos) || datos.asignadoCentavos < 0) {
+    return { ok: false, error: "Ese monto no sirve" };
+  }
+  const { data, error } = await supabase
+    .from("partidas_presupuesto")
+    .update({ asignado_centavos: datos.asignadoCentavos })
+    .eq("id", datos.partidaId)
+    .select("id");
+  if (error || !data || data.length === 0) {
+    return { ok: false, error: "No pudimos guardar el monto. Proba de nuevo." };
+  }
+  return { ok: true };
+}
 // ────────────────────────────────────────────── categorías propias
 //
 // Qué permite la RLS (verificado con un usuario real): crear ✓, editar ✓,

@@ -129,3 +129,42 @@ export async function armarPresupuesto(entrada: unknown): Promise<ResultadoArmad
   revalidatePath("/resumen");
   return { ok: true };
 }
+
+const esquemaPartida = z.object({
+  partidaId: z.uuid(),
+  asignadoCentavos: z
+    .number()
+    .int()
+    .min(0)
+    .max(9_999_999_999_99),
+});
+
+/**
+ * Cambiar el monto asignado de una partida de un presupuesto YA armado — el
+ * sobre se ajusta tocándolo, sin rearmar el mes. RLS garantiza que la partida
+ * sea de un presupuesto del hogar (y, si es personal, del usuario). Poner $ 0
+ * es válido: la partida sigue visible, con "queda" en cero — desactivarla es
+ * otra decisión (nota y flag), no un caso especial del monto.
+ */
+export async function actualizarPartida(entrada: unknown): Promise<ResultadoArmado> {
+  const parseo = esquemaPartida.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const datos = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+
+  const { data, error } = await sesion.supabase
+    .from("partidas_presupuesto")
+    .update({ asignado_centavos: datos.asignadoCentavos })
+    .eq("id", datos.partidaId)
+    .select("id");
+
+  // sin fila afectada = la partida no existe o RLS la bloqueó: mismo mensaje
+  if (error || !data || data.length === 0) {
+    return { ok: false, error: "No pudimos guardar el monto. Probá de nuevo." };
+  }
+
+  revalidatePath("/presupuesto");
+  revalidatePath("/resumen");
+  return { ok: true };
+}

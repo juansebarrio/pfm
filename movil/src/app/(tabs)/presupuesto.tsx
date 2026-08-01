@@ -29,6 +29,7 @@ import {
   type PresupuestoMes,
   type SesionHogar,
 } from "@/lib/datos";
+import { EditarPartida, type PartidaParaEditar } from "@/componentes/EditarPartida";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
 import { color, radio } from "@/lib/tema";
@@ -83,6 +84,7 @@ export default function Presupuesto() {
 
   const [hayAnterior, setHayAnterior] = useState(false);
   const [repitiendo, setRepitiendo] = useState(false);
+  const [partidaEditar, setPartidaEditar] = useState<PartidaParaEditar | null>(null);
 
   async function repetir() {
     if (!sesion || repitiendo) return;
@@ -315,21 +317,41 @@ export default function Presupuesto() {
             </View>
           </View>
 
-          {/* Grupos de partidas */}
+          {/* Grupos de partidas: cada sobre se ajusta tocándolo */}
           {presupuesto.grupos.map((g) => (
             <View key={g.grupo}>
               <EncabezadoSeccion>{g.grupo}</EncabezadoSeccion>
               <Card>
                 {g.partidas.map((p, i) => (
-                  <View key={p.id} style={i > 0 ? e.conBorde : undefined}>
+                  <Pressable
+                    key={p.id}
+                    onPress={() => {
+                      tacto.toque();
+                      setPartidaEditar({
+                        id: p.id,
+                        nombre: p.nombre,
+                        asignadoCentavos: p.asignadoCentavos,
+                        gastadoCentavos: p.gastadoCentavos,
+                        fija: p.fija,
+                      });
+                    }}
+                    style={i > 0 ? e.conBorde : undefined}
+                  >
                     <CardPartida {...aDatosPartida(p, mes)} />
-                  </View>
+                  </Pressable>
                 ))}
               </Card>
             </View>
           ))}
         </ScrollView>
       )}
+
+      <EditarPartida
+        partida={partidaEditar}
+        sesion={sesion}
+        alGuardar={cargar}
+        alCerrar={() => setPartidaEditar(null)}
+      />
     </View>
   );
 }

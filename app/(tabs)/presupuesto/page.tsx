@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import { BarraAvance } from "@/components/sistema/BarraAvance";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
-import { CardPartida, type DatosPartida } from "@/components/sistema/CardPartida";
+import { type DatosPartida } from "@/components/sistema/CardPartida";
+import { PartidaEditable } from "./PartidaEditable";
 import { EstadoVacio } from "@/components/sistema/EstadoVacio";
 import { Importe } from "@/components/sistema/Importe";
 import {
@@ -234,7 +235,11 @@ export default async function PaginaPresupuesto({
               <EncabezadoSeccion>{g.grupo}</EncabezadoSeccion>
               <Card className="divide-y divide-separador">
                 {g.partidas.map((p) => (
-                  <CardPartida key={p.id} {...aDatosPartida(p, mes, sugerencias)} />
+                  <PartidaEditable
+                    key={p.id}
+                    partidaId={p.id}
+                    datos={aDatosPartida(p, mes, sugerencias)}
+                  />
                 ))}
                 {fantasmas.map((s) => (
                   <SugerenciaRecurrente

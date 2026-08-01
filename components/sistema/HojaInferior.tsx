@@ -29,10 +29,17 @@ export function HojaInferior({ abierta, onCerrar, titulo, children }: Props) {
   useEffect(() => {
     const dialogo = ref.current;
     if (!dialogo) return;
-    if (abierta && !dialogo.open) {
-      dialogo.showModal();
+    if (abierta) {
+      // showModal solo si hace falta, pero la subida SIEMPRE: si la hoja se
+      // reabre mientras el close() diferido del cierre anterior sigue pendiente,
+      // el diálogo ya está open y saltear setVisible la dejaba abierta pero
+      // abajo de la pantalla para siempre.
+      if (!dialogo.open) dialogo.showModal();
       // dos frames: el primero pinta la hoja abajo, el segundo dispara la subida
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+      const raf = requestAnimationFrame(() =>
+        requestAnimationFrame(() => setVisible(true)),
+      );
+      return () => cancelAnimationFrame(raf);
     }
     if (!abierta && dialogo.open) {
       setVisible(false); // la hoja baja…
