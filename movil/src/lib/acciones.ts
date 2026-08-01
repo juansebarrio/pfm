@@ -597,6 +597,58 @@ export async function actualizarPartida(
   }
   return { ok: true };
 }
+/**
+ * Sumar una partida a un presupuesto YA armado. Espeja agregarPartida de
+ * app/acciones/presupuesto.ts; la unicidad (presupuesto, categoria) la
+ * garantiza la base.
+ */
+export async function agregarPartida(
+  sesion: SesionHogar,
+  datos: {
+    mes: string;
+    ambito: "hogar" | "personal";
+    categoriaId: string;
+    asignadoCentavos: number;
+  },
+): Promise<Resultado> {
+  if (!Number.isInteger(datos.asignadoCentavos) || datos.asignadoCentavos <= 0) {
+    return { ok: false, error: "Ese monto no sirve" };
+  }
+
+  let consulta = supabase
+    .from("presupuestos")
+    .select("id")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("mes", datos.mes)
+    .eq("ambito", datos.ambito);
+  consulta =
+    datos.ambito === "personal"
+      ? consulta.eq("user_id", sesion.userId)
+      : consulta.is("user_id", null);
+  const { data: presupuesto } = await consulta.maybeSingle();
+  if (!presupuesto) return { ok: false, error: "Ese mes no tiene presupuesto armado" };
+
+  const { error } = await supabase.from("partidas_presupuesto").insert({
+    presupuesto_id: presupuesto.id,
+    categoria_id: datos.categoriaId,
+    asignado_centavos: datos.asignadoCentavos,
+    activa: true,
+    fija: false,
+    rollover: false,
+    nota: null,
+  });
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "23505"
+          ? "Esa categoria ya tiene partida este mes"
+          : "No pudimos sumar la partida. Proba de nuevo.",
+    };
+  }
+  return { ok: true };
+}
+
 // ────────────────────────────────────────────── categorías propias
 //
 // Qué permite la RLS (verificado con un usuario real): crear ✓, editar ✓,

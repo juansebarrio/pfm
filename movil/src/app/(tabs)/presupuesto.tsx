@@ -21,7 +21,11 @@ import {
   mesAnterior,
   mesDe,
 } from "@dominio/fechas";
-import { repetirPresupuesto } from "@/lib/acciones";
+import {
+  categoriasDelHogar,
+  repetirPresupuesto,
+  type CategoriaSimple,
+} from "@/lib/acciones";
 import {
   obtenerPresupuestoMes,
   obtenerSesionHogar,
@@ -29,6 +33,7 @@ import {
   type PresupuestoMes,
   type SesionHogar,
 } from "@/lib/datos";
+import { AgregarPartida } from "@/componentes/AgregarPartida";
 import { EditarPartida, type PartidaParaEditar } from "@/componentes/EditarPartida";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
@@ -85,6 +90,8 @@ export default function Presupuesto() {
   const [hayAnterior, setHayAnterior] = useState(false);
   const [repitiendo, setRepitiendo] = useState(false);
   const [partidaEditar, setPartidaEditar] = useState<PartidaParaEditar | null>(null);
+  const [agregando, setAgregando] = useState(false);
+  const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
 
   async function repetir() {
     if (!sesion || repitiendo) return;
@@ -99,8 +106,12 @@ export default function Presupuesto() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const p = await obtenerPresupuestoMes(s, mes, ambito);
+    const [p, cats] = await Promise.all([
+      obtenerPresupuestoMes(s, mes, ambito),
+      categoriasDelHogar(s),
+    ]);
     setPresupuesto(p);
+    setCategorias(cats);
     // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
     setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
@@ -122,6 +133,14 @@ export default function Presupuesto() {
     await cargar();
     setRefrescando(false);
   }
+
+  // categorías del ámbito sin partida este mes (las de ingreso no son partidas)
+  const conPartida = new Set(
+    (presupuesto?.grupos ?? []).flatMap((g) => g.partidas).map((p) => p.categoriaId),
+  );
+  const categoriasLibres = categorias
+    .filter((c) => c.ambito === ambito && c.grupo !== "Ingresos" && !conPartida.has(c.id))
+    .map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono }));
 
   const dias = diasDelMes(mes);
   const esMesActual = mesDe(hoy) === mes;
@@ -343,9 +362,27 @@ export default function Presupuesto() {
               </Card>
             </View>
           ))}
+          <Pressable
+            onPress={() => {
+              tacto.toque();
+              setAgregando(true);
+            }}
+            style={e.sumar}
+          >
+            <Text style={e.sumarTexto}>+ Sumar una partida a este mes</Text>
+          </Pressable>
         </ScrollView>
       )}
 
+      <AgregarPartida
+        abierta={agregando}
+        mes={mes}
+        ambito={ambito}
+        categorias={categoriasLibres}
+        sesion={sesion}
+        alGuardar={cargar}
+        alCerrar={() => setAgregando(false)}
+      />
       <EditarPartida
         partida={partidaEditar}
         sesion={sesion}
@@ -396,6 +433,8 @@ const e = StyleSheet.create({
   segmentoActivo: { backgroundColor: color.segmentedActivo },
   segmentoTexto: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
   segmentoTextoActivo: { fontWeight: "600", color: color.tinta },
+  sumar: { marginTop: 16, alignSelf: "center", paddingVertical: 6, paddingHorizontal: 10 },
+  sumarTexto: { fontSize: 13.5, fontWeight: "500", color: color.verde },
   repetir: {
     marginTop: 14,
     fontSize: 13,

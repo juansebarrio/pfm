@@ -168,3 +168,59 @@ export async function actualizarPartida(entrada: unknown): Promise<ResultadoArma
   revalidatePath("/resumen");
   return { ok: true };
 }
+
+const esquemaAgregar = z.object({
+  mes: z.string().regex(/^\d{4}-\d{2}-01$/),
+  ambito: z.enum(["hogar", "personal"]),
+  categoriaId: z.uuid(),
+  asignadoCentavos: z.number().int().min(0).max(9_999_999_999_99),
+});
+
+/**
+ * Sumar una partida a un presupuesto YA armado: la categoría que no entró al
+ * armar el mes (o se creó después) se agrega tocando "+ Sumar partida", sin
+ * rearmar nada. La unicidad (presupuesto, categoría) la garantiza la base.
+ */
+export async function agregarPartida(entrada: unknown): Promise<ResultadoArmado> {
+  const parseo = esquemaAgregar.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const datos = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+
+  let consulta = sesion.supabase
+    .from("presupuestos")
+    .select("id")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("mes", datos.mes)
+    .eq("ambito", datos.ambito);
+  consulta =
+    datos.ambito === "personal"
+      ? consulta.eq("user_id", sesion.userId)
+      : consulta.is("user_id", null);
+  const { data: presupuesto } = await consulta.maybeSingle();
+  if (!presupuesto) return { ok: false, error: "Ese mes no tiene presupuesto armado" };
+
+  const { error } = await sesion.supabase.from("partidas_presupuesto").insert({
+    presupuesto_id: presupuesto.id,
+    categoria_id: datos.categoriaId,
+    asignado_centavos: datos.asignadoCentavos,
+    activa: true,
+    fija: false,
+    rollover: false,
+    nota: null,
+  });
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "23505"
+          ? "Esa categoría ya tiene partida este mes"
+          : "No pudimos sumar la partida. Probá de nuevo.",
+    };
+  }
+
+  revalidatePath("/presupuesto");
+  revalidatePath("/resumen");
+  return { ok: true };
+}

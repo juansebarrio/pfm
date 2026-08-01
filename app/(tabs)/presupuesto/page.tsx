@@ -26,7 +26,9 @@ import {
   mesDe,
   mesSiguiente,
 } from "@/lib/dominio/fechas";
+import { categoriasDelHogar } from "@/lib/datos/movimientos";
 import { existePresupuesto } from "./datos";
+import { AgregarPartida } from "./AgregarPartida";
 import { BotonRepetir } from "./BotonRepetir";
 import { EncabezadoPresupuesto } from "./EncabezadoPresupuesto";
 import { PorCategoria } from "@/components/sistema/PorCategoria";
@@ -88,12 +90,22 @@ export default async function PaginaPresupuesto({
   const mesProximo = mesSiguiente(mes);
 
   const sesion = await obtenerSesionHogar();
-  const [presupuesto, sugerencias, proximoArmado, hayAnterior] = await Promise.all([
-    obtenerPresupuestoMes(sesion, mes, ambito),
-    sugerenciasRecurrentes(sesion, mes),
-    existePresupuesto(sesion, mesProximo, ambito),
-    existePresupuesto(sesion, mesAnterior(mes), ambito),
-  ]);
+  const [presupuesto, sugerencias, proximoArmado, hayAnterior, categorias] =
+    await Promise.all([
+      obtenerPresupuestoMes(sesion, mes, ambito),
+      sugerenciasRecurrentes(sesion, mes),
+      existePresupuesto(sesion, mesProximo, ambito),
+      existePresupuesto(sesion, mesAnterior(mes), ambito),
+      categoriasDelHogar(sesion),
+    ]);
+
+  // categorías del ámbito sin partida este mes (las de ingreso no son partidas)
+  const conPartida = new Set(
+    (presupuesto?.grupos ?? []).flatMap((g) => g.partidas).map((p) => p.categoriaId),
+  );
+  const categoriasLibres = categorias
+    .filter((c) => c.ambito === ambito && c.grupo !== "Ingresos" && !conPartida.has(c.id))
+    .map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono }));
 
 
   const mesTitulo = formatearMesLargo(mes);
@@ -254,6 +266,8 @@ export default async function PaginaPresupuesto({
             </section>
           );
         })}
+
+        <AgregarPartida mes={mes} ambito={ambito} categorias={categoriasLibres} />
 
         {!proximoArmado && (
           <p className="mt-6 text-center">
