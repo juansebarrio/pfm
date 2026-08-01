@@ -198,16 +198,23 @@ export default function Resumen() {
         </Pressable>
       )}
 
-      {/* Card de disponible del presupuesto: segunda a propósito y con la cifra
-          más chica — mismo comportamiento, menos jerarquía. */}
+      {/* Card de disponible del presupuesto: segunda a propósito y en formato
+          de DATO, no de héroe — etiqueta a la izquierda, cifra chica a la
+          derecha y la barra como cuerpo de la card. */}
       {presupuesto ? (
         <Pressable onPress={() => router.push("/presupuesto")}>
           <Card style={{ marginTop: 10, paddingHorizontal: 14, paddingVertical: 12 }}>
-            <Text style={e.cardEtiqueta}>
-              Disponible en {formatearMesSolo(mes)} · Hogar
-            </Text>
-            <View style={{ marginTop: 2 }}>
-              <Importe centavos={presupuesto.disponibleCentavos} variante="patrimonio" />
+            <View style={e.filaDato}>
+              <Text style={e.cardEtiqueta}>Presupuesto · disponible</Text>
+              <Text
+                style={[
+                  e.datoCifra,
+                  presupuesto.disponibleCentavos < 0 && { color: color.rojo },
+                ]}
+              >
+                {presupuesto.disponibleCentavos < 0 ? "− " : ""}
+                {formatearImporte(Math.abs(presupuesto.disponibleCentavos))}
+              </Text>
             </View>
             <BarraAvance
               progreso={progreso}
@@ -355,6 +362,13 @@ const e = StyleSheet.create({
   },
   avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
   cardEtiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
+  filaDato: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  datoCifra: { fontSize: 17, fontWeight: "600", color: color.tinta },
   filaPie: { marginTop: 8, flexDirection: "row", justifyContent: "space-between" },
   pieTexto: { fontSize: 10.5, color: color.tintaSecundaria },
   vacio: { textAlign: "center", fontSize: 13.5, fontWeight: "500", color: color.verde },

@@ -118,26 +118,25 @@ export default async function Resumen() {
       </Link>
 
       {/* Card de disponible del presupuesto, tocable → /presupuesto. Segunda a
-          propósito y con la cifra más chica: mismo comportamiento, menos
-          jerarquía — la caja manda, el plan acompaña. */}
+          propósito y en formato de DATO, no de héroe: etiqueta a la izquierda,
+          cifra chica a la derecha y la barra como cuerpo de la card — la caja
+          manda, el plan acompaña. */}
       {presupuesto ? (
         <Link href="/presupuesto" className="mt-2.5 block">
           <Card className="px-3.5 py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-baseline justify-between gap-2">
               <p className="text-[12px] font-medium text-tinta-secundaria">
-                Disponible en {nombreMes} · Hogar
+                Presupuesto · disponible
               </p>
-              <ChevronRight
-                className="size-4 shrink-0 text-tinta-muda"
-                strokeWidth={1.5}
-                aria-hidden
-              />
+              <span
+                className={`cifra shrink-0 text-[17px] font-semibold ${
+                  presupuesto.disponibleCentavos < 0 ? "text-rojo" : "text-tinta"
+                }`}
+              >
+                {presupuesto.disponibleCentavos < 0 ? "− " : ""}
+                {formatearImporte(Math.abs(presupuesto.disponibleCentavos))}
+              </span>
             </div>
-            <Importe
-              centavos={presupuesto.disponibleCentavos}
-              variante="patrimonio"
-              className="mt-0.5 block text-tinta"
-            />
             <BarraAvance
               progreso={
                 presupuesto.asignadoCentavos > 0
@@ -147,7 +146,7 @@ export default async function Resumen() {
               tono="tinta"
               marcadorDia={diaDelMes(hoy) / diasDelMes(hoy)}
               etiqueta={`gastado ${formatearImporte(presupuesto.gastadoCentavos)} de ${formatearImporte(presupuesto.asignadoCentavos)}`}
-              className="mt-3"
+              className="mt-2.5"
             />
             <div className="mt-2 flex items-center justify-between">
               <span className="cifra text-[10.5px] text-tinta-secundaria">
