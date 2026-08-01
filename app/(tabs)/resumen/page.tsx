@@ -8,6 +8,7 @@ import {
   categoriasDelHogar,
   mediosDePago,
   movimientosCategorizados,
+  totalesDelMes,
 } from "@/lib/datos/movimientos";
 import { ListaMovimientosTocables } from "@/components/sistema/ListaMovimientosTocables";
 import { OnboardingAuto } from "@/components/sistema/Onboarding";
@@ -39,16 +40,18 @@ export default async function Resumen() {
   const sesion = await obtenerSesionHogar();
   const hoy = hoyBA();
   const mesActual = mesDe(hoy);
-  const [presupuesto, avisos, ultimos, categorias, medios] = await Promise.all([
+  const [presupuesto, avisos, ultimos, categorias, medios, totales] = await Promise.all([
     obtenerPresupuestoMes(sesion, mesActual, "hogar"),
     avisosParaAtender(sesion, hoy),
     movimientosCategorizados(sesion, { limite: 3 }),
     categoriasDelHogar(sesion),
     mediosDePago(sesion),
+    totalesDelMes(sesion, mesActual),
   ]);
 
   const nombreMes = formatearMesSolo(mesActual);
   const quedanDias = diasDelMes(hoy) - diaDelMes(hoy);
+  const balanceCentavos = totales.ingresosCentavos - totales.gastosCentavos;
 
   return (
     <div className="px-5 pt-14">
@@ -87,10 +90,39 @@ export default async function Resumen() {
         </div>
       </header>
 
-      {/* Card de disponible, tocable → /presupuesto */}
+      {/* Card principal: la CAJA del mes, como el totalizador de Movimientos —
+          el balance (ingresos − gastos) protagonista y las dos cifras que lo
+          componen en voz baja. Tocable → /movimientos. */}
+      <Link href="/movimientos" className="mt-4 block">
+        <Card className="px-3.5 py-3.5">
+          <div className="flex items-center justify-between">
+            <p className="text-[12px] font-medium text-tinta-secundaria">
+              Balance de {nombreMes}
+            </p>
+            <ChevronRight
+              className="size-4 shrink-0 text-tinta-muda"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+          </div>
+          <Importe
+            centavos={balanceCentavos}
+            variante="card"
+            className={`mt-1 block ${balanceCentavos < 0 ? "text-rojo" : "text-verde"}`}
+          />
+          <p className="cifra mt-1.5 text-[11px] text-tinta-secundaria">
+            ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
+            {formatearImporte(totales.gastosCentavos)}
+          </p>
+        </Card>
+      </Link>
+
+      {/* Card de disponible del presupuesto, tocable → /presupuesto. Segunda a
+          propósito y con la cifra más chica: mismo comportamiento, menos
+          jerarquía — la caja manda, el plan acompaña. */}
       {presupuesto ? (
-        <Link href="/presupuesto" className="mt-4 block">
-          <Card className="px-3.5 py-3.5">
+        <Link href="/presupuesto" className="mt-2.5 block">
+          <Card className="px-3.5 py-3">
             <div className="flex items-center justify-between">
               <p className="text-[12px] font-medium text-tinta-secundaria">
                 Disponible en {nombreMes} · Hogar
@@ -103,8 +135,8 @@ export default async function Resumen() {
             </div>
             <Importe
               centavos={presupuesto.disponibleCentavos}
-              variante="card"
-              className="mt-1 block text-tinta"
+              variante="patrimonio"
+              className="mt-0.5 block text-tinta"
             />
             <BarraAvance
               progreso={
@@ -133,7 +165,7 @@ export default async function Resumen() {
           </Card>
         </Link>
       ) : (
-        <Link href="/presupuesto/armar" className="mt-4 block">
+        <Link href="/presupuesto/armar" className="mt-2.5 block">
           <Card className="px-3.5 py-4">
             <p className="text-center text-[13.5px] font-medium text-verde">
               Armá tu presupuesto de {nombreMes} →

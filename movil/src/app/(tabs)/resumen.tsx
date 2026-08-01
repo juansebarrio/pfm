@@ -33,10 +33,12 @@ import {
   movimientosCategorizados,
   obtenerPresupuestoMes,
   obtenerSesionHogar,
+  totalesDelMes,
   type Aviso,
   type MovimientoFila,
   type PresupuestoMes,
   type SesionHogar,
+  type TotalesMes,
 } from "@/lib/datos";
 import { color, radio } from "@/lib/tema";
 import {
@@ -71,6 +73,7 @@ export default function Resumen() {
   const insets = useSafeAreaInsets();
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [presupuesto, setPresupuesto] = useState<PresupuestoMes | null>(null);
+  const [totales, setTotales] = useState<TotalesMes | null>(null);
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [movimientos, setMovimientos] = useState<MovimientoFila[]>([]);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
@@ -86,14 +89,16 @@ export default function Resumen() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [p, a, m, c, md] = await Promise.all([
+    const [p, a, m, c, md, t] = await Promise.all([
       obtenerPresupuestoMes(s, mes, "hogar"),
       avisosParaAtender(s),
       movimientosCategorizados(s, { limite: 3 }),
       categoriasDelHogar(s),
       mediosDePago(s),
+      totalesDelMes(s, mes),
     ]);
     setPresupuesto(p);
+    setTotales(t);
     setAvisos(a);
     setMovimientos(m);
     setCategorias(c);
@@ -167,32 +172,67 @@ export default function Resumen() {
         </View>
       </View>
 
-      {/* Card de disponible */}
-      {presupuesto ? (
-        <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 14 }}>
-          <Text style={e.cardEtiqueta}>
-            Disponible en {formatearMesSolo(mes)} · Hogar
-          </Text>
-          <View style={{ marginTop: 4 }}>
-            <Importe centavos={presupuesto.disponibleCentavos} variante="card" />
-          </View>
-          <BarraAvance
-            progreso={progreso}
-            tono="tinta"
-            marcadorDia={diaDelMes(hoy) / diasDelMes(hoy)}
-            style={{ marginTop: 12 }}
-          />
-          <View style={e.filaPie}>
-            <Text style={e.pieTexto}>{formatearPorcentaje(progreso * 100)} gastado</Text>
-            <Text style={[e.pieTexto, { color: color.verde }]}>
-              {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+      {/* Card principal: la CAJA del mes, como el totalizador de Movimientos —
+          el balance (ingresos − gastos) protagonista y las dos cifras que lo
+          componen en voz baja. Tocable → Movimientos. */}
+      {totales && (
+        <Pressable onPress={() => router.push("/movimientos")}>
+          <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 14 }}>
+            <Text style={e.cardEtiqueta}>Balance de {formatearMesSolo(mes)}</Text>
+            <View style={{ marginTop: 4 }}>
+              <Importe
+                centavos={totales.ingresosCentavos - totales.gastosCentavos}
+                variante="card"
+                color={
+                  totales.ingresosCentavos - totales.gastosCentavos < 0
+                    ? color.rojo
+                    : color.verde
+                }
+              />
+            </View>
+            <Text style={[e.pieTexto, { marginTop: 6 }]}>
+              ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
+              {formatearImporte(totales.gastosCentavos)}
             </Text>
-          </View>
-        </Card>
+          </Card>
+        </Pressable>
+      )}
+
+      {/* Card de disponible del presupuesto: segunda a propósito y con la cifra
+          más chica — mismo comportamiento, menos jerarquía. */}
+      {presupuesto ? (
+        <Pressable onPress={() => router.push("/presupuesto")}>
+          <Card style={{ marginTop: 10, paddingHorizontal: 14, paddingVertical: 12 }}>
+            <Text style={e.cardEtiqueta}>
+              Disponible en {formatearMesSolo(mes)} · Hogar
+            </Text>
+            <View style={{ marginTop: 2 }}>
+              <Importe centavos={presupuesto.disponibleCentavos} variante="patrimonio" />
+            </View>
+            <BarraAvance
+              progreso={progreso}
+              tono="tinta"
+              marcadorDia={diaDelMes(hoy) / diasDelMes(hoy)}
+              style={{ marginTop: 10 }}
+            />
+            <View style={e.filaPie}>
+              <Text style={e.pieTexto}>{formatearPorcentaje(progreso * 100)} gastado</Text>
+              <Text style={[e.pieTexto, { color: color.verde }]}>
+                {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+              </Text>
+            </View>
+          </Card>
+        </Pressable>
       ) : (
-        <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 16 }}>
-          <Text style={e.vacio}>Armá tu presupuesto de {formatearMesSolo(mes)} →</Text>
-        </Card>
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/armar-presupuesto", params: { mes, ambito: "hogar" } })
+          }
+        >
+          <Card style={{ marginTop: 10, paddingHorizontal: 14, paddingVertical: 16 }}>
+            <Text style={e.vacio}>Armá tu presupuesto de {formatearMesSolo(mes)} →</Text>
+          </Card>
+        </Pressable>
       )}
 
       {/* Para atender: cards sueltas apiladas */}
