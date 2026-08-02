@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   CalendarClock,
+  ChevronRight,
   CreditCard,
   Inbox,
   Sparkles,
@@ -40,7 +41,8 @@ import {
   type SesionHogar,
   type TotalesMes,
 } from "@/lib/datos";
-import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, fuente, radio } from "@/lib/tema";
+import { tacto } from "@/lib/tacto";
 import {
   Badge,
   BarraAvance,
@@ -135,6 +137,10 @@ export default function Resumen() {
     presupuesto && presupuesto.asignadoCentavos > 0
       ? presupuesto.gastadoCentavos / presupuesto.asignadoCentavos
       : 0;
+  const balanceCentavos = totales
+    ? totales.ingresosCentavos - totales.gastosCentavos
+    : 0;
+  const sinIngresos = totales !== null && totales.ingresosCentavos === 0;
 
   return (
     <>
@@ -174,26 +180,41 @@ export default function Resumen() {
 
       {/* Card principal: la CAJA del mes, como el totalizador de Movimientos —
           el balance (ingresos − gastos) protagonista y las dos cifras que lo
-          componen en voz baja. Tocable → Movimientos. */}
-      {totales && (
+          componen en voz baja. Tocable → Movimientos.
+          Sin ingresos cargados no hay balance que evaluar: la card pasa a
+          "Gastos de {mes}" en tinta (el rojo se reserva para "excedido") y lo
+          dice abajo. Sin ningún movimiento, directamente no aparece. */}
+      {totales && (totales.ingresosCentavos > 0 || totales.gastosCentavos > 0) && (
         <Pressable onPress={() => router.push("/movimientos")}>
           <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 14 }}>
-            <Text style={e.cardEtiqueta}>Balance de {formatearMesSolo(mes)}</Text>
+            <Text style={e.cardEtiqueta}>
+              {sinIngresos
+                ? `Gastos de ${formatearMesSolo(mes)}`
+                : `Balance de ${formatearMesSolo(mes)}`}
+            </Text>
             <View style={{ marginTop: 4 }}>
               <Importe
-                centavos={totales.ingresosCentavos - totales.gastosCentavos}
+                centavos={sinIngresos ? totales.gastosCentavos : balanceCentavos}
                 variante="card"
                 color={
-                  totales.ingresosCentavos - totales.gastosCentavos < 0
-                    ? color.rojo
-                    : color.verde
+                  sinIngresos
+                    ? color.tinta
+                    : balanceCentavos < 0
+                      ? color.rojo
+                      : color.verde
                 }
               />
             </View>
-            <Text style={[e.pieTexto, { marginTop: 6 }]}>
-              ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
-              {formatearImporte(totales.gastosCentavos)}
-            </Text>
+            {sinIngresos ? (
+              <Text style={[e.pieTexto, { marginTop: 6, fontFamily: fuente.texto }]}>
+                sin ingresos cargados este mes
+              </Text>
+            ) : (
+              <Text style={[e.pieTexto, { marginTop: 6 }]}>
+                ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
+                {formatearImporte(totales.gastosCentavos)}
+              </Text>
+            )}
           </Card>
         </Pressable>
       )}
@@ -253,25 +274,41 @@ export default function Resumen() {
           {avisos.map((a) => {
             const Icono = iconosAviso[a.tipo];
             return (
-              <Card key={a.id} style={e.aviso}>
-                <Icono
-                  size={18}
-                  color={color.tintaSecundaria}
-                  strokeWidth={1.5}
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text numberOfLines={1} style={e.avisoTitulo}>
-                    {a.titulo}
-                  </Text>
-                  <View style={e.avisoMetaFila}>
-                    <Text numberOfLines={1} style={e.avisoMeta}>
-                      {a.meta}
+              <Pressable
+                key={a.id}
+                onPress={() => {
+                  tacto.toque();
+                  router.push(a.href);
+                }}
+              >
+                <Card style={e.aviso}>
+                  <Icono
+                    size={18}
+                    color={color.tintaSecundaria}
+                    strokeWidth={1.5}
+                  />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} style={e.avisoTitulo}>
+                      {a.titulo}
                     </Text>
-                    {a.badge && <Badge variante={a.badge}>{a.badge}</Badge>}
+                    <View style={e.avisoMetaFila}>
+                      <Text numberOfLines={1} style={e.avisoMeta}>
+                        {a.meta}
+                      </Text>
+                      {a.badge && <Badge variante={a.badge}>{a.badge}</Badge>}
+                    </View>
                   </View>
-                </View>
-                {a.accion && <Text style={e.avisoAccion}>{a.accion}</Text>}
-              </Card>
+                  {a.accion ? (
+                    <Text style={e.avisoAccion}>{a.accion}</Text>
+                  ) : (
+                    <ChevronRight
+                      size={18}
+                      color={color.tintaMuda}
+                      strokeWidth={1.5}
+                    />
+                  )}
+                </Card>
+              </Pressable>
             );
           })}
         </View>

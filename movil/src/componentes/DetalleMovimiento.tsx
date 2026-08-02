@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, Pencil, Trash2 } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
-import { formatearDiaLargo } from "@dominio/fechas";
+import { formatearDiaCorto, formatearDiaLargo } from "@dominio/fechas";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   actualizarFecha,
@@ -190,6 +190,18 @@ export function DetalleMovimiento({
                   {m.ambito}
                 </Badge>
               </Fila>
+              {/* a qué resumen de la tarjeta cae el consumo, mientras el ciclo
+                  siga abierto — espejo de la fila "Ciclo" de la web, más el
+                  estado cuando la fecha de cierre es estimada */}
+              {m.cierreCiclo && (
+                <Fila etiqueta="Ciclo" conBorde>
+                  <Text style={[e.valor, { color: color.ambarTexto }]}>
+                    {`cierra ${formatearDiaCorto(m.cierreCiclo.fechaCierre)}${
+                      m.cierreCiclo.estado === "estimado" ? " · estimado" : ""
+                    }`}
+                  </Text>
+                </Fila>
+              )}
               {m.badgeCuota && (
                 <Fila etiqueta="Cuota" conBorde>
                   <Badge variante="cuota">{m.badgeCuota}</Badge>

@@ -2,17 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Inbox, ListChecks } from "lucide-react-native";
+import { Check, ChevronDown, Inbox, ListChecks, Search, X } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
+import { claveNombre } from "@dominio/categorias";
 import {
   etiquetaDia,
   formatearDiaCorto,
@@ -39,7 +42,7 @@ import {
   type CategoriaSimple,
   type MedioDePago,
 } from "@/lib/acciones";
-import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, fuente, radio } from "@/lib/tema";
 import { useModoSeleccion } from "@/lib/modo-seleccion";
 import { tacto } from "@/lib/tacto";
 import {
@@ -101,6 +104,15 @@ export default function Movimientos() {
   const mesActual = mesDe(hoy);
   const [mes, setMes] = useState(mesActual);
   const esMesActual = mes === mesActual;
+
+  // búsqueda y filtros EN MEMORIA sobre el historial del mes ya cargado (la
+  // web filtra en el server vía searchParams; acá el mes entero ya está en
+  // memoria y no hace falta otra consulta). El totalizador de arriba no se
+  // toca: mide el mes, no lo filtrado.
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
+  const [filtroTipo, setFiltroTipo] = useState<"gasto" | "ingreso" | null>(null);
+  const [hojaFiltro, setHojaFiltro] = useState<"categoria" | "tipo" | null>(null);
 
   // el layout de las tabs esconde la pastilla flotante mientras seleccionás
   const { activo: seleccionando, setActivo: setSeleccionando } = useModoSeleccion();
@@ -227,10 +239,40 @@ export default function Movimientos() {
   );
   const todosElegidos =
     seleccionables.length > 0 && elegidos.length === seleccionables.length;
-  const grupos = porDia(
-    historial.filter((m) => !ocultos.includes(m.id)),
-    hoy,
+
+  // claveNombre (@dominio/categorias): sin tildes ni mayúsculas, para que
+  // "cafe" encuentre "Café". Busca en descripción O categoría, como la web.
+  const claveBusqueda = claveNombre(busqueda);
+  const hayFiltros =
+    claveBusqueda !== "" || filtroCategoria !== null || filtroTipo !== null;
+  const historialVisible = historial.filter((m) => {
+    if (ocultos.includes(m.id)) return false;
+    if (filtroCategoria !== null && m.categoria !== filtroCategoria) return false;
+    if (filtroTipo === "gasto" && m.esIngreso) return false;
+    if (filtroTipo === "ingreso" && !m.esIngreso) return false;
+    if (claveBusqueda !== "") {
+      const enDescripcion = claveNombre(m.descripcion).includes(claveBusqueda);
+      const enCategoria =
+        m.categoria !== null && claveNombre(m.categoria).includes(claveBusqueda);
+      if (!enDescripcion && !enCategoria) return false;
+    }
+    return true;
+  });
+  // suma bruta de lo filtrado: los importes son absolutos (el signo lo lleva
+  // el tipo), así que no netea ingresos contra gastos — cuánto es lo visto
+  const totalFiltradoCentavos = historialVisible.reduce(
+    (suma, m) => suma + m.importeCentavos,
+    0,
   );
+  // opciones del chip Categoría: las presentes en el mes cargado
+  const categoriasDelMes = [
+    ...new Set(
+      historial
+        .map((m) => m.categoria)
+        .filter((c): c is string => c !== null),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "es"));
+  const grupos = porDia(historialVisible, hoy);
 
   return (
     <>
@@ -300,6 +342,9 @@ export default function Movimientos() {
           </View>
           <View style={[e.totalCol, e.totalConBorde]}>
             <Text style={e.totalEtiqueta}>Balance</Text>
+            {/* en negativo va en tinta con su signo: el rojo del sistema se
+                reserva para "excedido", y gastar más de lo que entró no lo es
+                (espejo de TotalizadorMes.tsx de la web) */}
             <Text
               numberOfLines={1}
               style={[
@@ -307,7 +352,7 @@ export default function Movimientos() {
                 {
                   color:
                     totales.ingresosCentavos - totales.gastosCentavos < 0
-                      ? color.rojo
+                      ? color.tinta
                       : color.verde,
                 },
               ]}
@@ -316,6 +361,75 @@ export default function Movimientos() {
             </Text>
           </View>
         </View>
+      )}
+
+      {/* Búsqueda + filtros, espejo de app/(tabs)/movimientos/Filtros.tsx en
+          versión mínima: buscar por comercio o categoría, y dos chips que
+          abren hoja inferior. Todo filtra en memoria el historial de abajo. */}
+      <View style={e.buscador}>
+        <Search size={15} color={color.tintaTerciaria} strokeWidth={1.5} />
+        <TextInput
+          value={busqueda}
+          onChangeText={(t) => {
+            if (seleccionando) salirDeSeleccion();
+            setBusqueda(t);
+          }}
+          placeholder="Buscar comercio o categoría"
+          placeholderTextColor={color.tintaTerciaria}
+          autoCorrect={false}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+          style={e.buscadorInput}
+        />
+      </View>
+
+      <View style={e.filtros}>
+        <Pressable
+          onPress={() => {
+            tacto.toque();
+            setHojaFiltro("categoria");
+          }}
+          style={[e.chipFiltro, filtroCategoria !== null && e.chipFiltroActivo]}
+        >
+          <Text
+            numberOfLines={1}
+            style={[e.chipFiltroTexto, filtroCategoria !== null && e.chipFiltroTextoActivo]}
+          >
+            {filtroCategoria ?? "Categoría"}
+          </Text>
+          <ChevronDown size={12} color={color.tintaSecundaria} strokeWidth={1.5} />
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            tacto.toque();
+            setHojaFiltro("tipo");
+          }}
+          style={[e.chipFiltro, filtroTipo !== null && e.chipFiltroActivo]}
+        >
+          <Text
+            numberOfLines={1}
+            style={[e.chipFiltroTexto, filtroTipo !== null && e.chipFiltroTextoActivo]}
+          >
+            {filtroTipo === "gasto"
+              ? "Solo gastos"
+              : filtroTipo === "ingreso"
+                ? "Solo ingresos"
+                : "Tipo"}
+          </Text>
+          <ChevronDown size={12} color={color.tintaSecundaria} strokeWidth={1.5} />
+        </Pressable>
+      </View>
+
+      {/* Con filtros activos, cuánto suma lo que quedó a la vista. El
+          totalizador de arriba sigue midiendo el mes completo. */}
+      {hayFiltros && historialVisible.length > 0 && (
+        <Text style={e.totalFiltrado}>
+          <Text style={e.totalFiltradoCifra}>{historialVisible.length}</Text>
+          {historialVisible.length === 1 ? " movimiento · " : " movimientos · "}
+          <Text style={e.totalFiltradoCifra}>
+            {formatearImporte(totalFiltradoCentavos)}
+          </Text>
+        </Text>
       )}
 
       {/* Bandeja de entrada: borde cálido + contador ámbar. Tocar un ítem
@@ -383,8 +497,10 @@ export default function Movimientos() {
         </View>
       )}
 
-      {/* Historial agrupado por día */}
-      {grupos.length > 0 && (
+      {/* Historial agrupado por día. La selección masiva no convive con los
+          filtros: "Todos" elegiría filas que no están a la vista, así que el
+          botón se esconde mientras haya búsqueda o filtro activo. */}
+      {grupos.length > 0 && !hayFiltros && (
         <View style={e.filaSeleccion}>
           {seleccionando && seleccionables.length > 0 && (
             <Pressable
@@ -413,6 +529,13 @@ export default function Movimientos() {
       )}
 
       {grupos.length === 0 ? (
+        hayFiltros ? (
+          <Text style={e.sinResultados}>
+            {claveBusqueda !== ""
+              ? `Nada con ese nombre en ${formatearMesLargo(mes)}`
+              : "No encontramos movimientos con esos filtros."}
+          </Text>
+        ) : (
         <View style={{ marginTop: 48 }}>
           <EstadoVacio
             Icono={Inbox}
@@ -420,6 +543,7 @@ export default function Movimientos() {
             cuerpo="Cargá tu primer gasto con el botón + y va a aparecer acá."
           />
         </View>
+        )
       ) : (
         grupos.map((g) => (
           <View key={g.etiqueta}>
@@ -430,6 +554,11 @@ export default function Movimientos() {
                   descripcion: m.descripcion,
                   icono: m.icono,
                   metadata: [m.categoria, m.medio].filter(Boolean).join(" · "),
+                  // el diferencial argentino: a qué resumen cae el consumo.
+                  // FilaMovimiento lo pinta en ámbar como "· cierra 28 jul".
+                  cierreCiclo: m.cierreCiclo
+                    ? `cierra ${formatearDiaCorto(m.cierreCiclo.fechaCierre)}`
+                    : undefined,
                   importeCentavos: m.importeCentavos,
                   esIngreso: m.esIngreso,
                   ambito: m.ambito,
@@ -476,6 +605,27 @@ export default function Movimientos() {
       />
     )}
 
+    <HojaFiltro
+      abierta={hojaFiltro !== null}
+      titulo={hojaFiltro === "tipo" ? "Tipo" : "Categoría"}
+      todas={hojaFiltro === "tipo" ? "Gastos e ingresos" : "Todas las categorías"}
+      opciones={
+        hojaFiltro === "tipo"
+          ? [
+              { valor: "gasto", etiqueta: "Solo gastos" },
+              { valor: "ingreso", etiqueta: "Solo ingresos" },
+            ]
+          : categoriasDelMes.map((c) => ({ valor: c, etiqueta: c }))
+      }
+      actual={hojaFiltro === "tipo" ? filtroTipo : filtroCategoria}
+      alElegir={(valor) => {
+        salirDeSeleccion();
+        if (hojaFiltro === "tipo") setFiltroTipo(valor as "gasto" | "ingreso" | null);
+        else setFiltroCategoria(valor);
+      }}
+      alCerrar={() => setHojaFiltro(null)}
+    />
+
     <DetalleMovimiento
       movimiento={detalle}
       sesion={sesion}
@@ -492,6 +642,134 @@ export default function Movimientos() {
     </>
   );
 }
+
+/**
+ * Hoja inferior con las opciones de un filtro (patrón AgregarPartida). Espeja
+ * la HojaInferior de Filtros.tsx de la web: primera fila "todas" que limpia,
+ * y un tap en la opción ya activa la des-selecciona.
+ */
+function HojaFiltro({
+  abierta,
+  titulo,
+  todas,
+  opciones,
+  actual,
+  alElegir,
+  alCerrar,
+}: {
+  abierta: boolean;
+  titulo: string;
+  /** la opción que limpia el filtro ("Todas las categorías") */
+  todas: string;
+  opciones: Array<{ valor: string; etiqueta: string }>;
+  actual: string | null;
+  alElegir: (valor: string | null) => void;
+  alCerrar: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+
+  function elegir(valor: string | null) {
+    tacto.toque();
+    alElegir(valor);
+    alCerrar();
+  }
+
+  return (
+    <Modal visible={abierta} transparent animationType="slide" onRequestClose={alCerrar}>
+      <View style={h.lleno}>
+        <Pressable style={h.fondo} onPress={alCerrar} />
+        <View style={[h.hoja, { paddingBottom: Math.max(20, insets.bottom) }]}>
+          <View aria-hidden style={h.agarre} />
+          <View style={h.filaTitulo}>
+            <Text style={h.titulo}>{titulo}</Text>
+            <Pressable onPress={alCerrar} hitSlop={10}>
+              <X size={22} color={color.tintaSecundaria} strokeWidth={2} />
+            </Pressable>
+          </View>
+          <ScrollView style={{ maxHeight: 380 }}>
+            <OpcionFila
+              etiqueta={todas}
+              seleccionada={actual === null}
+              alElegir={() => elegir(null)}
+            />
+            {opciones.map((opcion) => (
+              <OpcionFila
+                key={opcion.valor}
+                etiqueta={opcion.etiqueta}
+                seleccionada={actual === opcion.valor}
+                conBorde
+                alElegir={() => elegir(actual === opcion.valor ? null : opcion.valor)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function OpcionFila({
+  etiqueta,
+  seleccionada,
+  conBorde,
+  alElegir,
+}: {
+  etiqueta: string;
+  seleccionada: boolean;
+  conBorde?: boolean;
+  alElegir: () => void;
+}) {
+  return (
+    <Pressable onPress={alElegir} style={[h.opcion, conBorde && h.opcionConBorde]}>
+      <Text style={[h.opcionTexto, seleccionada && h.opcionTextoActivo]}>
+        {etiqueta}
+      </Text>
+      {seleccionada && <Check size={16} color={color.verde} strokeWidth={2} />}
+    </Pressable>
+  );
+}
+
+const h = StyleSheet.create({
+  lleno: { flex: 1, justifyContent: "flex-end" },
+  fondo: {
+    ...(StyleSheet.absoluteFill as object),
+    backgroundColor: "rgba(20, 19, 18, 0.6)",
+  },
+  hoja: {
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  agarre: {
+    alignSelf: "center",
+    height: 4,
+    width: 36,
+    borderRadius: 2,
+    backgroundColor: color.tintaMuda,
+  },
+  filaTitulo: {
+    marginTop: 14,
+    marginBottom: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  titulo: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  opcion: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingVertical: 13,
+  },
+  opcionConBorde: { borderTopWidth: 1, borderTopColor: color.separador },
+  opcionTexto: { flexShrink: 1, fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
+  opcionTextoActivo: { fontFamily: fuente.textoSemi, color: color.verde },
+});
 
 const e = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: color.papel },
@@ -526,6 +804,69 @@ const e = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.borde,
     backgroundColor: color.superficie,
+  },
+  buscador: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 12,
+  },
+  buscadorInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 13,
+    fontFamily: fuente.texto,
+    color: color.tinta,
+  },
+  filtros: { marginTop: 10, flexDirection: "row", gap: 8 },
+  chipFiltro: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    maxWidth: "60%",
+    borderRadius: radio.chip,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  chipFiltroActivo: {
+    borderWidth: 1.5,
+    borderColor: color.verde,
+    backgroundColor: color.verdeSuave,
+  },
+  chipFiltroTexto: {
+    flexShrink: 1,
+    fontSize: 12,
+    fontFamily: fuente.texto,
+    color: color.tinta,
+  },
+  chipFiltroTextoActivo: { fontFamily: fuente.textoSemi },
+  totalFiltrado: {
+    marginTop: 12,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  totalFiltradoCifra: {
+    fontSize: 11.5,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaSecundaria,
+  },
+  sinResultados: {
+    marginTop: 32,
+    textAlign: "center",
+    fontSize: 13.5,
+    lineHeight: 21,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
   },
   totalCol: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
   totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },

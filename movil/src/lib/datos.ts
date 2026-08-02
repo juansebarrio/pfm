@@ -9,6 +9,7 @@ import {
   mesDe,
   ultimoDiaDelMes,
 } from "@dominio/fechas";
+import type { Href } from "expo-router";
 import { supabase } from "./supabase";
 
 // Capa de datos. Las consultas son las MISMAS que en lib/datos/ de la web —
@@ -355,6 +356,12 @@ export type MovimientoFila = {
   medio: string | null;
   ambito: "hogar" | "personal";
   badgeCuota?: string;
+  /**
+   * Ciclo de tarjeta al que devenga el gasto, si sigue abierto — la web lo
+   * muestra como "· cierra 28 jul". `estado` es el de las FECHAS del ciclo
+   * (estimadas o confirmadas), para poder marcar la fecha como estimada.
+   */
+  cierreCiclo: { fechaCierre: string; estado: "estimado" | "confirmado" } | null;
   /** lo que solo mira el detalle: la lista no los usa */
   tipo: "gasto" | "ingreso" | "transferencia" | "pago_resumen";
   nota: string | null;
@@ -381,6 +388,11 @@ type FilaMovimientoDb = {
   categorias: { id: string; nombre: string; icono: string } | null;
   cuentas: { nombre: string } | null;
   tarjetas: { nombre: string; ultimos4: string } | null;
+  ciclos_tarjeta: {
+    fecha_cierre: string;
+    estado_fechas: "estimado" | "confirmado";
+    estado: string;
+  } | null;
   compras_en_cuotas: { n_cuotas: number } | null;
 };
 
@@ -390,7 +402,8 @@ const SELECT_MOVIMIENTO =
   "id, descripcion, importe_centavos, fecha, tipo, visibilidad, n_cuota, nota, " +
   "compra_id, cuenta_id, tarjeta_id, " +
   "categorias(id, nombre, icono), cuentas!movimientos_cuenta_id_fkey(nombre), " +
-  "tarjetas(nombre, ultimos4), compras_en_cuotas(n_cuotas)";
+  "tarjetas(nombre, ultimos4), ciclos_tarjeta(fecha_cierre, estado_fechas, estado), " +
+  "compras_en_cuotas(n_cuotas)";
 
 function aFila(m: FilaMovimientoDb): MovimientoFila {
   // "Visa Galicia •• 4321" o "Mercado Pago"
@@ -411,6 +424,15 @@ function aFila(m: FilaMovimientoDb): MovimientoFila {
       m.n_cuota && m.compras_en_cuotas
         ? `CUOTA ${m.n_cuota}/${m.compras_en_cuotas.n_cuotas}`
         : undefined,
+    // misma semántica que la web (app/(tabs)/movimientos/datos.ts): el cierre
+    // solo interesa mientras el ciclo sigue abierto
+    cierreCiclo:
+      m.ciclos_tarjeta && m.ciclos_tarjeta.estado === "abierto"
+        ? {
+            fechaCierre: m.ciclos_tarjeta.fecha_cierre,
+            estado: m.ciclos_tarjeta.estado_fechas,
+          }
+        : null,
     tipo: m.tipo as MovimientoFila["tipo"],
     nota: m.nota ?? null,
     nCuotasTotal: m.compras_en_cuotas?.n_cuotas ?? null,
@@ -474,7 +496,10 @@ export type Aviso = {
   tipo: "cierre" | "vencimiento" | "bandeja";
   titulo: string;
   meta: string;
+  /** a dónde lleva el toque: cierre/vencimiento → la tarjeta, bandeja → movimientos */
+  href: Href;
   badge?: "estimada" | "confirmada";
+  /** acción textual verde ("Categorizar"): sin acción, la card lleva chevron */
   accion?: string;
 };
 
@@ -559,6 +584,7 @@ export async function avisosParaAtender(sesion: SesionHogar): Promise<Aviso[]> {
     meta: `proyectado ${formatearImporteLocal(
       (consumos.get(c.ciclo.id) ?? 0) + c.tarjeta.impuestos_estimados_centavos,
     )}`,
+    href: `/tarjeta/${c.tarjeta.id}` as Href,
     badge: c.ciclo.estado_fechas === "confirmado" ? ("confirmada" as const) : ("estimada" as const),
   }));
 
@@ -571,6 +597,7 @@ export async function avisosParaAtender(sesion: SesionHogar): Promise<Aviso[]> {
           ? "1 movimiento sin categorizar"
           : `${bandeja.length} movimientos sin categorizar`,
       meta: resumenBandeja(bandeja),
+      href: "/movimientos",
       accion: "Categorizar",
     });
   }
