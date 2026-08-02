@@ -73,6 +73,59 @@ describe("estadoPartida — reglas anotadas", () => {
   });
 });
 
+describe("estadoPartida — las compuertas de la proyección (2026-08-02)", () => {
+  it("antes del día 7 no hay proyección: una compra grande el día 2 no alarma", () => {
+    // el bug que motivó esto: $ 40.000 de súper el día 2 "proyectaba" $ 620.000
+    const r = estadoPartida({
+      asignadoCentavos: 52000000, gastadoCentavos: 4000000,
+      diaDelMes: 2, diasDelMes: 31,
+    });
+    expect(r.estado).toBe("ok");
+    expect(r.proyeccionCentavos).toBeNull();
+    expect(r.excedenteProyectadoCentavos).toBeNull();
+  });
+
+  it("el día 6 todavía calla; el día 7 ya proyecta", () => {
+    const base = { asignadoCentavos: 20000000, gastadoCentavos: 7000000, diasDelMes: 31 };
+    const dia6 = estadoPartida({ ...base, diaDelMes: 6 });
+    expect(dia6.estado).toBe("ok");
+    expect(dia6.proyeccionCentavos).toBeNull();
+
+    const dia7 = estadoPartida({ ...base, diaDelMes: 7 });
+    expect(dia7.estado).toBe("atencion"); // proyecta 31.000.000 > 22.000.000
+    expect(dia7.proyeccionCentavos).toBe(31000000);
+  });
+
+  it("pasarse hasta un 10 % no alarma: la proyección se muestra pero en calma", () => {
+    // proyección $ 325.500 sobre $ 310.000 disponibles (5 % arriba) → ok
+    const r = estadoPartida({
+      asignadoCentavos: 31000000, gastadoCentavos: 10500000,
+      diaDelMes: 10, diasDelMes: 31,
+    });
+    expect(r.estado).toBe("ok");
+    expect(r.proyeccionCentavos).toBe(32550000);
+    expect(r.excedenteProyectadoCentavos).toBeNull();
+  });
+
+  it("pasarse más del 10 % sí alarma", () => {
+    // proyección $ 372.000 sobre $ 310.000 (20 % arriba) → atención
+    const r = estadoPartida({
+      asignadoCentavos: 31000000, gastadoCentavos: 12000000,
+      diaDelMes: 10, diasDelMes: 31,
+    });
+    expect(r.estado).toBe("atencion");
+    expect(r.excedenteProyectadoCentavos).toBe(6200000);
+  });
+
+  it("excedido no pasa por compuertas: el día 2 pasado es excedido igual", () => {
+    const r = estadoPartida({
+      asignadoCentavos: 4000000, gastadoCentavos: 4500000,
+      diaDelMes: 2, diasDelMes: 31,
+    });
+    expect(r.estado).toBe("excedido");
+  });
+});
+
 describe("proyeccionLineal", () => {
   it("gastado / días transcurridos × días del mes", () => {
     expect(proyeccionLineal(26840000, 10, 31)).toBe(83204000);

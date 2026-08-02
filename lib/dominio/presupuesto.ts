@@ -5,6 +5,13 @@
 // gastado / días transcurridos × días del mes.
 // Decisión anotada (DESIGN_NOTES.md): las partidas fijas y las de rollover
 // no proyectan — una suscripción que se cobra una vez no es un ritmo diario.
+//
+// La proyección habla recién cuando hay señal (2026-08-02): con pocos días
+// transcurridos el divisor chico convierte cualquier compra normal en una
+// falsa alarma — una ida al súper el día 2 "proyectaba" 15 veces eso. Dos
+// compuertas: nada antes del día 7 (una semana de datos) y, desde ahí,
+// "atención" solo si la proyección supera lo disponible por más del 10 %.
+// "Excedido" no pasa por ninguna compuerta: no es proyección, es un hecho.
 
 export type EntradaEstadoPartida = {
   asignadoCentavos: number;
@@ -29,6 +36,17 @@ export type ResultadoEstadoPartida = {
   /** asignado + rollover − gastado */
   quedaCentavos: number;
 };
+
+/** La proyección no existe antes de este día: sin una semana de datos, calla. */
+export const DIA_MINIMO_PROYECCION = 7;
+
+/**
+ * "Atención" solo si la proyección supera lo disponible por más de este
+ * margen (10 %): los casos borde que un día alarmaban y al otro no, calman.
+ * Comparación en enteros: proyección × 10 > disponible × 11.
+ */
+const MARGEN_PROYECCION_NUMERADOR = 11;
+const MARGEN_PROYECCION_DENOMINADOR = 10;
 
 export function proyeccionLineal(
   gastadoCentavos: number,
@@ -55,8 +73,14 @@ export function estadoPartida(e: EntradaEstadoPartida): ResultadoEstadoPartida {
     };
   }
 
-  // fija (pagada o a medias) y pools de rollover: calma, no proyectan
-  if (e.fija || e.rollover || e.gastadoCentavos === 0) {
+  // fija (pagada o a medias), pools de rollover y el arranque del mes:
+  // calma, no proyectan — antes del día 7 no hay ritmo, hay ruido
+  if (
+    e.fija ||
+    e.rollover ||
+    e.gastadoCentavos === 0 ||
+    e.diaDelMes < DIA_MINIMO_PROYECCION
+  ) {
     return {
       estado: "ok",
       proyeccionCentavos: null,
@@ -66,7 +90,10 @@ export function estadoPartida(e: EntradaEstadoPartida): ResultadoEstadoPartida {
   }
 
   const proyeccion = proyeccionLineal(e.gastadoCentavos, e.diaDelMes, e.diasDelMes);
-  if (proyeccion > disponibleTotal) {
+  const superaConMargen =
+    proyeccion * MARGEN_PROYECCION_DENOMINADOR >
+    disponibleTotal * MARGEN_PROYECCION_NUMERADOR;
+  if (superaConMargen) {
     return {
       estado: "atencion",
       proyeccionCentavos: proyeccion,
