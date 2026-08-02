@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { LineChart } from "lucide-react-native";
 import { arsAUsd, formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import { etiquetaDia, formatearDiaCorto, hoyBA } from "@dominio/fechas";
@@ -50,6 +50,7 @@ function etiquetaFechaTC(fecha: string, hoy: string): string {
 
 export default function Patrimonio() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [datos, setDatos] = useState<DatosPatrimonio | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -153,7 +154,18 @@ export default function Patrimonio() {
         />
       }
     >
-      <Text style={e.titulo}>Patrimonio</Text>
+      {/* Título + avatar del hogar. La entrada a /hogar vivía solo en Resumen:
+          en las otras tres tabs desaparecía, y volver atrás para cambiar de
+          pantalla es el tipo de cosa que se aprende mal una vez y molesta
+          siempre. Misma anatomía que resumen.tsx (34px, inicial, → /hogar). */}
+      <View style={e.encabezado}>
+        <Text style={e.titulo}>Patrimonio</Text>
+        <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
+          <Text style={e.avatarTexto}>
+            {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
+          </Text>
+        </Pressable>
+      </View>
 
       {/* Total del hogar redondeado (≈, §1.2) + equivalente USD + TC con fecha */}
       <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 14 }}>
@@ -257,7 +269,21 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.papel,
   },
+  encabezado: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: color.tinta,
+  },
+  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
   etiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
   filaTotal: {
     marginTop: 4,

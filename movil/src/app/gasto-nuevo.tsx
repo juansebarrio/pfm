@@ -12,10 +12,12 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ArrowDownLeft,
+  ArrowRight,
   ArrowUpRight,
   CalendarDays,
   CreditCard,
   Delete,
+  Minus,
   Wallet,
   X,
 } from "lucide-react-native";
@@ -24,7 +26,13 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { aISO, desdeISO } from "@/lib/fecha-local";
 import { formatearImporte } from "@dominio/dinero";
 import { formatearDiaCorto, hoyBA } from "@dominio/fechas";
-import { obtenerSesionHogar, type SesionHogar } from "@/lib/datos";
+import {
+  categoriasRecientes,
+  obtenerSesionHogar,
+  TOPE_RECIENTES,
+  usosDeCategorias,
+  type SesionHogar,
+} from "@/lib/datos";
 import {
   categoriasDelHogar,
   crearGasto,
@@ -57,6 +65,10 @@ export default function GastoNuevo() {
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [medios, setMedios] = useState<MedioDePago[]>([]);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
+  /** frecuencia de uso de los últimos 60 días: ordena la grilla de recientes */
+  const [usos, setUsos] = useState<Map<string, number>>(new Map());
+  /** el tile "todas →" despliega el resto de las categorías del ámbito */
+  const [verTodas, setVerTodas] = useState(false);
   const [cargando, setCargando] = useState(true);
 
   const [tipo, setTipo] = useState<Tipo>("gasto");
@@ -78,9 +90,16 @@ export default function GastoNuevo() {
       const s = await obtenerSesionHogar();
       if (!s) return;
       setSesion(s);
-      const [m, c] = await Promise.all([mediosDePago(s), categoriasDelHogar(s)]);
+      // el conteo de usos viaja UNA vez: el orden de la grilla se rehace en el
+      // cliente al cambiar de ámbito o de tipo, sin volver al servidor
+      const [m, c, u] = await Promise.all([
+        mediosDePago(s),
+        categoriasDelHogar(s),
+        usosDeCategorias(s),
+      ]);
       setMedios(m);
       setCategorias(c);
+      setUsos(u);
 
       // última elección recordada
       const [a, guardadoMedio] = await Promise.all([
@@ -107,6 +126,20 @@ export default function GastoNuevo() {
   const categoriasDelAmbito = categorias.filter(
     (c) => c.ambito === ambito && (esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos"),
   );
+  // La grilla arranca con las recientes, como la web (03, §3.12): volcar las
+  // 15+ del ámbito convierte "elegí una" en "buscá una" y empuja el teclado
+  // abajo de todo. El resto vive detrás del tile "todas →".
+  //
+  // Con ese tile la grilla sigue midiendo 8 — 7 recientes más el tile, dos
+  // filas exactas de cuatro. Un noveno tile solo en una tercera fila se lee
+  // como un error de layout, y la octava más usada queda a un toque igual.
+  const hayMas = categoriasDelAmbito.length > TOPE_RECIENTES;
+  const recientes = categoriasRecientes(
+    categoriasDelAmbito,
+    usos,
+    hayMas ? TOPE_RECIENTES - 1 : TOPE_RECIENTES,
+  );
+  const categoriasVisibles = verTodas ? categoriasDelAmbito : recientes;
   const hayCategoria = categoriaId !== null;
 
   // updates funcionales: taps consecutivos en el mismo tick no se pisan
@@ -138,6 +171,7 @@ export default function GastoNuevo() {
   function elegirAmbito(a: Ambito) {
     setAmbito(a);
     setCategoriaId(null); // la categoría pertenece al ámbito
+    setVerTodas(false); // otro ámbito, otra grilla: vuelve a las recientes
     AsyncStorage.setItem(CLAVE_AMBITO, a);
   }
 
@@ -157,6 +191,7 @@ export default function GastoNuevo() {
     setTipo(t);
     setCuotas(1);
     setCategoriaId(null); // la categoría es del otro grupo: no puede quedar elegida
+    setVerTodas(false);
     if (t === "ingreso") {
       const cuentas = medios.filter((m) => m.tipo === "cuenta");
       if (!cuentas.some((m) => m.id === medioId)) setMedioId(cuentas[0]?.id ?? null);
@@ -360,12 +395,15 @@ export default function GastoNuevo() {
           {esIngreso ? "¿De dónde viene?" : "¿En qué lo gastaste?"} · opcional
         </Text>
         <View style={e.grillaCategorias}>
-          {categoriasDelAmbito.map((c) => {
+          {categoriasVisibles.map((c) => {
             const sel = c.id === categoriaId;
             return (
               <Pressable
                 key={c.id}
-                onPress={() => setCategoriaId(sel ? null : c.id)}
+                onPress={() => {
+                  tacto.toque();
+                  setCategoriaId(sel ? null : c.id);
+                }}
                 style={[e.tile, sel && e.tileSel]}
               >
                 <IconoCategoria nombre={c.icono} tono={sel ? "verde" : "normal"} />
@@ -375,6 +413,29 @@ export default function GastoNuevo() {
               </Pressable>
             );
           })}
+          {/* Último tile: el resto del ámbito. Despliega acá mismo en vez de
+              abrir una hoja — la pantalla ya es una vista completa con el
+              teclado fijo abajo, y un modal arriba de otro para elegir una
+              categoría es un paso de más en un alta que se mide en segundos. */}
+          {hayMas && (
+            <Pressable
+              onPress={() => {
+                tacto.toque();
+                setVerTodas((v) => !v);
+              }}
+              accessibilityLabel={verTodas ? "Ver menos categorías" : "Ver todas las categorías"}
+              style={[e.tile, e.tileTodas]}
+            >
+              {verTodas ? (
+                <Minus size={16} color={color.tintaSecundaria} strokeWidth={1.8} />
+              ) : (
+                <ArrowRight size={16} color={color.tintaSecundaria} strokeWidth={1.8} />
+              )}
+              <Text numberOfLines={1} style={[e.tileTexto, { color: color.tintaSecundaria }]}>
+                {verTodas ? "menos" : "todas"}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         {/* fecha del movimiento: por defecto hoy, editable — elegir un día de
@@ -567,6 +628,8 @@ const e = StyleSheet.create({
     paddingHorizontal: 2,
   },
   tileSel: { borderWidth: 1.5, borderColor: color.verde, backgroundColor: color.verdeSuave },
+  // el tile de "todas" no es una categoría: fondo del papel para que no compita
+  tileTodas: { backgroundColor: color.papel, borderStyle: "dashed" },
   tileTexto: { maxWidth: "100%", fontSize: 10, fontWeight: "500", color: color.tinta },
   tileTextoSel: { fontWeight: "600", color: color.verde },
   filaFecha: {

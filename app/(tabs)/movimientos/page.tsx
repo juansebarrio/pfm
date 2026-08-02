@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChartPie, List } from "lucide-react";
 import {
   bandejaDeEntrada,
   categoriasDelHogar,
@@ -19,7 +20,6 @@ import {
 } from "@/lib/dominio/fechas";
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import { PorCategoria } from "@/components/sistema/PorCategoria";
-import { Solapas } from "@/components/sistema/Solapas";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
 import { TotalizadorMes } from "./TotalizadorMes";
 import { Filtros } from "./Filtros";
@@ -161,13 +161,39 @@ export default async function PaginaMovimientos({
         }}
       />
 
-      <Solapas
-        activa={vista}
-        opciones={[
-          { clave: "lista", etiqueta: "Lista", href: hrefVista("lista") },
-          { clave: "categorias", etiqueta: "Por categoría", href: hrefVista("categorias") },
-        ]}
-      />
+      {/* Lista / por categoría: EL MISMO par de íconos que Presupuesto. Es la
+          misma pregunta ("¿cómo miro esto?") y dibujarla acá como solapas de
+          texto de ancho completo la hacía parecer otra cosa —y se comía una
+          banda entera de alto arriba del totalizador. */}
+      <nav
+        aria-label="Vista"
+        className="mt-3 ml-auto flex w-fit rounded-[11px] bg-fondo-segmented p-[2px]"
+      >
+        <Link
+          href={hrefVista("lista")}
+          aria-label="Ver lista"
+          aria-current={vista === "lista" ? "true" : undefined}
+          className={`flex h-[33px] w-11 items-center justify-center rounded-[9px] ${
+            vista === "lista"
+              ? "bg-segmented-activo text-tinta shadow-thumb"
+              : "text-tinta-secundaria"
+          }`}
+        >
+          <List className="size-[17px]" strokeWidth={1.8} aria-hidden />
+        </Link>
+        <Link
+          href={hrefVista("categorias")}
+          aria-label="Ver por categoría"
+          aria-current={vista === "categorias" ? "true" : undefined}
+          className={`flex h-[33px] w-11 items-center justify-center rounded-[9px] ${
+            vista === "categorias"
+              ? "bg-segmented-activo text-tinta shadow-thumb"
+              : "text-tinta-secundaria"
+          }`}
+        >
+          <ChartPie className="size-[17px]" strokeWidth={1.8} aria-hidden />
+        </Link>
+      </nav>
 
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo entre ambos.
           No es el "disponible" del presupuesto (eso vive en Resumen): es caja. */}

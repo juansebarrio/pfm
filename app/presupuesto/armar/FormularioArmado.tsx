@@ -2,13 +2,20 @@
 
 // Formulario de armado del mes (02): ajuste general por inflación en vivo,
 // filas con toggle + monto editable (§3.19–3.21) y footer sticky con total.
-// Todo en centavos enteros; el ajuste trabaja en décimas de punto porcentual
-// (25 = 2,5 %) y redondea a $ 25 (2.500 centavos), como el export.
+// Todo en centavos enteros; la aritmética del ajuste (décimas de punto y
+// redondeo a $ 25) vive en lib/dominio/inflacion.ts, compartida con el nativo.
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { armarPresupuesto } from "@/app/acciones/presupuesto";
 import { formatearImporte } from "@/lib/dominio/dinero";
+import {
+  DECIMAS_POR_DEFECTO,
+  ajustarPorInflacion,
+  decimasATexto,
+  esTextoDecimasValido,
+  textoADecimas,
+} from "@/lib/dominio/inflacion";
 import { BotonPrimario } from "@/components/sistema/BotonPrimario";
 import { Card } from "@/components/sistema/Card";
 import { Importe } from "@/components/sistema/Importe";
@@ -38,26 +45,6 @@ type EstadoFila = {
   nota: string;
 };
 
-/** asignado × (1 + décimas/1000), redondeado a $ 25 — sin floats acumulados. */
-function ajustar(asignadoCentavos: number, decimas: number): number {
-  return (
-    Math.round((asignadoCentavos * (1000 + decimas)) / 1000 / 2500) * 2500
-  );
-}
-
-/** 25 → "2,5" · 120 → "12" · 0 → "0" */
-function decimasATexto(decimas: number): string {
-  const entero = Math.trunc(decimas / 10);
-  const decimal = decimas % 10;
-  return decimal === 0 ? String(entero) : `${entero},${decimal}`;
-}
-
-/** "2,5" → 25 · "2," → 20 · "" → 0 */
-function textoADecimas(texto: string): number {
-  const m = texto.match(/^(\d+)(?:,(\d)?)?$/);
-  return m ? Number(m[1]) * 10 + Number(m[2] ?? 0) : 0;
-}
-
 export function FormularioArmado({
   mes,
   ambito,
@@ -70,8 +57,9 @@ export function FormularioArmado({
   const [pendiente, iniciarTransicion] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [decimas, setDecimas] = useState(hayAnterior ? 25 : 0);
-  const [textoPct, setTextoPct] = useState(decimasATexto(hayAnterior ? 25 : 0));
+  const decimasIniciales = hayAnterior ? DECIMAS_POR_DEFECTO : 0;
+  const [decimas, setDecimas] = useState(decimasIniciales);
+  const [textoPct, setTextoPct] = useState(decimasATexto(decimasIniciales));
   const [editandoPct, setEditandoPct] = useState(false);
 
   const [filas, setFilas] = useState<EstadoFila[]>(() =>
@@ -84,7 +72,8 @@ export function FormularioArmado({
 
   function montoFila(i: number): number {
     return (
-      filas[i].override ?? ajustar(partidas[i].asignadoAnteriorCentavos, decimas)
+      filas[i].override ??
+      ajustarPorInflacion(partidas[i].asignadoAnteriorCentavos, decimas)
     );
   }
 
@@ -96,7 +85,7 @@ export function FormularioArmado({
 
   function cambiarPct(texto: string) {
     const limpio = texto.replace(/[^\d,]/g, "");
-    if (!/^\d{0,3}(,\d?)?$/.test(limpio)) return;
+    if (!esTextoDecimasValido(limpio)) return;
     setTextoPct(limpio);
     setDecimas(textoADecimas(limpio));
   }

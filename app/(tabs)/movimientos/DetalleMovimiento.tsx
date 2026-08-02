@@ -35,6 +35,17 @@ const NOMBRE_TIPO: Record<MovimientoLista["tipo"], string | null> = {
   pago_resumen: "Pago de resumen",
 };
 
+/**
+ * "Cargado por": en un hogar de dos, "¿esto lo cargaste vos o yo?" no tenía
+ * respuesta en ningún lado. El nombre solo no alcanza — que diga cuál de los
+ * dos sos vos es la mitad del dato —, así que el propio se marca. En un hogar
+ * de a uno la capa de datos manda null y la fila no aparece.
+ */
+function etiquetaCargadoPor(m: MovimientoLista): string | null {
+  if (m.cargadoPor === null) return null;
+  return m.esPropio ? `${m.cargadoPor} · vos` : m.cargadoPor;
+}
+
 function Fila({
   etiqueta,
   children,
@@ -69,6 +80,7 @@ export function DetalleMovimiento({
   const m = movimiento;
   const esIngreso = m?.tipo === "ingreso";
   const tipo = m ? NOMBRE_TIPO[m.tipo] : null;
+  const cargadoPor = m ? etiquetaCargadoPor(m) : null;
   const [editando, setEditando] = useState(false);
   // el detalle puede abrirse con otro movimiento: la edición no sobrevive
   const editable =
@@ -132,6 +144,7 @@ export function DetalleMovimiento({
                 {m.visibilidad === "compartido" ? "hogar" : "personal"}
               </Badge>
             </Fila>
+            {cargadoPor && <Fila etiqueta="Cargado por">{cargadoPor}</Fila>}
             {m.cierreCiclo && (
               <Fila etiqueta="Ciclo">
                 <span className="text-ambar-texto">{m.cierreCiclo}</span>

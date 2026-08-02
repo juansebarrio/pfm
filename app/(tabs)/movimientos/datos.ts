@@ -1,5 +1,9 @@
 import "server-only";
-import type { MovimientoLista } from "@/lib/datos/movimientos";
+import {
+  nombreDeQuienCargo,
+  nombresDeMiembros,
+  type MovimientoLista,
+} from "@/lib/datos/movimientos";
 import type { SesionHogar } from "@/lib/datos/sesion";
 import { formatearDiaCorto, ultimoDiaDelMes } from "@/lib/dominio/fechas";
 
@@ -44,7 +48,11 @@ function nombreTarjeta(t: { red: string; ultimos4: string }): string {
   return `${red} •• ${t.ultimos4}`;
 }
 
-function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
+function aMovimiento(
+  fila: FilaCruda,
+  userId: string,
+  nombres: Map<string, string>,
+): MovimientoLista {
   return {
     id: fila.id,
     tipo: fila.tipo,
@@ -54,6 +62,7 @@ function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
     creadoEl: fila.creado_el,
     visibilidad: fila.visibilidad,
     esPropio: fila.user_id === userId,
+    cargadoPor: nombreDeQuienCargo(nombres, fila.user_id),
     categoria: fila.categorias,
     medio: fila.tarjetas
       ? nombreTarjeta(fila.tarjetas)
@@ -119,8 +128,13 @@ export async function movimientosFiltrados(
   if (filtros.tipo) consulta = consulta.eq("tipo", filtros.tipo);
   if (filtros.medio?.tipo === "cuenta") consulta = consulta.eq("cuenta_id", filtros.medio.id);
   if (filtros.medio?.tipo === "tarjeta") consulta = consulta.eq("tarjeta_id", filtros.medio.id);
-  const { data } = await consulta;
-  return ((data ?? []) as unknown as FilaCruda[]).map((f) => aMovimiento(f, sesion.userId));
+  // el nombre de quien cargó cada movimiento va aparte (no hay FK que embeber);
+  // `nombresDeMiembros` está cacheada por request, así que esto no es una
+  // consulta más aunque la pantalla también pida la bandeja
+  const [{ data }, nombres] = await Promise.all([consulta, nombresDeMiembros(sesion)]);
+  return ((data ?? []) as unknown as FilaCruda[]).map((f) =>
+    aMovimiento(f, sesion.userId, nombres),
+  );
 }
 
 export type MiembroSimple = { userId: string; nombre: string };

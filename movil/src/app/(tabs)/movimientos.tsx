@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,11 +11,20 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronDown, Inbox, ListChecks, Search, X } from "lucide-react-native";
+import {
+  ChartPie,
+  Check,
+  ChevronDown,
+  Inbox,
+  List,
+  ListChecks,
+  Search,
+  X,
+} from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
-import { claveNombre } from "@dominio/categorias";
+import { claveNombre, GRUPO_INGRESOS } from "@dominio/categorias";
 import {
   etiquetaDia,
   formatearDiaCorto,
@@ -37,6 +46,7 @@ import {
   actualizarFechasEnLote,
   borrarMovimiento,
   categoriasDelHogar,
+  categorizarEnLote,
   categorizarMovimiento,
   mediosDePago,
   type CategoriaSimple,
@@ -55,7 +65,6 @@ import { FilaSwipe } from "@/componentes/FilaSwipe";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
-import { Solapas } from "@/componentes/Solapas";
 import {
   BarraSeleccion,
   FilaSeleccionable,
@@ -83,6 +92,7 @@ function porDia(movimientos: MovimientoFila[], hoy: string) {
 
 export default function Movimientos() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [bandeja, setBandeja] = useState<MovimientoFila[]>([]);
   const [historial, setHistorial] = useState<MovimientoFila[]>([]);
@@ -90,8 +100,10 @@ export default function Movimientos() {
   const [medios, setMedios] = useState<MedioDePago[]>([]);
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
-  // categorización inline: qué ítem está abierto y cuáles ya se ocultaron
+  // categorización inline: qué ítem está abierto, si muestra la grilla completa
+  // y cuáles ya se ocultaron
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
+  const [grillaAbierta, setGrillaAbierta] = useState(false);
   const [ocultos, setOcultos] = useState<string[]>([]);
   const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
   const [totales, setTotales] = useState<TotalesMes | null>(null);
@@ -119,7 +131,14 @@ export default function Movimientos() {
   const [elegidos, setElegidos] = useState<string[]>([]);
   const [fechaDestino, setFechaDestino] = useState(hoy);
   const [moviendo, setMoviendo] = useState(false);
+  const [categorizando, setCategorizando] = useState(false);
+  const [hojaCategorias, setHojaCategorias] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  // el primer pendiente de la bandeja llega ABIERTO, como en la web: colapsada
+  // entera no enseña que tocar una fila la categoriza. Solo la primera carga —
+  // después manda el usuario, y un refresh no le vuelve a abrir la fila.
+  const bandejaSemilla = useRef(true);
 
   const cargar = useCallback(async () => {
     const s = await obtenerSesionHogar();
@@ -140,6 +159,10 @@ export default function Movimientos() {
     setCategorias(c);
     setTotales(t);
     setOcultos([]);
+    if (bandejaSemilla.current) {
+      bandejaSemilla.current = false;
+      setAbiertoId(b[0]?.id ?? null);
+    }
   }, [mes]);
 
   useEffect(() => {
@@ -173,6 +196,7 @@ export default function Movimientos() {
     if (!sesion) return;
     setOcultos((prev) => [...prev, movimientoId]);
     setAbiertoId(null);
+    setGrillaAbierta(false);
     const r = await categorizarMovimiento(sesion, movimientoId, categoriaId);
     if (!r.ok) setOcultos((prev) => prev.filter((id) => id !== movimientoId));
     else await cargar();
@@ -224,6 +248,26 @@ export default function Movimientos() {
     await cargar();
   }
 
+  async function categorizarLote(categoriaId: string) {
+    if (!sesion || elegidos.length === 0 || categorizando) return;
+    setCategorizando(true);
+    setAviso(null);
+    const r = await categorizarEnLote(sesion, elegidos, categoriaId);
+    setCategorizando(false);
+    if (!r.ok) {
+      Alert.alert("No pudimos categorizarlos", r.error);
+      return;
+    }
+    tacto.guardado();
+    const nombre = categorias.find((c) => c.id === categoriaId)?.nombre;
+    setAviso(
+      `${r.cambiados === 1 ? "1 movimiento quedó" : `${r.cambiados} movimientos quedaron`}` +
+        (nombre ? ` en ${nombre}` : " categorizados"),
+    );
+    salirDeSeleccion();
+    await cargar();
+  }
+
   if (cargando) {
     return (
       <View style={e.centrado}>
@@ -239,6 +283,39 @@ export default function Movimientos() {
   );
   const todosElegidos =
     seleccionables.length > 0 && elegidos.length === seleccionables.length;
+
+  // Cuánto se usó cada categoría en el mes cargado: con eso se ordenan las
+  // sugeridas de la bandeja. La web lo resuelve en el server con los últimos 60
+  // días (categoriasRecientes); acá el mes entero ya está en memoria y sacar
+  // otra consulta para tres chips no se paga.
+  const usoPorCategoria = new Map<string, number>();
+  for (const m of historial) {
+    if (m.categoriaId) {
+      usoPorCategoria.set(m.categoriaId, (usoPorCategoria.get(m.categoriaId) ?? 0) + 1);
+    }
+  }
+
+  // Qué categorías se ofrecen para categorizar EN LOTE. Misma regla que la
+  // bandeja, pero mirando todo lo elegido:
+  //  · ámbito — si lo elegido es todo del mismo lado, las de ese lado; si
+  //    mezcla, solo las del hogar: una categoría personal es de un miembro y
+  //    ponérsela a un movimiento compartido lo dejaría sin categoría para el
+  //    resto del hogar.
+  //  · tipo — un ingreso se categoriza con las de Ingresos y un gasto con el
+  //    resto; si la selección mezcla, no se filtra por grupo.
+  const movimientosElegidos = historial.filter((m) => elegidos.includes(m.id));
+  const ambitosElegidos = new Set(movimientosElegidos.map((m) => m.ambito));
+  const ambitoDelLote = ambitosElegidos.size === 1 ? [...ambitosElegidos][0] : "hogar";
+  const soloIngresos =
+    movimientosElegidos.length > 0 && movimientosElegidos.every((m) => m.esIngreso);
+  const soloGastos =
+    movimientosElegidos.length > 0 && movimientosElegidos.every((m) => !m.esIngreso);
+  const categoriasDelLote = categorias.filter((c) => {
+    if (c.ambito !== ambitoDelLote) return false;
+    if (soloIngresos) return c.grupo === GRUPO_INGRESOS;
+    if (soloGastos) return c.grupo !== GRUPO_INGRESOS;
+    return true;
+  });
 
   // claveNombre (@dominio/categorias): sin tildes ni mayúsculas, para que
   // "cafe" encuentre "Café". Busca en descripción O categoría, como la web.
@@ -291,7 +368,18 @@ export default function Movimientos() {
         />
       }
     >
-      <Text style={e.titulo}>Movimientos</Text>
+      {/* Título + avatar del hogar. La entrada a /hogar vivía solo en Resumen:
+          en las otras tres tabs desaparecía, y volver atrás para cambiar de
+          pantalla es el tipo de cosa que se aprende mal una vez y molesta
+          siempre. Misma anatomía que resumen.tsx (34px, inicial, → /hogar). */}
+      <View style={e.encabezado}>
+        <Text style={e.titulo}>Movimientos</Text>
+        <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
+          <Text style={e.avatarTexto}>
+            {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
+          </Text>
+        </Pressable>
+      </View>
 
       <NavegadorMes
         mes={mes}
@@ -302,17 +390,40 @@ export default function Movimientos() {
         }}
       />
 
-      <Solapas
-        activa={vista}
-        opciones={[
-          { clave: "lista" as const, etiqueta: "Lista" },
-          { clave: "categorias" as const, etiqueta: "Por categoría" },
-        ]}
-        alElegir={(v) => {
-          salirDeSeleccion();
-          setVista(v);
-        }}
-      />
+      {/* Lista / por categoría: EL MISMO par de íconos que Presupuesto. Es la
+          misma pregunta ("¿cómo miro esto?") y dibujarla acá como solapas de
+          texto de ancho completo la hacía parecer otra cosa —y se comía una
+          banda entera de alto arriba del totalizador. */}
+      <View style={e.filaVista}>
+        <View style={e.conmutadorVista}>
+          {(
+            [
+              { clave: "lista", Icono: List, etiqueta: "Ver lista" },
+              { clave: "categorias", Icono: ChartPie, etiqueta: "Ver por categoría" },
+            ] as const
+          ).map(({ clave, Icono, etiqueta }) => (
+            <Pressable
+              key={clave}
+              onPress={() => {
+                if (vista === clave) return;
+                tacto.toque();
+                salirDeSeleccion();
+                setVista(clave);
+              }}
+              accessibilityLabel={etiqueta}
+              accessibilityRole="button"
+              accessibilityState={{ selected: vista === clave }}
+              style={[e.botonVista, vista === clave && e.vistaActiva]}
+            >
+              <Icono
+                size={17}
+                color={vista === clave ? color.tinta : color.tintaSecundaria}
+                strokeWidth={1.8}
+              />
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
       {aviso && <Text style={e.aviso}>{aviso}</Text>}
 
@@ -451,12 +562,21 @@ export default function Movimientos() {
             const delAmbito = categorias.filter(
               (c) =>
                 c.ambito === m.ambito &&
-                (m.esIngreso ? c.grupo === "Ingresos" : c.grupo !== "Ingresos"),
+                (m.esIngreso ? c.grupo === GRUPO_INGRESOS : c.grupo !== GRUPO_INGRESOS),
             );
+            // igual que la web: 3 sugeridas (las más usadas del mes) + "todas →",
+            // que despliega la grilla completa. Volcar veinte chips de una hacía
+            // de la fila abierta un muro en vez de una decisión de un toque.
+            const sugeridas = [...delAmbito]
+              .sort((a, b) => (usoPorCategoria.get(b.id) ?? 0) - (usoPorCategoria.get(a.id) ?? 0))
+              .slice(0, 3);
             return (
               <View key={m.id} style={i > 0 ? e.conBorde : undefined}>
                 <Pressable
-                  onPress={() => setAbiertoId(abierto ? null : m.id)}
+                  onPress={() => {
+                    setAbiertoId(abierto ? null : m.id);
+                    setGrillaAbierta(false);
+                  }}
                   style={e.bandejaFila}
                 >
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -477,20 +597,48 @@ export default function Movimientos() {
                   />
                 </Pressable>
 
-                {abierto && (
-                  <View style={e.chipsCategoria}>
-                    {delAmbito.map((c) => (
-                      <Pressable
-                        key={c.id}
-                        onPress={() => categorizar(m.id, c.id)}
-                        style={e.chipCategoria}
-                      >
-                        <IconoCategoria nombre={c.icono} tamano={13} />
-                        <Text style={e.chipCategoriaTexto}>{c.nombre}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                )}
+                {abierto &&
+                  (grillaAbierta ? (
+                    <View style={e.grillaCategorias}>
+                      {delAmbito.map((c) => (
+                        <Pressable
+                          key={c.id}
+                          onPress={() => categorizar(m.id, c.id)}
+                          style={e.celdaCategoria}
+                        >
+                          <IconoCategoria nombre={c.icono} />
+                          <Text numberOfLines={1} style={e.celdaCategoriaTexto}>
+                            {c.nombre}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : (
+                    <View style={e.chipsCategoria}>
+                      {sugeridas.map((c) => (
+                        <Pressable
+                          key={c.id}
+                          onPress={() => categorizar(m.id, c.id)}
+                          style={e.chipCategoria}
+                        >
+                          <IconoCategoria nombre={c.icono} tamano={13} />
+                          <Text style={e.chipCategoriaTexto}>{c.nombre}</Text>
+                        </Pressable>
+                      ))}
+                      {delAmbito.length > sugeridas.length && (
+                        <Pressable
+                          onPress={() => {
+                            tacto.toque();
+                            setGrillaAbierta(true);
+                          }}
+                          accessibilityLabel="Ver todas las categorías"
+                          style={e.chipCategoria}
+                        >
+                          <Text style={e.chipCategoriaTexto}>todas →</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  ))}
               </View>
             );
           })}
@@ -588,7 +736,9 @@ export default function Movimientos() {
           </View>
         ))
       )}
-      {seleccionando && <View style={{ height: 130 }} />}
+      {/* aire para que la barra fija no tape el último movimiento (la barra
+          creció: además de mover, categoriza) */}
+      {seleccionando && <View style={{ height: 190 }} />}
         </>
       )}
     </ScrollView>
@@ -598,12 +748,23 @@ export default function Movimientos() {
         cantidad={elegidos.length}
         fecha={fechaDestino}
         pendiente={moviendo}
+        pendienteCategoria={categorizando}
+        puedeCategorizar={categoriasDelLote.length > 0}
         abajo={insets.bottom}
         alElegirFecha={setFechaDestino}
         alMover={mover}
+        alCategorizar={() => setHojaCategorias(true)}
         alCancelar={salirDeSeleccion}
       />
     )}
+
+    <HojaCategorias
+      abierta={hojaCategorias}
+      cantidad={elegidos.length}
+      categorias={categoriasDelLote}
+      alElegir={categorizarLote}
+      alCerrar={() => setHojaCategorias(false)}
+    />
 
     <HojaFiltro
       abierta={hojaFiltro !== null}
@@ -708,6 +869,68 @@ function HojaFiltro({
   );
 }
 
+/**
+ * Hoja para categorizar EN LOTE (mismo patrón AgregarPartida que HojaFiltro).
+ * Lista con ícono y nombre: la categoría se elige de un toque y se aplica a
+ * todo lo seleccionado, sin paso de confirmación — deshacer es volver a
+ * elegir, y una selección ya es una confirmación.
+ */
+function HojaCategorias({
+  abierta,
+  cantidad,
+  categorias,
+  alElegir,
+  alCerrar,
+}: {
+  abierta: boolean;
+  cantidad: number;
+  categorias: CategoriaSimple[];
+  alElegir: (categoriaId: string) => void;
+  alCerrar: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal visible={abierta} transparent animationType="slide" onRequestClose={alCerrar}>
+      <View style={h.lleno}>
+        <Pressable style={h.fondo} onPress={alCerrar} />
+        <View style={[h.hoja, { paddingBottom: Math.max(20, insets.bottom) }]}>
+          <View aria-hidden style={h.agarre} />
+          <View style={h.filaTitulo}>
+            <Text style={h.titulo}>
+              {cantidad === 1
+                ? "Categoría del movimiento"
+                : `Categoría de ${cantidad} movimientos`}
+            </Text>
+            <Pressable onPress={alCerrar} hitSlop={10}>
+              <X size={22} color={color.tintaSecundaria} strokeWidth={2} />
+            </Pressable>
+          </View>
+          <Text style={h.ayuda}>
+            Se aplica a todo lo elegido. La categoría anterior se reemplaza.
+          </Text>
+          <ScrollView style={{ maxHeight: 380 }}>
+            {categorias.map((c, i) => (
+              <Pressable
+                key={c.id}
+                onPress={() => {
+                  tacto.toque();
+                  alCerrar();
+                  alElegir(c.id);
+                }}
+                style={[h.opcion, h.opcionCategoria, i > 0 && h.opcionConBorde]}
+              >
+                <IconoCategoria nombre={c.icono} tamano={17} />
+                <Text style={h.opcionTexto}>{c.nombre}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 function OpcionFila({
   etiqueta,
   seleccionada,
@@ -766,6 +989,15 @@ const h = StyleSheet.create({
     gap: 12,
     paddingVertical: 13,
   },
+  opcionCategoria: { justifyContent: "flex-start", gap: 10 },
+  ayuda: {
+    marginTop: 2,
+    marginBottom: 6,
+    fontSize: 11.5,
+    lineHeight: 17,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   opcionConBorde: { borderTopWidth: 1, borderTopColor: color.separador },
   opcionTexto: { flexShrink: 1, fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
   opcionTextoActivo: { fontFamily: fuente.textoSemi, color: color.verde },
@@ -773,6 +1005,21 @@ const h = StyleSheet.create({
 
 const e = StyleSheet.create({
   pantalla: { flex: 1, backgroundColor: color.papel },
+  filaVista: { marginTop: 12, flexDirection: "row", justifyContent: "flex-end" },
+  conmutadorVista: {
+    flexDirection: "row",
+    borderRadius: 11,
+    backgroundColor: color.fondoSegmented,
+    padding: 2,
+  },
+  botonVista: {
+    width: 44,
+    height: 33,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9,
+  },
+  vistaActiva: { backgroundColor: color.segmentedActivo },
   filaSeleccion: {
     marginTop: 14,
     flexDirection: "row",
@@ -872,7 +1119,21 @@ const e = StyleSheet.create({
   totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },
   totalEtiqueta: { fontSize: 10.5, color: color.tintaSecundaria },
   totalCifra: { marginTop: 2, fontSize: 14, fontWeight: "600", color: color.tinta },
+  encabezado: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: color.tinta,
+  },
+  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
   bandeja: {
     marginTop: 16,
     borderRadius: radio.card,
@@ -928,6 +1189,31 @@ const e = StyleSheet.create({
     paddingVertical: 5,
   },
   chipCategoriaTexto: { fontSize: 11.5, fontWeight: "500", color: color.tintaSecundaria },
+  grillaCategorias: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+  },
+  celdaCategoria: {
+    width: "23%",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 2,
+    paddingVertical: 9,
+  },
+  celdaCategoriaTexto: {
+    width: "100%",
+    textAlign: "center",
+    fontSize: 10,
+    fontWeight: "500",
+    color: color.tinta,
+  },
   dia: {
     marginTop: 20,
     marginBottom: 8,

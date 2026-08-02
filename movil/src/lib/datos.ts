@@ -417,6 +417,13 @@ export type MovimientoFila = {
   cierreCiclo: { fechaCierre: string; estado: "estimado" | "confirmado" } | null;
   /** lo que solo mira el detalle: la lista no los usa */
   tipo: "gasto" | "ingreso" | "transferencia" | "pago_resumen";
+  /**
+   * Nombre del miembro que lo cargó, para la fila "Cargado por". Null en un
+   * hogar de una sola persona: ahí la pregunta no existe y la fila sería ruido
+   * en cada movimiento.
+   */
+  cargadoPor: string | null;
+  esPropio: boolean;
   nota: string | null;
   nCuotasTotal: number | null;
   /** para el formulario de edición */
@@ -433,6 +440,7 @@ type FilaMovimientoDb = {
   fecha: string;
   tipo: string;
   visibilidad: string;
+  user_id: string;
   n_cuota: number | null;
   nota: string | null;
   compra_id: string | null;
@@ -452,13 +460,36 @@ type FilaMovimientoDb = {
 // OJO: movimientos tiene DOS FK a cuentas (cuenta_id y cuenta_destino_id), así
 // que el embed hay que desambiguarlo por nombre de constraint o PostgREST falla.
 const SELECT_MOVIMIENTO =
-  "id, descripcion, importe_centavos, fecha, tipo, visibilidad, n_cuota, nota, " +
+  "id, descripcion, importe_centavos, fecha, tipo, visibilidad, user_id, n_cuota, nota, " +
   "compra_id, cuenta_id, tarjeta_id, " +
   "categorias(id, nombre, icono), cuentas!movimientos_cuenta_id_fkey(nombre), " +
   "tarjetas(nombre, ultimos4), ciclos_tarjeta(fecha_cierre, estado_fechas, estado), " +
   "compras_en_cuotas(n_cuotas)";
 
-function aFila(m: FilaMovimientoDb): MovimientoFila {
+/**
+ * Nombre de cada miembro del hogar, por user_id — lo que contesta "¿esto lo
+ * cargaste vos o yo?" en el detalle.
+ *
+ * Va aparte y no embebido en SELECT_MOVIMIENTO porque no hay por dónde
+ * embeberlo: `movimientos.user_id` referencia `auth.users`, igual que
+ * `miembros_hogar.user_id`, y sin FK entre las dos tablas PostgREST no ve la
+ * relación. Es una consulta de dos filas y sale en paralelo con la lista.
+ * Espeja nombresDeMiembros de lib/datos/movimientos.ts (web).
+ */
+export async function nombresDeMiembros(
+  sesion: SesionHogar,
+): Promise<Map<string, string>> {
+  const { data } = await supabase
+    .from("miembros_hogar")
+    .select("user_id, nombre")
+    .eq("hogar_id", sesion.hogarId);
+  return new Map<string, string>((data ?? []).map((m) => [m.user_id, m.nombre]));
+}
+
+/** El contexto que `aFila` necesita para resolver "cargado por". */
+type QuienCarga = { userId: string; nombres: Map<string, string> };
+
+function aFila(m: FilaMovimientoDb, quien: QuienCarga): MovimientoFila {
   // "Visa Galicia •• 4321" o "Mercado Pago"
   const medio = m.tarjetas
     ? `${m.tarjetas.nombre} •• ${m.tarjetas.ultimos4}`
@@ -487,6 +518,9 @@ function aFila(m: FilaMovimientoDb): MovimientoFila {
           }
         : null,
     tipo: m.tipo as MovimientoFila["tipo"],
+    // en un hogar de a uno siempre sos vos: la fila no aporta nada y no se manda
+    cargadoPor: quien.nombres.size > 1 ? (quien.nombres.get(m.user_id) ?? null) : null,
+    esPropio: m.user_id === quien.userId,
     nota: m.nota ?? null,
     nCuotasTotal: m.compras_en_cuotas?.n_cuotas ?? null,
     categoriaId: m.categorias?.id ?? null,
@@ -517,8 +551,10 @@ export async function movimientosCategorizados(
   if (opciones.mes) {
     consulta = consulta.gte("fecha", opciones.mes).lte("fecha", ultimoDiaDelMes(opciones.mes));
   }
-  const { data } = await consulta;
-  return ((data ?? []) as unknown as FilaMovimientoDb[]).map(aFila);
+  const [{ data }, nombres] = await Promise.all([consulta, nombresDeMiembros(sesion)]);
+  return ((data ?? []) as unknown as FilaMovimientoDb[]).map((m) =>
+    aFila(m, { userId: sesion.userId, nombres }),
+  );
 }
 
 /**
@@ -528,16 +564,69 @@ export async function movimientosCategorizados(
  * cuota).
  */
 export async function bandejaDeEntrada(sesion: SesionHogar): Promise<MovimientoFila[]> {
+  const [{ data }, nombres] = await Promise.all([
+    supabase
+      .from("movimientos")
+      .select(SELECT_MOVIMIENTO)
+      .eq("hogar_id", sesion.hogarId)
+      .is("categoria_id", null)
+      .is("compra_id", null)
+      .in("tipo", ["gasto", "ingreso"])
+      .order("creado_el", { ascending: false })
+      .limit(20),
+    nombresDeMiembros(sesion),
+  ]);
+  return ((data ?? []) as unknown as FilaMovimientoDb[]).map((m) =>
+    aFila(m, { userId: sesion.userId, nombres }),
+  );
+}
+
+// ──────────────────────────────────────────────────────── categorías recientes
+
+/** ventana de "reciente" para ordenar la grilla del alta rápida */
+const DIAS_RECIENTES = 60;
+/** cuántos tiles entran antes del "todas →" (2 filas de 4, como la web) */
+export const TOPE_RECIENTES = 8;
+
+/**
+ * Cuántas veces se usó cada categoría en los últimos 60 días.
+ *
+ * Es la mitad "de servidor" de categoriasRecientes de lib/datos/movimientos.ts
+ * (web). Allá la función hace las dos consultas y devuelve las 8 ya recortadas;
+ * acá se parte en dos porque el alta rápida cambia de ámbito y de tipo sin
+ * volver al servidor: el conteo se pide UNA vez al montar y el recorte se
+ * rehace en el cliente con cada toque del segmented.
+ */
+export async function usosDeCategorias(sesion: SesionHogar): Promise<Map<string, number>> {
+  const desde = new Date(Date.now() - DIAS_RECIENTES * 86400000).toISOString().slice(0, 10);
   const { data } = await supabase
     .from("movimientos")
-    .select(SELECT_MOVIMIENTO)
+    .select("categoria_id")
     .eq("hogar_id", sesion.hogarId)
-    .is("categoria_id", null)
-    .is("compra_id", null)
-    .in("tipo", ["gasto", "ingreso"])
-    .order("creado_el", { ascending: false })
-    .limit(20);
-  return ((data ?? []) as unknown as FilaMovimientoDb[]).map(aFila);
+    .eq("tipo", "gasto")
+    .gte("fecha", desde)
+    .not("categoria_id", "is", null);
+  const conteo = new Map<string, number>();
+  for (const u of data ?? []) {
+    conteo.set(u.categoria_id, (conteo.get(u.categoria_id) ?? 0) + 1);
+  }
+  return conteo;
+}
+
+/**
+ * Las categorías recientes para la grilla del alta: por frecuencia de uso,
+ * completadas por el orden del hogar (el sort es estable, así que las que nunca
+ * usaste quedan en el orden en que las creaste). Espeja el recorte de
+ * categoriasRecientes de lib/datos/movimientos.ts.
+ */
+export function categoriasRecientes<T extends { id: string }>(
+  categorias: readonly T[],
+  usos: Map<string, number>,
+  tope: number = TOPE_RECIENTES,
+): T[] {
+  return [...categorias]
+    .sort((a, b) => (usos.get(b.id) ?? 0) - (usos.get(a.id) ?? 0))
+    .slice(0, tope);
 }
 
 // ──────────────────────────────────────────────────────── avisos (resumen)
@@ -875,15 +964,20 @@ export async function movimientosDeCiclo(
   sesion: SesionHogar,
   cicloId: string,
 ): Promise<MovimientoFila[]> {
-  const { data } = await supabase
-    .from("movimientos")
-    .select(SELECT_MOVIMIENTO)
-    .eq("hogar_id", sesion.hogarId)
-    .eq("ciclo_id", cicloId)
-    .eq("tipo", "gasto")
-    .order("fecha", { ascending: false })
-    .order("creado_el", { ascending: false });
-  return ((data ?? []) as unknown as FilaMovimientoDb[]).map(aFila);
+  const [{ data }, nombres] = await Promise.all([
+    supabase
+      .from("movimientos")
+      .select(SELECT_MOVIMIENTO)
+      .eq("hogar_id", sesion.hogarId)
+      .eq("ciclo_id", cicloId)
+      .eq("tipo", "gasto")
+      .order("fecha", { ascending: false })
+      .order("creado_el", { ascending: false }),
+    nombresDeMiembros(sesion),
+  ]);
+  return ((data ?? []) as unknown as FilaMovimientoDb[]).map((m) =>
+    aFila(m, { userId: sesion.userId, nombres }),
+  );
 }
 
 export type TotalesCiclo = {

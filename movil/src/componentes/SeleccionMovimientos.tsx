@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { CalendarArrowDown, Check, X } from "lucide-react-native";
+import { CalendarArrowDown, Check, Tag, X } from "lucide-react-native";
 import { color, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { aISO, desdeISO } from "@/lib/fecha-local";
@@ -62,35 +62,47 @@ export function FilaSeleccionable({
 }
 
 /**
- * Barra de acción: cuántos elegiste y a qué fecha moverlos. Va fija abajo y
+ * Barra de acción: cuántos elegiste y qué hacer con ellos. Va fija abajo y
  * tapando la tab bar a propósito: mientras seleccionás estás en un modo, y
  * ofrecer "Patrimonio" al lado de "Mover 3" invita a perder la selección.
+ *
+ * Dos acciones sobre la misma selección: moverlos de fecha y CATEGORIZARLOS en
+ * tanda ("estas cinco cargas van todas a SUBE"). La categoría se elige en la
+ * hoja inferior que abre la pantalla, patrón AgregarPartida.
  */
 export function BarraSeleccion({
   cantidad,
   fecha,
   pendiente,
+  pendienteCategoria,
+  puedeCategorizar,
   abajo,
   alElegirFecha,
   alMover,
+  alCategorizar,
   alCancelar,
 }: {
   cantidad: number;
   fecha: string;
   pendiente: boolean;
+  pendienteCategoria: boolean;
+  /** sin categorías que apliquen a todo lo elegido no se ofrece la acción */
+  puedeCategorizar: boolean;
   /** safe area inferior */
   abajo: number;
   alElegirFecha: (f: string) => void;
   alMover: () => void;
+  alCategorizar: () => void;
   alCancelar: () => void;
 }) {
-  const listo = cantidad > 0 && !pendiente;
+  const ocupado = pendiente || pendienteCategoria;
+  const listo = cantidad > 0 && !ocupado;
   return (
     <View style={[e.barra, { paddingBottom: Math.max(20, abajo) }]}>
       <View style={e.barraFila}>
         <Text style={e.cuenta}>
           {cantidad === 0
-            ? "Elegí movimientos para mover"
+            ? "Elegí movimientos"
             : `${cantidad} ${cantidad === 1 ? "elegido" : "elegidos"}`}
         </Text>
         <Pressable onPress={alCancelar} hitSlop={10} style={e.cancelar}>
@@ -119,6 +131,22 @@ export function BarraSeleccion({
           <Text style={e.ctaTexto}>{pendiente ? "Moviendo…" : "Mover"}</Text>
         </Pressable>
       </View>
+
+      {puedeCategorizar && (
+        <Pressable
+          onPress={() => {
+            tacto.toque();
+            alCategorizar();
+          }}
+          disabled={!listo}
+          style={[e.ctaSecundaria, !listo && { opacity: 0.4 }]}
+        >
+          <Tag size={17} color={color.tinta} strokeWidth={1.8} />
+          <Text style={e.ctaSecundariaTexto}>
+            {pendienteCategoria ? "Categorizando…" : "Categorizar"}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -181,4 +209,16 @@ const e = StyleSheet.create({
     backgroundColor: color.verde,
   },
   ctaTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
+  ctaSecundaria: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 44,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+  },
+  ctaSecundariaTexto: { fontSize: 14, fontWeight: "600", color: color.tinta },
 });

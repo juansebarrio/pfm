@@ -16,6 +16,7 @@ import { formatearImporte, formatearPorcentaje } from "@dominio/dinero";
 import {
   diaDelMes,
   diasDelMes,
+  formatearDiaCorto,
   formatearMesSolo,
   hoyBA,
   mesAnterior,
@@ -23,21 +24,24 @@ import {
 } from "@dominio/fechas";
 import {
   categoriasDelHogar,
+  confirmarRecurrente,
   repetirPresupuesto,
   type CategoriaSimple,
 } from "@/lib/acciones";
 import {
   obtenerPresupuestoMes,
   obtenerSesionHogar,
+  sugerenciasRecurrentes,
   type PartidaConEstado,
   type PresupuestoMes,
   type SesionHogar,
+  type SugerenciaRecurrente,
 } from "@/lib/datos";
 import { AgregarPartida } from "@/componentes/AgregarPartida";
 import { EditarPartida, type PartidaParaEditar } from "@/componentes/EditarPartida";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
-import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import {
   Card,
@@ -54,8 +58,13 @@ import {
 type Ambito = "hogar" | "personal";
 
 /** PartidaConEstado → props de CardPartida, con el léxico verbatim del export. */
-function aDatosPartida(p: PartidaConEstado, mes: string): DatosPartida {
+function aDatosPartida(
+  p: PartidaConEstado,
+  mes: string,
+  sugerencias: SugerenciaRecurrente[],
+): DatosPartida {
   const notaDiceBroker = (p.nota ?? "").toLowerCase().includes("broker");
+  const sugerencia = sugerencias.find((s) => s.categoriaId === p.categoriaId);
   return {
     nombre: p.nombre,
     icono: p.icono,
@@ -67,12 +76,76 @@ function aDatosPartida(p: PartidaConEstado, mes: string): DatosPartida {
     estado: p.resultado.estado,
     excedenteProyectadoCentavos: p.resultado.excedenteProyectadoCentavos,
     sufijoMeta: notaDiceBroker || p.esAhorro ? "· a Broker" : p.fija ? "· fijo" : undefined,
+    avisoRecurrente: sugerencia
+      ? `recurrente · vence el ${formatearDiaCorto(sugerencia.fechaVencimiento)}`
+      : undefined,
     textoRollover:
       p.rolloverCentavos > 0
         ? `arrastrás + ${formatearImporte(p.rolloverCentavos)} de ${formatearMesSolo(mesAnterior(mes))}`
         : undefined,
     esAhorro: p.esAhorro,
   };
+}
+
+/**
+ * Fila fantasma: un recurrente que este mes todavía no tiene movimiento. Va al
+ * final del grupo de su categoría, tenue, y se confirma con un tap — nunca se
+ * autoinserta. Vive acá y no en componentes/sistema.tsx porque es una fila de
+ * ESTA pantalla, no una pieza del sistema: la web tampoco la generalizó.
+ */
+function FilaRecurrente({
+  sugerencia,
+  sesion,
+  mes,
+  alConfirmar,
+}: {
+  sugerencia: SugerenciaRecurrente;
+  sesion: SesionHogar | null;
+  mes: string;
+  alConfirmar: () => Promise<void> | void;
+}) {
+  const [pendiente, setPendiente] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmar() {
+    if (!sesion || pendiente) return;
+    setError(null);
+    setPendiente(true);
+    tacto.toque();
+    const r = await confirmarRecurrente(sesion, sugerencia.id, mes);
+    if (r.ok) {
+      tacto.guardado();
+      await alConfirmar();
+      // la recarga hace desaparecer la fila: la categoría ya tiene gasto
+      return;
+    }
+    tacto.error();
+    setError(r.error);
+    setPendiente(false);
+  }
+
+  return (
+    <View style={[e.fantasma, pendiente && { opacity: 0.6 }]}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text numberOfLines={1} style={e.fantasmaTitulo}>
+          {sugerencia.descripcion}
+        </Text>
+        <Text style={e.fantasmaDetalle}>
+          vence el {formatearDiaCorto(sugerencia.fechaVencimiento)} ·{" "}
+          {formatearImporte(sugerencia.importeSugeridoCentavos)} sugerido
+        </Text>
+        {error && <Text style={e.fantasmaError}>{error}</Text>}
+      </View>
+      <Pressable
+        onPress={confirmar}
+        disabled={pendiente}
+        hitSlop={10}
+        accessibilityLabel={`Confirmar ${sugerencia.descripcion}`}
+      >
+        <Text style={e.fantasmaAccion}>{pendiente ? "Confirmando…" : "Confirmar"}</Text>
+      </Pressable>
+    </View>
+  );
 }
 
 export default function Presupuesto() {
@@ -92,6 +165,7 @@ export default function Presupuesto() {
   const [partidaEditar, setPartidaEditar] = useState<PartidaParaEditar | null>(null);
   const [agregando, setAgregando] = useState(false);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
+  const [sugerencias, setSugerencias] = useState<SugerenciaRecurrente[]>([]);
 
   async function repetir() {
     if (!sesion || repitiendo) return;
@@ -106,12 +180,15 @@ export default function Presupuesto() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [p, cats] = await Promise.all([
+    const [p, cats, recurrentes] = await Promise.all([
       obtenerPresupuestoMes(s, mes, ambito),
       categoriasDelHogar(s),
+      // los recurrentes son del hogar, no del ámbito: se filtran al pintarlos
+      sugerenciasRecurrentes(s, mes),
     ]);
     setPresupuesto(p);
     setCategorias(cats);
+    setSugerencias(recurrentes);
     // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
     setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
@@ -158,7 +235,18 @@ export default function Presupuesto() {
           dos chevrons pegados al título y allá una fila centrada, y dos formas
           de hacer lo mismo en pantallas hermanas se leen como dos apps. */}
       <View style={[e.encabezado, { paddingTop: insets.top + 12 }]}>
-        <Text style={e.titulo}>Presupuesto</Text>
+        {/* El avatar del hogar va arriba a la derecha, alineado con el título y
+            por encima del navegador de mes: la entrada a /hogar vivía solo en
+            Resumen y en las otras tres tabs desaparecía. Misma anatomía que
+            resumen.tsx (34px, inicial, → /hogar). */}
+        <View style={e.filaTitulo}>
+          <Text style={e.titulo}>Presupuesto</Text>
+          <Pressable onPress={() => router.push("/hogar")} hitSlop={8} style={e.avatar}>
+            <Text style={e.avatarTexto}>
+              {(sesion?.nombreMiembro ?? "?").charAt(0).toUpperCase()}
+            </Text>
+          </Pressable>
+        </View>
         <NavegadorMes mes={mes} mesActual={mesDe(hoy)} alCambiar={setMes} />
         {/* Una sola fila para los dos ejes. Son preguntas distintas y por eso
             se ven distintas: Hogar/Personal elige QUÉ plata (texto, ancho) y el
@@ -336,32 +424,49 @@ export default function Presupuesto() {
             </View>
           </View>
 
-          {/* Grupos de partidas: cada sobre se ajusta tocándolo */}
-          {presupuesto.grupos.map((g) => (
-            <View key={g.grupo}>
-              <EncabezadoSeccion>{g.grupo}</EncabezadoSeccion>
-              <Card>
-                {g.partidas.map((p, i) => (
-                  <Pressable
-                    key={p.id}
-                    onPress={() => {
-                      tacto.toque();
-                      setPartidaEditar({
-                        id: p.id,
-                        nombre: p.nombre,
-                        asignadoCentavos: p.asignadoCentavos,
-                        gastadoCentavos: p.gastadoCentavos,
-                        fija: p.fija,
-                      });
-                    }}
-                    style={i > 0 ? e.conBorde : undefined}
-                  >
-                    <CardPartida {...aDatosPartida(p, mes)} />
-                  </Pressable>
-                ))}
-              </Card>
-            </View>
-          ))}
+          {/* Grupos de partidas: cada sobre se ajusta tocándolo, y al final
+              del grupo van las filas fantasma de los recurrentes que vencen
+              este mes y todavía no se pagaron. */}
+          {presupuesto.grupos.map((g) => {
+            const fantasmas = sugerencias.filter((s) =>
+              g.partidas.some((p) => p.categoriaId === s.categoriaId),
+            );
+            return (
+              <View key={g.grupo}>
+                <EncabezadoSeccion>{g.grupo}</EncabezadoSeccion>
+                <Card>
+                  {g.partidas.map((p, i) => (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => {
+                        tacto.toque();
+                        setPartidaEditar({
+                          id: p.id,
+                          nombre: p.nombre,
+                          asignadoCentavos: p.asignadoCentavos,
+                          gastadoCentavos: p.gastadoCentavos,
+                          fija: p.fija,
+                        });
+                      }}
+                      style={i > 0 ? e.conBorde : undefined}
+                    >
+                      <CardPartida {...aDatosPartida(p, mes, sugerencias)} />
+                    </Pressable>
+                  ))}
+                  {fantasmas.map((s) => (
+                    <View key={s.id} style={e.conBorde}>
+                      <FilaRecurrente
+                        sugerencia={s}
+                        sesion={sesion}
+                        mes={mes}
+                        alConfirmar={cargar}
+                      />
+                    </View>
+                  ))}
+                </Card>
+              </View>
+            );
+          })}
           <Pressable
             onPress={() => {
               tacto.toque();
@@ -403,7 +508,21 @@ const e = StyleSheet.create({
     borderBottomColor: color.separador,
     gap: 10,
   },
+  filaTitulo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: color.tinta,
+  },
+  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
   filaControles: {
     marginTop: 14,
     flexDirection: "row",
@@ -460,4 +579,22 @@ const e = StyleSheet.create({
   },
   heroPieTexto: { fontSize: 10.5, color: color.tintaSecundaria },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
+  // Fila fantasma: no es una partida, es un recordatorio. Por eso el título va
+  // en tinta secundaria — pesa menos que los sobres reales de arriba.
+  fantasma: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  fantasmaTitulo: { fontSize: 14, fontWeight: "500", color: color.tintaSecundaria },
+  fantasmaDetalle: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.mono,
+    color: color.tintaSecundaria,
+  },
+  fantasmaError: { marginTop: 2, fontSize: 11, fontWeight: "500", color: color.rojo },
+  fantasmaAccion: { fontSize: 12.5, fontWeight: "500", color: color.verde },
 });

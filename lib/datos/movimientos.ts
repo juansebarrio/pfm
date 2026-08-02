@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { formatearDiaCorto, hoyBA, ultimoDiaDelMes } from "@/lib/dominio/fechas";
 import type { SesionHogar } from "./sesion";
 
@@ -11,6 +12,12 @@ export type MovimientoLista = {
   creadoEl: string;
   visibilidad: "personal" | "compartido";
   esPropio: boolean;
+  /**
+   * Nombre del miembro que lo cargó, para la fila "Cargado por" del detalle.
+   * Null en un hogar de una sola persona: ahí la pregunta no existe y la fila
+   * sería ruido en cada movimiento.
+   */
+  cargadoPor: string | null;
   categoria: { id: string; nombre: string; icono: string } | null;
   medio: string | null; // "Visa •• 4321", "Mercado Pago", "Galicia"
   /** para preseleccionar el medio al editar */
@@ -60,7 +67,41 @@ function nombreTarjeta(t: { red: string; ultimos4: string }): string {
   return `${red} •• ${t.ultimos4}`;
 }
 
-function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
+/**
+ * Nombre de cada miembro del hogar, por user_id.
+ *
+ * Va en una consulta aparte y no embebido en el SELECT del movimiento porque
+ * no hay por dónde embeberlo: `movimientos.user_id` referencia `auth.users`,
+ * igual que `miembros_hogar.user_id`, y sin FK entre las dos tablas PostgREST
+ * no ve la relación. `cache` la deja en UNA consulta por request, aunque la
+ * pantalla pida el historial y la bandeja por separado.
+ */
+export const nombresDeMiembros = cache(
+  async (sesion: SesionHogar): Promise<Map<string, string>> => {
+    const { data } = await sesion.supabase
+      .from("miembros_hogar")
+      .select("user_id, nombre")
+      .eq("hogar_id", sesion.hogarId);
+    return new Map<string, string>((data ?? []).map((m) => [m.user_id, m.nombre]));
+  },
+);
+
+/**
+ * El nombre a mostrar en "Cargado por", o null si no hay nada que contestar:
+ * hogar de a uno (siempre sos vos) o miembro que ya no está en el hogar.
+ */
+export function nombreDeQuienCargo(
+  nombres: Map<string, string>,
+  userId: string,
+): string | null {
+  return nombres.size > 1 ? (nombres.get(userId) ?? null) : null;
+}
+
+function aMovimiento(
+  fila: FilaCruda,
+  userId: string,
+  nombres: Map<string, string>,
+): MovimientoLista {
   return {
     id: fila.id,
     tipo: fila.tipo,
@@ -70,6 +111,7 @@ function aMovimiento(fila: FilaCruda, userId: string): MovimientoLista {
     creadoEl: fila.creado_el,
     visibilidad: fila.visibilidad,
     esPropio: fila.user_id === userId,
+    cargadoPor: nombreDeQuienCargo(nombres, fila.user_id),
     categoria: fila.categorias,
     medio: fila.tarjetas
       ? nombreTarjeta(fila.tarjetas)
@@ -98,29 +140,39 @@ export async function movimientosDeCiclo(
   sesion: SesionHogar,
   cicloId: string,
 ): Promise<MovimientoLista[]> {
-  const { data } = await sesion.supabase
-    .from("movimientos")
-    .select(CAMPOS)
-    .eq("hogar_id", sesion.hogarId)
-    .eq("ciclo_id", cicloId)
-    .eq("tipo", "gasto")
-    .order("fecha", { ascending: false })
-    .order("creado_el", { ascending: false });
-  return ((data ?? []) as unknown as FilaCruda[]).map((f) => aMovimiento(f, sesion.userId));
+  const [{ data }, nombres] = await Promise.all([
+    sesion.supabase
+      .from("movimientos")
+      .select(CAMPOS)
+      .eq("hogar_id", sesion.hogarId)
+      .eq("ciclo_id", cicloId)
+      .eq("tipo", "gasto")
+      .order("fecha", { ascending: false })
+      .order("creado_el", { ascending: false }),
+    nombresDeMiembros(sesion),
+  ]);
+  return ((data ?? []) as unknown as FilaCruda[]).map((f) =>
+    aMovimiento(f, sesion.userId, nombres),
+  );
 }
 
 /** Bandeja de entrada: sin categorizar (las cuotas hijas no cuentan). */
 export async function bandejaDeEntrada(sesion: SesionHogar): Promise<MovimientoLista[]> {
-  const { data } = await sesion.supabase
-    .from("movimientos")
-    .select(CAMPOS)
-    .eq("hogar_id", sesion.hogarId)
-    .is("categoria_id", null)
-    .is("compra_id", null)
-    .in("tipo", ["gasto", "ingreso"])
-    .order("creado_el", { ascending: false })
-    .limit(20);
-  return ((data ?? []) as unknown as FilaCruda[]).map((f) => aMovimiento(f, sesion.userId));
+  const [{ data }, nombres] = await Promise.all([
+    sesion.supabase
+      .from("movimientos")
+      .select(CAMPOS)
+      .eq("hogar_id", sesion.hogarId)
+      .is("categoria_id", null)
+      .is("compra_id", null)
+      .in("tipo", ["gasto", "ingreso"])
+      .order("creado_el", { ascending: false })
+      .limit(20),
+    nombresDeMiembros(sesion),
+  ]);
+  return ((data ?? []) as unknown as FilaCruda[]).map((f) =>
+    aMovimiento(f, sesion.userId, nombres),
+  );
 }
 
 /** Historial categorizado, más nuevo primero. */
@@ -143,8 +195,10 @@ export async function movimientosCategorizados(
   if (opciones.ambito === "hogar") consulta = consulta.eq("visibilidad", "compartido");
   if (opciones.ambito === "personal")
     consulta = consulta.eq("visibilidad", "personal").eq("user_id", sesion.userId);
-  const { data } = await consulta;
-  return ((data ?? []) as unknown as FilaCruda[]).map((f) => aMovimiento(f, sesion.userId));
+  const [{ data }, nombres] = await Promise.all([consulta, nombresDeMiembros(sesion)]);
+  return ((data ?? []) as unknown as FilaCruda[]).map((f) =>
+    aMovimiento(f, sesion.userId, nombres),
+  );
 }
 
 export type CategoriaSimple = {

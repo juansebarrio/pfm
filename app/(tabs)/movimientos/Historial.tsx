@@ -3,10 +3,15 @@
 import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ListChecks } from "lucide-react";
-import { actualizarFechasEnLote, borrarMovimiento } from "@/app/acciones/movimientos";
+import {
+  actualizarFechasEnLote,
+  borrarMovimiento,
+  categorizarEnLote,
+} from "@/app/acciones/movimientos";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
 import type { DatosFilaMovimiento } from "@/components/sistema/FilaMovimiento";
 import type { CategoriaSimple, MedioDePago, MovimientoLista } from "@/lib/datos/movimientos";
+import { GRUPO_INGRESOS } from "@/lib/dominio/categorias";
 import { etiquetaDia, formatearDiaCorto } from "@/lib/dominio/fechas";
 import { BarraSeleccion } from "./BarraSeleccion";
 import { DetalleMovimiento } from "./DetalleMovimiento";
@@ -18,8 +23,9 @@ import { FilaSwipe } from "./FilaSwipe";
 // falla. Una cuota borra la compra entera (todas sus hermanas de la lista).
 //
 // Y un segundo modo: SELECCIÓN. Elegís varios y les cambiás la fecha de una —
-// que es como se arrastra medio mes al siguiente sin abrir uno por uno. El
-// cambio de a uno sigue viviendo en el detalle del movimiento.
+// que es como se arrastra medio mes al siguiente sin abrir uno por uno— o los
+// CATEGORIZÁS en tanda ("estas cinco cargas van todas a SUBE"). El cambio de a
+// uno sigue viviendo en el detalle del movimiento.
 
 type Dia = { fecha: string; movimientos: MovimientoLista[] };
 
@@ -46,6 +52,7 @@ export function Historial({
   const [elegidos, setElegidos] = useState<Set<string>>(new Set());
   const [fechaDestino, setFechaDestino] = useState(hoy);
   const [moviendo, setMoviendo] = useState(false);
+  const [categorizando, setCategorizando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
 
   const todos = useMemo(() => dias.flatMap((d) => d.movimientos), [dias]);
@@ -116,6 +123,26 @@ export function Historial({
     router.refresh();
   }
 
+  async function categorizar(categoriaId: string) {
+    if (elegidos.size === 0 || categorizando) return;
+    setCategorizando(true);
+    setError(null);
+    setAviso(null);
+    const r = await categorizarEnLote({ movimientoIds: [...elegidos], categoriaId });
+    setCategorizando(false);
+    if (!r.ok) {
+      setError(r.error);
+      return;
+    }
+    const nombre = categorias.find((c) => c.id === categoriaId)?.nombre;
+    setAviso(
+      `${r.cambiados === 1 ? "1 movimiento quedó" : `${r.cambiados} movimientos quedaron`}` +
+        (nombre ? ` en ${nombre}` : " categorizados"),
+    );
+    salirDeSeleccion();
+    router.refresh();
+  }
+
   const visibles = dias
     .map((d) => ({ fecha: d.fecha, movimientos: d.movimientos.filter((m) => !ocultos.has(m.id)) }))
     .filter((d) => d.movimientos.length > 0);
@@ -124,6 +151,30 @@ export function Historial({
   const seleccionables = todos.filter((m) => !m.esCuota && !ocultos.has(m.id));
   const todosElegidos =
     seleccionables.length > 0 && elegidos.size === seleccionables.length;
+
+  // Qué categorías se ofrecen para el lote. Misma regla que la bandeja, pero
+  // mirando TODO lo elegido:
+  //  · ámbito — si lo elegido es todo del mismo lado, las de ese lado; si
+  //    mezcla, solo las del hogar: una categoría personal es de un miembro y
+  //    ponérsela a un movimiento compartido lo dejaría sin categoría para el
+  //    resto del hogar.
+  //  · tipo — un ingreso se categoriza con las de Ingresos y un gasto con el
+  //    resto; si la selección mezcla, no se filtra por grupo.
+  const movimientosElegidos = todos.filter((m) => elegidos.has(m.id));
+  const ambitosElegidos = new Set(
+    movimientosElegidos.map((m) => (m.visibilidad === "compartido" ? "hogar" : "personal")),
+  );
+  const ambitoDelLote = ambitosElegidos.size === 1 ? [...ambitosElegidos][0] : "hogar";
+  const soloIngresos =
+    movimientosElegidos.length > 0 && movimientosElegidos.every((m) => m.tipo === "ingreso");
+  const soloGastos =
+    movimientosElegidos.length > 0 && movimientosElegidos.every((m) => m.tipo !== "ingreso");
+  const categoriasDelLote = categorias.filter((c) => {
+    if (c.ambito !== ambitoDelLote) return false;
+    if (soloIngresos) return c.grupo === GRUPO_INGRESOS;
+    if (soloGastos) return c.grupo !== GRUPO_INGRESOS;
+    return true;
+  });
 
   return (
     <>
@@ -209,16 +260,20 @@ export function Historial({
         </Fragment>
       ))}
 
-      {/* aire para que la barra fija no tape el último movimiento */}
-      {seleccionando && <div className="h-36" />}
+      {/* aire para que la barra fija no tape el último movimiento (la barra
+          creció: además de mover, categoriza) */}
+      {seleccionando && <div className="h-52" />}
 
       {seleccionando && (
         <BarraSeleccion
           cantidad={elegidos.size}
           fecha={fechaDestino}
           pendiente={moviendo}
+          categorias={categoriasDelLote}
+          pendienteCategoria={categorizando}
           onFecha={setFechaDestino}
           onMover={mover}
+          onCategorizar={categorizar}
           onCancelar={salirDeSeleccion}
         />
       )}

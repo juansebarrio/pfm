@@ -38,7 +38,11 @@ type Props = {
 export function Bandeja({ items, sugeridas, categorias }: Props) {
   const router = useRouter();
   const [, iniciarTransicion] = useTransition();
-  const [abiertoId, setAbiertoId] = useState<string | null>(null);
+  // el PRIMER pendiente llega abierto: colapsada entera, la bandeja no enseña
+  // que tocando una fila se categoriza — se lee como una lista más. Con los
+  // chips a la vista, la acción se ve antes de tener que descubrirla (es como
+  // la dibuja el export). Solo el estado inicial: después manda el usuario.
+  const [abiertoId, setAbiertoId] = useState<string | null>(items[0]?.id ?? null);
   const [grillaAbierta, setGrillaAbierta] = useState(false);
   const [ocultos, setOcultos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);

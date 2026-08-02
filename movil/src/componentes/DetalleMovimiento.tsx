@@ -46,6 +46,18 @@ const NOMBRE_TIPO: Record<MovimientoFila["tipo"], string | null> = {
 
 const DURACION_MS = 280;
 
+/**
+ * "Cargado por": en un hogar de dos, "¿esto lo cargaste vos o yo?" no tenía
+ * respuesta en ningún lado. El nombre solo no alcanza — que diga cuál de los
+ * dos sos vos es la mitad del dato —, así que el propio se marca. En un hogar
+ * de a uno la capa de datos manda null y la fila no aparece. Espeja
+ * app/(tabs)/movimientos/DetalleMovimiento.tsx.
+ */
+function etiquetaCargadoPor(m: MovimientoFila): string | null {
+  if (m.cargadoPor === null) return null;
+  return m.esPropio ? `${m.cargadoPor} · vos` : m.cargadoPor;
+}
+
 export function DetalleMovimiento({
   movimiento,
   sesion,
@@ -101,6 +113,7 @@ export function DetalleMovimiento({
   }, [movimiento]);
 
   const m = movimiento ?? copia;
+  const cargadoPor = m ? etiquetaCargadoPor(m) : null;
   const editable =
     m !== null && (m.tipo === "gasto" || m.tipo === "ingreso") &&
     categorias.length > 0 && medios.length > 0;
@@ -190,6 +203,11 @@ export function DetalleMovimiento({
                   {m.ambito}
                 </Badge>
               </Fila>
+              {cargadoPor && (
+                <Fila etiqueta="Cargado por" conBorde>
+                  <Text style={e.valor}>{cargadoPor}</Text>
+                </Fila>
+              )}
               {/* a qué resumen de la tarjeta cae el consumo, mientras el ciclo
                   siga abierto — espejo de la fila "Ciclo" de la web, más el
                   estado cuando la fecha de cierre es estimada */}

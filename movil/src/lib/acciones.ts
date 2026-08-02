@@ -523,6 +523,81 @@ export async function actualizarFechasEnLote(
   return { ok: true, movidos, omitidos };
 }
 
+export type ResultadoCategorizarLote =
+  | { ok: true; cambiados: number }
+  | { ok: false; error: string };
+
+/**
+ * Categorizar VARIOS movimientos de una — "estas cinco cargas van todas a
+ * SUBE". Espeja categorizarEnLote de app/acciones/movimientos.ts, tope de 200
+ * ids incluido.
+ *
+ * CUOTAS: al revés que la fecha, acá NO se omiten. La categoría de una compra
+ * en cuotas es UNA —actualizarMovimiento ya la propaga a las hermanas por
+ * compra_id—, así que el lote hace lo mismo: si cae una cuota, se categoriza la
+ * compra entera. Por eso `cambiados` cuenta FILAS escritas y puede ser mayor
+ * que la cantidad de ids enviados.
+ */
+export async function categorizarEnLote(
+  sesion: SesionHogar,
+  movimientoIds: string[],
+  categoriaId: string,
+): Promise<ResultadoCategorizarLote> {
+  if (movimientoIds.length === 0) return { ok: false, error: "No elegiste ninguno" };
+  if (movimientoIds.length > 200) return { ok: false, error: "Son demasiados de una" };
+
+  // la categoría tiene que ser del hogar: un id de otro lado dejaría los
+  // movimientos apuntando a algo que nadie del hogar puede leer
+  const { data: categoria } = await supabase
+    .from("categorias")
+    .select("id")
+    .eq("id", categoriaId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!categoria) return { ok: false, error: "Esa categoría no es de tu hogar" };
+
+  const { data: movimientos } = await supabase
+    .from("movimientos")
+    .select("id, compra_id")
+    .in("id", movimientoIds)
+    .eq("hogar_id", sesion.hogarId);
+  if (!movimientos?.length) return { ok: false, error: "No encontramos esos movimientos" };
+
+  const sueltos = movimientos.filter((m) => !m.compra_id).map((m) => m.id as string);
+  const compras = [
+    ...new Set(
+      movimientos
+        .map((m) => m.compra_id as string | null)
+        .filter((c): c is string => c !== null),
+    ),
+  ];
+
+  let cambiados = 0;
+  if (sueltos.length > 0) {
+    const { data, error } = await supabase
+      .from("movimientos")
+      .update({ categoria_id: categoriaId })
+      .in("id", sueltos)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos categorizar" };
+    cambiados += data?.length ?? 0;
+  }
+  if (compras.length > 0) {
+    const { data, error } = await supabase
+      .from("movimientos")
+      .update({ categoria_id: categoriaId })
+      .in("compra_id", compras)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos categorizar las cuotas" };
+    cambiados += data?.length ?? 0;
+  }
+  if (cambiados === 0) return { ok: false, error: "No pudimos categorizar" };
+
+  return { ok: true, cambiados };
+}
+
 export async function actualizarFecha(
   sesion: SesionHogar,
   movimientoId: string,
@@ -991,6 +1066,50 @@ export async function armarPresupuesto(
     await supabase.from("presupuestos").delete().eq("id", presupuesto.id);
     return { ok: false, error: "No pudimos crear las partidas" };
   }
+  return { ok: true };
+}
+
+// ────────────────────────────────────────────── recurrentes
+
+/**
+ * Confirmar una fila fantasma de recurrente: crea el movimiento del mes con el
+ * importe sugerido, en la fecha de vencimiento. Espeja confirmarRecurrente de
+ * app/acciones/movimientos.ts.
+ *
+ * Un recurrente NUNCA se autoinserta — el gasto existe recién cuando alguien lo
+ * confirma con un tap. Si el recurrente es de tarjeta, el movimiento también
+ * tiene que caer en su ciclo, o el resumen queda mintiendo.
+ */
+export async function confirmarRecurrente(
+  sesion: SesionHogar,
+  recurrenteId: string,
+  mes: string,
+): Promise<Resultado> {
+  const { data: recurrente } = await supabase
+    .from("recurrentes")
+    .select("*")
+    .eq("id", recurrenteId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!recurrente) return { ok: false, error: "Recurrente inexistente" };
+
+  const fecha = `${mes.slice(0, 7)}-${String(recurrente.dia_mes).padStart(2, "0")}`;
+  const { error } = await supabase.from("movimientos").insert({
+    hogar_id: sesion.hogarId,
+    user_id: sesion.userId,
+    tipo: "gasto",
+    descripcion: recurrente.descripcion,
+    importe_centavos: recurrente.importe_sugerido_centavos,
+    fecha,
+    cuenta_id: recurrente.cuenta_id,
+    tarjeta_id: recurrente.tarjeta_id,
+    ciclo_id: recurrente.tarjeta_id
+      ? await asegurarCicloParaFecha(sesion, recurrente.tarjeta_id, fecha)
+      : null,
+    categoria_id: recurrente.categoria_id,
+    visibilidad: recurrente.visibilidad,
+  });
+  if (error) return { ok: false, error: "No pudimos registrar el pago" };
   return { ok: true };
 }
 

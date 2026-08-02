@@ -479,6 +479,91 @@ export async function actualizarFechasEnLote(entrada: unknown): Promise<Resultad
   return { ok: true, movidos, omitidos };
 }
 
+const esquemaCategorizarEnLote = z.object({
+  movimientoIds: z.array(z.uuid()).min(1).max(200),
+  categoriaId: z.uuid(),
+});
+
+export type ResultadoCategorizarLote =
+  | { ok: true; cambiados: number }
+  | { ok: false; error: string };
+
+/**
+ * Categorizar VARIOS movimientos de una — "estas cinco cargas van todas a
+ * SUBE". Es la versión masiva de categorizarMovimiento y espeja la validación
+ * de actualizarFechasEnLote: máximo 200 ids, solo lo del propio hogar, y el
+ * resultado se cuenta en vez de asumirse.
+ *
+ * CUOTAS: al revés que la fecha, acá NO se omiten. La categoría de una compra
+ * en cuotas es UNA —actualizarMovimiento ya la propaga a todas las hermanas
+ * por compra_id—, así que el lote hace lo mismo: si en la selección cae una
+ * cuota, se categoriza la compra entera. Por eso `cambiados` cuenta FILAS
+ * escritas y puede ser mayor que la cantidad de ids enviados. Hoy la selección
+ * del historial ni siquiera deja marcar cuotas (su fecha la manda la serie),
+ * pero la acción tiene que ser coherente sola.
+ */
+export async function categorizarEnLote(
+  entrada: unknown,
+): Promise<ResultadoCategorizarLote> {
+  const parseo = esquemaCategorizarEnLote.safeParse(entrada);
+  if (!parseo.success) return { ok: false, error: "Datos inválidos" };
+  const { movimientoIds, categoriaId } = parseo.data;
+
+  const sesion = await obtenerSesionHogar();
+  // la categoría tiene que ser del hogar: un id de otro lado dejaría los
+  // movimientos apuntando a algo que nadie del hogar puede leer
+  const { data: categoria } = await sesion.supabase
+    .from("categorias")
+    .select("id")
+    .eq("id", categoriaId)
+    .eq("hogar_id", sesion.hogarId)
+    .maybeSingle();
+  if (!categoria) return { ok: false, error: "Esa categoría no es de tu hogar" };
+
+  const { data: movimientos } = await sesion.supabase
+    .from("movimientos")
+    .select("id, compra_id")
+    .in("id", movimientoIds)
+    .eq("hogar_id", sesion.hogarId);
+  if (!movimientos?.length) return { ok: false, error: "No encontramos esos movimientos" };
+
+  const sueltos = movimientos.filter((m) => !m.compra_id).map((m) => m.id);
+  const compras = [
+    ...new Set(
+      movimientos.map((m) => m.compra_id).filter((c): c is string => c !== null),
+    ),
+  ];
+
+  let cambiados = 0;
+  if (sueltos.length > 0) {
+    const { data, error } = await sesion.supabase
+      .from("movimientos")
+      .update({ categoria_id: categoriaId })
+      .in("id", sueltos)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos categorizar" };
+    cambiados += data?.length ?? 0;
+  }
+  if (compras.length > 0) {
+    const { data, error } = await sesion.supabase
+      .from("movimientos")
+      .update({ categoria_id: categoriaId })
+      .in("compra_id", compras)
+      .eq("hogar_id", sesion.hogarId)
+      .select("id");
+    if (error) return { ok: false, error: "No pudimos categorizar las cuotas" };
+    cambiados += data?.length ?? 0;
+  }
+  if (cambiados === 0) return { ok: false, error: "No pudimos categorizar" };
+
+  revalidatePath("/movimientos");
+  revalidatePath("/resumen");
+  revalidatePath("/presupuesto");
+  revalidatePath("/cuotas");
+  return { ok: true, cambiados };
+}
+
 const esquemaBorrar = z.object({ movimientoId: z.uuid() });
 
 /**
