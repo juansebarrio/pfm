@@ -11,7 +11,7 @@
     "primaryColor": "#4FA37F",
     "ios": {
       "bundleIdentifier": "com.juansebarrio.findemes",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
