@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { ChartPie, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ChartPie, ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/sistema/Card";
 import { Dona, tono } from "@/components/sistema/Dona";
 import { EstadoVacio } from "@/components/sistema/EstadoVacio";
@@ -20,6 +21,15 @@ import { repartir, type ItemReparto, type Porcion } from "@/lib/dominio/reparto"
 // grande del mes, y una fila muerta que dice "un quinto de tu plata, no te digo
 // en qué" contradice a toda la vista. Al tocarla se abren DEBAJO las categorías
 // que esconde; el anillo no cambia (sigue mostrando la porción agregada).
+//
+// Y con `hrefsDeCategoria`, cada fila LLEVA a esos movimientos: la vista
+// contesta "en qué se me fue" y el paso siguiente ("¿en qué exactamente?") no
+// puede ser un callejón. Solo lo pasa Movimientos —en Presupuesto las porciones
+// son plan (lo asignado), no gasto, y no hay "esos movimientos" que mostrar.
+//
+// Va como MAPA (clave → href) y no como función: esto es un client component y
+// los callers son server components, que no pueden pasar funciones a través del
+// borde ("Functions cannot be passed directly to Client Components").
 
 /**
  * Las categorías que "Otras" esconde, en el mismo orden del reparto (monto
@@ -66,6 +76,33 @@ function desplegarOtras(
   return escondidas.map((item, i) => ({ ...item, porcentaje: base[i] }));
 }
 
+/**
+ * Fila de la lista: un `div` cuando no lleva a ningún lado y un `Link` cuando
+ * sí. El chevron es MUDO —no dice nada que la fila no diga— y está solo para
+ * que se vea que la fila se toca.
+ */
+function Fila({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (!href) return <div className={className}>{children}</div>;
+  return (
+    <Link href={href} className={className}>
+      {children}
+      <ChevronRight
+        aria-hidden
+        className="size-3.5 shrink-0 text-tinta-terciaria"
+        strokeWidth={1.5}
+      />
+    </Link>
+  );
+}
+
 export function PorCategoria({
   items,
   /** texto del estado vacío, que cambia según la pantalla */
@@ -75,12 +112,15 @@ export function PorCategoria({
   etiquetaTotal = "Gastado",
   /** total de gastos del mes, incluido lo que NO tiene categoría */
   totalGastosCentavos,
+  /** clave de categoría → adónde va su fila; sin entrada, la fila no navega */
+  hrefsDeCategoria,
 }: {
   items: ItemReparto[];
   vacio: string;
   tituloVacio?: string;
   etiquetaTotal?: string;
   totalGastosCentavos?: number;
+  hrefsDeCategoria?: Record<string, string>;
 }) {
   // arranca colapsada: el desglose es para quien pregunta, no para todos
   const [otrasAbierta, setOtrasAbierta] = useState(false);
@@ -150,10 +190,13 @@ export function PorCategoria({
                   {p.porcentaje} %
                 </span>
               </button>
+              {/* las de adentro de la bolsa también llevan a sus movimientos:
+                  desplegar y quedarse mirando sería el mismo callejón */}
               {otrasAbierta &&
                 dentroDeOtras.map((s) => (
-                  <div
+                  <Fila
                     key={s.clave}
+                    href={hrefsDeCategoria?.[s.clave]}
                     className="flex items-center gap-3 py-2.5 pl-[38px] pr-4"
                   >
                     {/* el neutro de "Otras", no un color propio: el anillo no
@@ -172,11 +215,15 @@ export function PorCategoria({
                     <span className="cifra w-9 shrink-0 text-right text-[11px] text-tinta-terciaria">
                       {s.porcentaje} %
                     </span>
-                  </div>
+                  </Fila>
                 ))}
             </Fragment>
           ) : (
-            <div key={p.clave} className="flex items-center gap-3 px-4 py-3">
+            <Fila
+              key={p.clave}
+              href={hrefsDeCategoria?.[p.clave]}
+              className="flex items-center gap-3 px-4 py-3"
+            >
               <span
                 aria-hidden
                 className="size-2.5 shrink-0 rounded-full"
@@ -192,7 +239,7 @@ export function PorCategoria({
               <span className="cifra w-9 shrink-0 text-right text-[12px] text-tinta-secundaria">
                 {p.porcentaje} %
               </span>
-            </div>
+            </Fila>
           ),
         )}
       </Card>

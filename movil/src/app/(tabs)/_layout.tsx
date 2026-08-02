@@ -48,14 +48,24 @@ function Tabs_() {
           <Pressable
             onPress={() => router.push("/asistente?camara=1")}
             style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            // la web dice "Leer un comprobante con el asistente" porque allá el
+            // link lleva al chat; acá la cámara se abre sola, y la etiqueta
+            // tiene que decir lo que el botón hace, no lo que hace su gemelo
             accessibilityLabel="Sacarle una foto a un comprobante"
           >
             <Camera size={23} color={color.papel} strokeWidth={2} />
           </Pressable>
-          <View style={e.divisor} />
+          {/* aria-hidden en la web: el divisor es dibujo, no contenido */}
+          <View
+            style={e.divisor}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
           <Pressable
             onPress={() => router.push("/gasto-nuevo")}
             style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
             accessibilityLabel="Cargar un movimiento a mano"
           >
             <Plus size={25} color={color.papel} strokeWidth={2.5} />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { actualizarPartida } from "@/app/acciones/presupuesto";
@@ -13,12 +14,22 @@ import { centavosDesdeTexto, formatearImporte } from "@/lib/dominio/dinero";
 //
 // Las desactivadas no abren nada: su edición es otra historia (reactivar,
 // nota), no un monto.
+//
+// Al pie, el camino al detalle: la hoja dice cuánto gastaste y hasta acá no
+// ofrecía nada para ver DE QUÉ está hecho ese número. Va como link discreto,
+// abajo del guardar: es la salida, no la acción de la hoja.
 
 export function PartidaEditable({
   partidaId,
+  categoriaId,
+  mes,
   datos,
 }: {
   partidaId: string;
+  /** la categoría de la partida, para filtrar sus movimientos */
+  categoriaId: string;
+  /** "YYYY-MM-01": la partida es de un mes y sus gastos también */
+  mes: string;
   datos: DatosPartida;
 }) {
   const router = useRouter();
@@ -88,6 +99,15 @@ export function PartidaEditable({
         >
           {pendiente ? "Guardando…" : "Guardar monto"}
         </button>
+
+        <p className="mt-3 text-center">
+          <Link
+            href={`/movimientos?categoria=${categoriaId}&mes=${mes.slice(0, 7)}`}
+            className="hit-44 inline-block text-[13px] font-medium text-verde"
+          >
+            Ver los movimientos de {datos.nombre} →
+          </Link>
+        </p>
       </HojaInferior>
     </>
   );

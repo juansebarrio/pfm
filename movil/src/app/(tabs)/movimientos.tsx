@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ChartPie,
@@ -134,6 +134,21 @@ export default function Movimientos() {
   const [categorizando, setCategorizando] = useState(false);
   const [hojaCategorias, setHojaCategorias] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+
+  // Se puede llegar acá con la categoría —y el mes— ya elegidos: la hoja de la
+  // partida en Presupuesto ofrece "ver los movimientos de X". Los parámetros se
+  // CONSUMEN (quedan en ""): si no, volver a la tab desde cualquier otro lado
+  // reaplicaría un filtro que el usuario ya había sacado.
+  const parametros = useLocalSearchParams<{ categoria?: string; mes?: string }>();
+  useEffect(() => {
+    if (!parametros.categoria && !parametros.mes) return;
+    if (parametros.mes) setMes(parametros.mes);
+    if (parametros.categoria) {
+      setFiltroCategoria(parametros.categoria);
+      setVista("lista");
+    }
+    router.setParams({ categoria: "", mes: "" });
+  }, [parametros.categoria, parametros.mes, router]);
 
   // el primer pendiente de la bandeja llega ABIERTO, como en la web: colapsada
   // entera no enseña que tocar una fila la categoriza. Solo la primera carga —
@@ -431,6 +446,13 @@ export default function Movimientos() {
         <PorCategoria
           items={porCategoria}
           totalGastosCentavos={totales?.gastosCentavos}
+          // la porción lleva a SUS movimientos: mismo mes, filtro puesto y de
+          // vuelta a la lista. Es el filtro que ya existe, no una pantalla nueva.
+          alElegirCategoria={(nombre) => {
+            salirDeSeleccion();
+            setFiltroCategoria(nombre);
+            setVista("lista");
+          }}
           vacio={`No cargaste gastos en ${formatearMesLargo(mes)}. Cuando cargues alguno, acá vas a ver en qué se te fue.`}
         />
       ) : (

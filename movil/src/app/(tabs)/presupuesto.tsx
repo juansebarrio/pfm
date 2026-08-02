@@ -29,6 +29,7 @@ import {
   type CategoriaSimple,
 } from "@/lib/acciones";
 import {
+  gastosPorCategoria,
   obtenerPresupuestoMes,
   obtenerSesionHogar,
   sugerenciasRecurrentes,
@@ -166,6 +167,9 @@ export default function Presupuesto() {
   const [agregando, setAgregando] = useState(false);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
   const [sugerencias, setSugerencias] = useState<SugerenciaRecurrente[]>([]);
+  // lo ya gastado este mes por categoría: la hoja de "Sumar una partida" lo usa
+  // como referencia del monto, para que no se elija a ciegas
+  const [gastadoPorCategoria, setGastadoPorCategoria] = useState<Record<string, number>>({});
 
   async function repetir() {
     if (!sesion || repitiendo) return;
@@ -180,15 +184,21 @@ export default function Presupuesto() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [p, cats, recurrentes] = await Promise.all([
+    const [p, cats, recurrentes, gastos] = await Promise.all([
       obtenerPresupuestoMes(s, mes, ambito),
       categoriasDelHogar(s),
       // los recurrentes son del hogar, no del ámbito: se filtran al pintarlos
       sugerenciasRecurrentes(s, mes),
+      // mismo ámbito que el presupuesto: lo que una partida de esta solapa
+      // contaría como gastado
+      gastosPorCategoria(s, mes, ambito),
     ]);
     setPresupuesto(p);
     setCategorias(cats);
     setSugerencias(recurrentes);
+    setGastadoPorCategoria(
+      Object.fromEntries(gastos.filter((g) => g.centavos > 0).map((g) => [g.clave, g.centavos])),
+    );
     // solo importa cuando no hay presupuesto: habilita el "repetir" de un toque
     setHayAnterior(p ? false : (await obtenerPresupuestoMes(s, mesAnterior(mes), ambito)) !== null);
   }, [mes, ambito]);
@@ -484,12 +494,14 @@ export default function Presupuesto() {
         mes={mes}
         ambito={ambito}
         categorias={categoriasLibres}
+        gastadoPorCategoria={gastadoPorCategoria}
         sesion={sesion}
         alGuardar={cargar}
         alCerrar={() => setAgregando(false)}
       />
       <EditarPartida
         partida={partidaEditar}
+        mes={mes}
         sesion={sesion}
         alGuardar={cargar}
         alCerrar={() => setPartidaEditar(null)}

@@ -193,10 +193,19 @@ export function Chat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const ultimo = turnos[turnos.length - 1];
-  const propuestas = !pensando && ultimo ? repreguntas(ultimo.bloques) : [];
-  const aOfrecer =
-    propuestas.length > 0 ? propuestas : !pensando && ultimo ? REPREGUNTAS_BASE : [];
+  // Las repreguntas van ANCLADAS sobre el campo de escritura, no al final del
+  // hilo: ahí está el pulgar y ahí ya está mirando quien va a escribir. Dos
+  // consecuencias de anclarlas:
+  //
+  // - Se ofrecen SIEMPRE, también con la conversación vacía y mientras piensa
+  //   (ahí van deshabilitadas). Aparecer y desaparecer le cambiaría la altura a
+  //   la franja de escritura en cada turno, y una barra que se mueve abajo del
+  //   pulgar es peor que una barra que por un segundo está apagada.
+  // - Mientras piensa se muestran las del último turno YA cerrado — el en curso
+  //   todavía no tiene bloques —, así el contenido tampoco parpadea.
+  const cerrado = turnos[turnos.length - (pensando ? 2 : 1)];
+  const propuestas = cerrado ? repreguntas(cerrado.bloques) : [];
+  const aOfrecer = propuestas.length > 0 ? propuestas : REPREGUNTAS_BASE;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -267,25 +276,29 @@ export function Chat({
           </p>
         )}
 
-        {aOfrecer.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {aOfrecer.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => preguntar(s)}
-                className="rounded-chip border border-borde bg-superficie px-3 py-2 text-left text-[12.5px] text-tinta"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
         <div ref={finRef} />
       </div>
 
-      {/* input pegado abajo */}
+      {/* Input pegado abajo. La franja es sticky pero sigue EN FLUJO (es el
+          último hijo de la columna), así que reserva su propio alto: el pb-4
+          del hilo alcanza para que el último mensaje no quede abajo de ella. */}
       <div className="sticky bottom-0 -mx-5 mt-auto bg-papel px-5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))]">
+        {/* repreguntas, arriba de todo: una sola fila con scroll horizontal —
+            así el alto de la franja no depende de cuántas ni de qué largo son */}
+        <div className="-mx-5 mb-2 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_24px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {aOfrecer.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => preguntar(s)}
+              disabled={pensando}
+              className="shrink-0 rounded-chip border border-borde bg-superficie px-3 py-2 text-left text-[12.5px] whitespace-nowrap text-tinta disabled:opacity-40"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
         {/* la foto elegida, antes de mandarla: se puede sacar */}
         {adjunta && (
           <div className="mb-2 flex items-center gap-2.5 rounded-cta border border-borde bg-superficie p-2">

@@ -52,12 +52,55 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react-native";
-import { formatearImporte, type Moneda } from "@dominio/dinero";
+import { formatearImporte, formatearPorcentaje, type Moneda } from "@dominio/dinero";
 import { color, fuente, radio } from "@/lib/tema";
 
 // Componentes del sistema de diseño, portados de components/sistema/ de la web.
 // Misma anatomía y mismo léxico; lo que cambia es CSS → StyleSheet y <div> →
 // <View>. Los tamaños en px del export se conservan tal cual.
+//
+// La accesibilidad también se porta: cada aria-* del gemelo web tiene acá su
+// prop de React Native (role="progressbar" → accessibilityRole="progressbar",
+// aria-current → accessibilityState.selected, aria-hidden → los hijos dejan de
+// ser enfocables). Lo único que la web no necesita declarar es cómo se DICE una
+// cifra: el navegador recibe "$ 84.320" dentro de una oración en español y lo
+// resuelve; VoiceOver lo lee como signos y dígitos sueltos. De ahí
+// importeHablado().
+
+// ─────────────────────────────────────────────────────── plata hablada
+
+/**
+ * La misma cifra que muestra `formatearImporte`, dicha como plata:
+ * `− $ 339.550` → "menos 339.550 pesos". El signo va en palabra porque el "−"
+ * tipográfico del formateador no es el menos que el lector conoce, y un gasto
+ * que se anuncia igual que un ingreso es un error caro en una app de plata.
+ */
+export function importeHablado(
+  centavos: number,
+  moneda: Moneda = "ARS",
+  conSigno = false,
+): string {
+  const abs = Math.abs(centavos);
+  const cifra = formatearImporte(abs, moneda).replace(/^(\$|USD)\s*/, "");
+  const singular = abs === 100;
+  const unidad =
+    moneda === "ARS" ? (singular ? "peso" : "pesos") : singular ? "dólar" : "dólares";
+  const signo = centavos < 0 ? "menos " : conSigno && centavos > 0 ? "más " : "";
+  return `${signo}${cifra} ${unidad}`;
+}
+
+/** "CUOTA 4/12" → "CUOTA 4 de 12": la barra la lee VoiceOver como una fecha. */
+function cuotaLegible(texto: string): string {
+  return texto.replace("/", " de ");
+}
+
+/** Junta los pedazos de una fila compuesta en una sola oración para el lector. */
+function frase(...partes: Array<string | null | undefined | false>): string {
+  return partes
+    .filter((p): p is string => Boolean(p))
+    .map((p) => p.replace(/\s*·\s*/g, ", ").trim())
+    .join(", ");
+}
 
 // ─────────────────────────────────────────────────────── Card
 
@@ -72,7 +115,12 @@ export function Card({
 }
 
 export function EncabezadoSeccion({ children }: { children: React.ReactNode }) {
-  return <Text style={e.encabezadoSeccion}>{children}</Text>;
+  // <h2> en la web
+  return (
+    <Text accessibilityRole="header" style={e.encabezadoSeccion}>
+      {children}
+    </Text>
+  );
 }
 
 // ─────────────────────────────────────────────────────── Importe
@@ -105,7 +153,10 @@ export function Importe({
   const texto = formatearImporte(Math.abs(centavos), moneda);
   const prefijo = conSigno && centavos > 0 ? "+ " : centavos < 0 ? "− " : "";
   return (
-    <Text style={[e.cifra, variantesImporte[variante], { color: colorTexto }]}>
+    <Text
+      accessibilityLabel={importeHablado(centavos, moneda, conSigno)}
+      style={[e.cifra, variantesImporte[variante], { color: colorTexto }]}
+    >
       {prefijo}
       {texto}
     </Text>
@@ -165,7 +216,11 @@ export function Badge({
 }) {
   return (
     <View style={[e.badge, estilosBadge[variante]]}>
+      {/* la web sube a mayúsculas por CSS, así que el lector recibe el texto
+          tal cual se escribió; acá la mayúscula está en el string, y "HOGAR"
+          se le puede escapar a VoiceOver como sigla */}
       <Text
+        accessibilityLabel={cuotaLegible(children)}
         style={[
           e.badgeTexto,
           // CUOTA 4/12 es cifra: mono con el tracking del export (.05em)
@@ -196,17 +251,34 @@ export function BarraAvance({
   tono,
   altura = 4,
   marcadorDia,
+  etiqueta,
   style,
 }: {
   progreso: number;
   tono: Tono;
   altura?: number;
   marcadorDia?: number;
+  /** para lectores de pantalla: "gastado 52 % de $ 520.000" */
+  etiqueta?: string;
   style?: ViewStyle;
 }) {
   const ancho = Math.max(0, Math.min(1, progreso)) * 100;
   return (
-    <View style={[e.pista, { height: altura }, style]}>
+    <View
+      // role="progressbar" + aria-valuenow/min/max del gemelo web. El `text`
+      // no tiene equivalente allá: lo agrega el port porque es lo que garantiza
+      // que VoiceOver diga el porcentaje y no solo "barra de progreso".
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={etiqueta}
+      accessibilityValue={{
+        min: 0,
+        max: 100,
+        now: Math.round(ancho),
+        text: formatearPorcentaje(ancho),
+      }}
+      style={[e.pista, { height: altura }, style]}
+    >
       <View
         style={{
           height: "100%",
@@ -296,7 +368,16 @@ export function IconoCategoria({
   tono?: keyof typeof tonosIcono;
 }) {
   const Icono = (nombre && iconos[nombre]) || Tag;
-  return <Icono size={tamano} color={tonosIcono[tono]} strokeWidth={1.5} />;
+  // aria-hidden en la web: el ícono repite lo que ya dice el nombre al lado
+  return (
+    <Icono
+      size={tamano}
+      color={tonosIcono[tono]}
+      strokeWidth={1.5}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    />
+  );
 }
 
 // ─────────────────────────────────────────────────────── EstadoVacio
@@ -315,13 +396,20 @@ export function EstadoVacio({
 }) {
   return (
     <View style={e.vacio}>
-      <View style={e.vacioCirculo}>
+      <View
+        style={e.vacioCirculo}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         <Icono size={28} color={color.verde} strokeWidth={1.5} />
       </View>
-      <Text style={e.vacioTitulo}>{titulo}</Text>
+      {/* <h2> en la web */}
+      <Text accessibilityRole="header" style={e.vacioTitulo}>
+        {titulo}
+      </Text>
       <Text style={e.vacioCuerpo}>{cuerpo}</Text>
       {accion && (
-        <Pressable onPress={accion.onPress} style={e.vacioCta}>
+        <Pressable onPress={accion.onPress} accessibilityRole="button" style={e.vacioCta}>
           <Text style={e.vacioCtaTexto}>{accion.texto}</Text>
         </Pressable>
       )}
@@ -359,8 +447,36 @@ export function CardPartida(p: DatosPartida) {
   // importe ámbar: atención + gastado ≥ 75 % del disponible (DESIGN_NOTES §1.8)
   const importeAmbar = p.estado === "atencion" && p.gastadoCentavos >= disponible * 0.75;
 
+  // el mismo aviso que se ve abajo a la derecha, en texto plano para el lector
+  const textoAviso = p.avisoRecurrente
+    ? p.avisoRecurrente
+    : p.estado === "atencion" && p.excedenteProyectadoCentavos != null
+      ? `a este ritmo terminás ${importeHablado(p.excedenteProyectadoCentavos)} arriba`
+      : p.estado === "excedido"
+        ? `te pasaste ${importeHablado(-queda)}`
+        : p.textoRollover;
+
+  // La card entera es UN elemento: en Presupuesto va adentro de un Pressable
+  // que abre el editor, y una barra de progreso enfocable dentro de un botón se
+  // lee peor que un botón que dice todo. Se anuncia en el orden en que se ve:
+  // nombre, estado, cuánto de cuánto, el avance de la barra y el aviso.
+  const etiquetaPartida = frase(
+    p.nombre,
+    p.rollover && "rollover",
+    pagada
+      ? p.esAhorro
+        ? "transferido"
+        : "pagado"
+      : `queda ${importeHablado(queda)}`,
+    `gastado ${importeHablado(p.gastadoCentavos)} de ${importeHablado(p.asignadoCentavos)}${
+      p.sufijoMeta ? ` ${p.sufijoMeta}` : ""
+    }`,
+    formatearPorcentaje(progreso * 100),
+    textoAviso,
+  );
+
   return (
-    <View style={e.partida}>
+    <View accessible accessibilityLabel={etiquetaPartida} style={e.partida}>
       <View style={e.partidaFila}>
         <IconoCategoria nombre={p.icono} tono={tieneAviso ? "ambar" : "normal"} />
         <View style={e.partidaNombre}>
@@ -457,8 +573,20 @@ export function FilaMovimiento({
   ambito,
   badgeCuota,
 }: DatosFilaMovimiento) {
+  // La fila entera es UN elemento: siete Text sueltos se anuncian como siete
+  // fragmentos ("Coto", "Supermercado", "Visa", "84.320"...) y el movimiento
+  // deja de leerse como un movimiento. Va en el orden en que se ve.
+  const etiqueta = frase(
+    descripcion,
+    metadata,
+    cierreCiclo,
+    importeHablado(importeCentavos, "ARS", esIngreso),
+    badgeCuota && cuotaLegible(badgeCuota),
+    ambito,
+  );
+
   return (
-    <View style={e.movimiento}>
+    <View accessible accessibilityLabel={etiqueta} style={e.movimiento}>
       <IconoCategoria nombre={icono ?? null} />
       <View style={e.movimientoTexto}>
         <Text numberOfLines={1} style={e.movimientoDescripcion}>

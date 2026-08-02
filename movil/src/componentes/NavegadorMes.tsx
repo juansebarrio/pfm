@@ -31,6 +31,7 @@ export function NavegadorMes({
       <Pressable
         onPress={() => ir(mesAnterior(mes))}
         hitSlop={14}
+        accessibilityRole="button"
         accessibilityLabel={`Ver ${formatearMesLargo(mesAnterior(mes))}`}
       >
         <ChevronLeft size={22} color={color.tintaSecundaria} strokeWidth={1.8} />
@@ -40,7 +41,7 @@ export function NavegadorMes({
         <Text style={e.mes}>{formatearMesLargo(mes)}</Text>
         {/* el atajo solo aparece cuando sirve */}
         {mes !== mesActual && (
-          <Pressable onPress={() => ir(mesActual)} hitSlop={10}>
+          <Pressable onPress={() => ir(mesActual)} hitSlop={10} accessibilityRole="button">
             <Text style={e.volver}>Volver a este mes</Text>
           </Pressable>
         )}
@@ -49,6 +50,7 @@ export function NavegadorMes({
       <Pressable
         onPress={() => ir(mesSiguiente(mes))}
         hitSlop={14}
+        accessibilityRole="button"
         accessibilityLabel={`Ver ${formatearMesLargo(mesSiguiente(mes))}`}
       >
         <ChevronRight size={22} color={color.tintaSecundaria} strokeWidth={1.8} />

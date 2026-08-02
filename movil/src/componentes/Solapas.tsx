@@ -6,18 +6,25 @@ import { tacto } from "@/lib/tacto";
 // presupuesto —misma altura, mismo radio, mismo thumb— porque dos controles de
 // dos estados en la misma pantalla que se vean distinto se leen como si
 // hicieran cosas de distinta naturaleza. Espeja components/sistema/Solapas.tsx.
+//
+// Accesibilidad: allá es un <nav aria-label="Vista"> con links y aria-current;
+// acá, tablist + tab + accessibilityState.selected, que es lo que hace que
+// VoiceOver diga "seleccionado" en vez de leer las dos solapas iguales.
 
 export function Solapas<T extends string>({
   opciones,
   activa,
   alElegir,
+  etiqueta = "Vista",
 }: {
   opciones: Array<{ clave: T; etiqueta: string }>;
   activa: T;
   alElegir: (clave: T) => void;
+  /** el aria-label del <nav> de la web */
+  etiqueta?: string;
 }) {
   return (
-    <View style={e.contenedor}>
+    <View accessibilityRole="tablist" accessibilityLabel={etiqueta} style={e.contenedor}>
       {opciones.map((o) => {
         const esActiva = activa === o.clave;
         return (
@@ -28,6 +35,8 @@ export function Solapas<T extends string>({
               tacto.toque();
               alElegir(o.clave);
             }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: esActiva }}
             style={[e.boton, esActiva && e.activo]}
           >
             <Text style={[e.texto, esActiva && e.textoActivo]}>{o.etiqueta}</Text>

@@ -1,12 +1,19 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import Svg, { Circle, Path } from "react-native-svg";
-import { ChartPie, ChevronDown, ChevronUp } from "lucide-react-native";
+import { ChartPie, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
 import { arcos, repartir, type ItemReparto, type Porcion } from "@dominio/reparto";
 import { color, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
-import { Card, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
+import { Card, EstadoVacio, IconoCategoria, importeHablado } from "@/componentes/sistema";
 
 // Vista "Por categoría": el anillo arriba y el mismo dato en lista abajo.
 // Espeja components/sistema/{Dona,PorCategoria}.tsx de la web, con el mismo
@@ -20,6 +27,11 @@ import { Card, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
 // grande del mes, y una fila muerta que dice "un quinto de tu plata, no te digo
 // en qué" contradice a toda la vista. Al tocarla se abren DEBAJO las categorías
 // que esconde; el anillo no cambia (sigue mostrando la porción agregada).
+//
+// Y con `alElegirCategoria`, cada fila LLEVA a esos movimientos: la vista
+// contesta "en qué se me fue" y el paso siguiente ("¿en qué exactamente?") no
+// puede ser un callejón. Solo lo pasa Movimientos —en Presupuesto las porciones
+// son plan (lo asignado), no gasto, y no hay "esos movimientos" que mostrar.
 
 const RAMPA = ["#4fa37f", "#6cab8d", "#87b39c", "#a0b6a8", "#aba8a0", "#938d84", "#6b665e"];
 
@@ -106,7 +118,16 @@ function Dona({
 }) {
   const tramos = arcos(porciones);
   return (
-    <View style={e.dona}>
+    // role="img" + aria-label del gemelo web, con la misma frase. El anillo se
+    // anuncia como UNA imagen con su total: las porciones no se pierden, están
+    // en la lista de abajo, que es la leyenda y ya se lee categoría por
+    // categoría. Repetirlas acá sería leer la vista dos veces.
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`${etiqueta} por categoría, total ${importeHablado(totalCentavos)}`}
+      style={e.dona}
+    >
       <Svg width={TAMANO} height={TAMANO}>
         {/* la pista de atrás: con una sola porción igual se ve un anillo */}
         <Circle
@@ -140,12 +161,59 @@ function Dona({
   );
 }
 
+/**
+ * Fila de la lista: una `View` cuando no lleva a ningún lado y un `Pressable`
+ * cuando sí. El chevron es MUDO —no dice nada que la fila no diga— y está solo
+ * para que se vea que la fila se toca.
+ */
+function Fila({
+  alTocar,
+  estilo,
+  etiqueta,
+  children,
+}: {
+  alTocar?: () => void;
+  estilo: StyleProp<ViewStyle>;
+  /**
+   * Para lectores de pantalla, la fila leída como UN dato ("Nafta, 84.320
+   * pesos, 12 %"): en la web el `Link` envuelve el contenido y el navegador lo
+   * anuncia entero, acá los cuatro `Text` sueltos serían cuatro fragmentos.
+   * Que además lleve a algún lado lo dice el rol, y el detalle va en el hint.
+   */
+  etiqueta: string;
+  children: React.ReactNode;
+}) {
+  if (!alTocar) {
+    return (
+      <View accessible accessibilityLabel={etiqueta} style={estilo}>
+        {children}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      onPress={() => {
+        tacto.toque();
+        alTocar();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      accessibilityHint="Ver los movimientos de esta categoría"
+      style={estilo}
+    >
+      {children}
+      <ChevronRight size={14} color={color.tintaTerciaria} strokeWidth={1.5} />
+    </Pressable>
+  );
+}
+
 export function PorCategoria({
   items,
   vacio,
   tituloVacio = "Todavía no hay gastos",
   etiquetaTotal = "Gastado",
   totalGastosCentavos,
+  alElegirCategoria,
 }: {
   items: ItemReparto[];
   vacio: string;
@@ -153,6 +221,8 @@ export function PorCategoria({
   /** "Gastado" en Movimientos, "Asignado" en Presupuesto */
   etiquetaTotal?: string;
   totalGastosCentavos?: number;
+  /** si viene, la fila filtra la lista por esa categoría (por nombre) */
+  alElegirCategoria?: (nombre: string) => void;
 }) {
   // arranca colapsada: el desglose es para quien pregunta, no para todos
   const [otrasAbierta, setOtrasAbierta] = useState(false);
@@ -198,6 +268,8 @@ export function PorCategoria({
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: otrasAbierta }}
+                accessibilityLabel={`${p.nombre}, ${importeHablado(p.centavos)}, ${p.porcentaje} %`}
+                accessibilityHint="Ver qué categorías hay adentro"
                 style={[e.fila, i > 0 && e.conBorde]}
               >
                 <View style={[e.punto, { backgroundColor: tono(p.indice) }]} />
@@ -214,9 +286,18 @@ export function PorCategoria({
                 <Text style={e.importe}>{formatearImporte(p.centavos)}</Text>
                 <Text style={e.porcentaje}>{p.porcentaje} %</Text>
               </Pressable>
+              {/* las de adentro de la bolsa también llevan a sus movimientos:
+                  desplegar y quedarse mirando sería el mismo callejón */}
               {otrasAbierta &&
                 dentroDeOtras.map((s) => (
-                  <View key={s.clave} style={e.subFila}>
+                  <Fila
+                    key={s.clave}
+                    estilo={e.subFila}
+                    etiqueta={`${s.nombre}, ${importeHablado(s.centavos)}, ${s.porcentaje} %`}
+                    alTocar={
+                      alElegirCategoria ? () => alElegirCategoria(s.nombre) : undefined
+                    }
+                  >
                     {/* el neutro de "Otras", no un color propio: el anillo no
                         tiene un tramo para esta categoría */}
                     <View style={[e.subPunto, { backgroundColor: tono(p.indice) }]} />
@@ -225,11 +306,16 @@ export function PorCategoria({
                     </Text>
                     <Text style={e.subImporte}>{formatearImporte(s.centavos)}</Text>
                     <Text style={e.subPorcentaje}>{s.porcentaje} %</Text>
-                  </View>
+                  </Fila>
                 ))}
             </View>
           ) : (
-            <View key={p.clave} style={[e.fila, i > 0 && e.conBorde]}>
+            <Fila
+              key={p.clave}
+              estilo={[e.fila, i > 0 && e.conBorde]}
+              etiqueta={`${p.nombre}, ${importeHablado(p.centavos)}, ${p.porcentaje} %`}
+              alTocar={alElegirCategoria ? () => alElegirCategoria(p.nombre) : undefined}
+            >
               <View style={[e.punto, { backgroundColor: tono(p.indice) }]} />
               <IconoCategoria nombre={p.icono} tamano={17} />
               <Text numberOfLines={1} style={e.nombre}>
@@ -237,7 +323,7 @@ export function PorCategoria({
               </Text>
               <Text style={e.importe}>{formatearImporte(p.centavos)}</Text>
               <Text style={e.porcentaje}>{p.porcentaje} %</Text>
-            </View>
+            </Fila>
           ),
         )}
       </Card>

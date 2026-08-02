@@ -23,7 +23,7 @@ export const PASOS_ONBOARDING: PasoOnboarding[] = [
     icono: "wallet",
     titulo: "Presupuesto por sobres",
     cuerpo:
-      "Cada mes le ponés un monto a cada partida, como sobres de plata. El Resumen te dice cuánto queda en total y cuánto en cada sobre, para llegar tranquilo a fin de mes.",
+      "Cada mes le ponés un monto a cada partida, como sobres de plata. El Resumen te dice cuánto queda en total y cuánto en cada sobre, para llegar sin sobresaltos a fin de mes.",
   },
   {
     icono: "camera",

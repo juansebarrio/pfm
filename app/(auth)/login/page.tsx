@@ -20,7 +20,7 @@ export default async function Login({
     <div className="flex min-h-dvh flex-col justify-center px-5 py-10">
       {/* la recuperación pedida desde la app nativa aterriza acá con #access_token */}
       <RescateRecuperacion />
-      <EncabezadoAuth subtitulo="Llegá tranquilo a fin de mes. Presupuesto del hogar y personal, tarjetas con ciclos reales y patrimonio, hecho para Argentina." />
+      <EncabezadoAuth subtitulo="Llegá sin sobresaltos a fin de mes. Presupuesto del hogar y personal, tarjetas con ciclos reales y patrimonio, hecho para Argentina." />
       <FormularioAuth
         accion={iniciarSesion}
         textoCta="Entrar"

@@ -6,10 +6,16 @@ import { Plus } from "lucide-react";
 import { agregarPartida } from "@/app/acciones/presupuesto";
 import { HojaInferior } from "@/components/sistema/HojaInferior";
 import { IconoCategoria } from "@/components/sistema/IconoCategoria";
-import { centavosDesdeTexto } from "@/lib/dominio/dinero";
+import { centavosDesdeTexto, formatearImporte } from "@/lib/dominio/dinero";
 
 // Sumar una categoría a un mes YA armado — la que quedó afuera al armar o se
 // creó después. Solo aparecen las que todavía no tienen partida en el mes.
+//
+// El campo arranca en "$ 0" y sin referencia el monto se elige a ciegas: si cae
+// abajo de lo YA gastado, la partida nace en rojo. Por eso, elegida la
+// categoría, abajo del campo va cuánto se lleva gastado este mes, y si el monto
+// tipeado no lo cubre, un aviso en ámbar ANTES de guardar. No bloquea: es su
+// plata y puede querer asignar menos — lo que no puede es enterarse después.
 
 export type CategoriaDisponible = { id: string; nombre: string; icono: string };
 
@@ -17,10 +23,13 @@ export function AgregarPartida({
   mes,
   ambito,
   categorias,
+  gastadoPorCategoria,
 }: {
   mes: string;
   ambito: "hogar" | "personal";
   categorias: CategoriaDisponible[];
+  /** lo ya gastado este mes, en centavos, por id de categoría (solo las que tienen) */
+  gastadoPorCategoria: Record<string, number>;
 }) {
   const router = useRouter();
   const [abierta, setAbierta] = useState(false);
@@ -34,6 +43,8 @@ export function AgregarPartida({
 
   const montoCentavos = centavosDesdeTexto(montoTexto);
   const listo = categoriaId !== null && montoCentavos !== null && montoCentavos > 0;
+  const yaGastado = categoriaId !== null ? (gastadoPorCategoria[categoriaId] ?? 0) : 0;
+  const naceExcedida = yaGastado > 0 && montoCentavos !== null && montoCentavos > 0 && montoCentavos < yaGastado;
 
   function abrir() {
     setCategoriaId(null);
@@ -109,6 +120,19 @@ export function AgregarPartida({
             montoTexto !== "" && montoCentavos === null ? "border-rojo" : "border-borde"
           }`}
         />
+
+        {/* la referencia: sin gasto todavía no hay nada que decir */}
+        {yaGastado > 0 && (
+          <p className="mt-1.5 text-[11.5px] text-tinta-secundaria">
+            ya gastaste <span className="cifra">{formatearImporte(yaGastado)}</span> este
+            mes
+          </p>
+        )}
+        {naceExcedida && (
+          <p className="mt-1 text-[11.5px] font-medium text-ambar-texto">
+            con ese monto la partida ya nace excedida
+          </p>
+        )}
 
         {error && <p className="mt-2 text-[12.5px] text-rojo">{error}</p>}
 

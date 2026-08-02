@@ -117,33 +117,31 @@ export default async function Hogar() {
         ))}
       </Card>
 
-      {/* Card-fila de navegación a la gestión de cuentas y tarjetas */}
-      <Card className="mt-4">
-        <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
-          <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
-          <ChevronRight
-            className="size-4 shrink-0 text-tinta-terciaria"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-        </Link>
-      </Card>
+      {/* Navegación: UNA card con separadores, calcando movil/src/app/hogar.tsx.
+          Apiladas de a una eran cuatro cards sueltas que decían "cuatro cosas
+          distintas" cuando son la misma: a dónde más se puede ir desde acá.
+          Mismo orden que el nativo. /cuotas no tiene otra entrada en la web. */}
+      <Card className="mt-4 divide-y divide-separador">
+        {/* Asistente financiero con IA — solo cuando hay API key configurada */}
+        {process.env.ANTHROPIC_API_KEY && (
+          <Link href="/asistente" className="flex items-center gap-2.5 px-4 py-3.5">
+            <Sparkles className="size-[17px] shrink-0 text-verde" strokeWidth={1.5} aria-hidden />
+            <div className="min-w-0 flex-1">
+              <span className="block text-[14px] font-medium text-tinta">
+                Asistente financiero
+              </span>
+              <span className="block text-[11.5px] text-tinta-secundaria">
+                Preguntale a tus números
+              </span>
+            </div>
+            <ChevronRight
+              className="size-4 shrink-0 text-tinta-terciaria"
+              strokeWidth={1.5}
+              aria-hidden
+            />
+          </Link>
+        )}
 
-      {/* ...y a las compras en cuotas: /cuotas no tiene otra entrada en la web */}
-      <Card className="mt-4">
-        <Link href="/cuotas" className="flex items-center gap-2.5 px-4 py-3.5">
-          <CreditCard className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <span className="flex-1 text-[14px] font-medium text-tinta">Compras en cuotas</span>
-          <ChevronRight
-            className="size-4 shrink-0 text-tinta-terciaria"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-        </Link>
-      </Card>
-
-      <Card className="mt-4">
         <Link href="/categorias" className="flex items-center gap-2.5 px-4 py-3.5">
           <Tags className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
           <div className="min-w-0 flex-1">
@@ -158,29 +156,31 @@ export default async function Hogar() {
             aria-hidden
           />
         </Link>
+
+        <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
+          <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+          <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-tinta-terciaria"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
+
+        <Link href="/cuotas" className="flex items-center gap-2.5 px-4 py-3.5">
+          <CreditCard className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+          <span className="flex-1 text-[14px] font-medium text-tinta">Compras en cuotas</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-tinta-terciaria"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
       </Card>
 
+      {/* Cierra el grupo, pero con card propia: abre el recorrido en vez de
+          navegar y por eso vive en su client component */}
       <BotonOnboarding />
-
-      {/* Asistente financiero con IA — solo cuando hay API key configurada */}
-      {process.env.ANTHROPIC_API_KEY && (
-        <Card className="mt-4">
-          <Link href="/asistente" className="flex items-center gap-2.5 px-4 py-3.5">
-            <Sparkles className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-            <div className="min-w-0 flex-1">
-              <span className="block text-[14px] font-medium text-tinta">Asistente</span>
-              <span className="block text-[11.5px] text-tinta-secundaria">
-                Preguntale a tus números
-              </span>
-            </div>
-            <ChevronRight
-              className="size-4 shrink-0 text-tinta-terciaria"
-              strokeWidth={1.5}
-              aria-hidden
-            />
-          </Link>
-        </Card>
-      )}
 
       {/* Tema claro/oscuro/auto persistido (tanda 8) */}
       <CambiadorTema />

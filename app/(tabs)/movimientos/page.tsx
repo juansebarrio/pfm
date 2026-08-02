@@ -203,6 +203,15 @@ export default async function PaginaMovimientos({
         <PorCategoria
           items={porCategoria}
           totalGastosCentavos={(await totalesPedido).gastosCentavos}
+          // cada porción lleva a SUS movimientos, en el mes que se está mirando.
+          // Sin `vista` para caer en la lista: la pregunta que sigue al anillo
+          // es "¿de qué está hecho ese número?", y eso es la lista.
+          hrefsDeCategoria={Object.fromEntries(
+            porCategoria.map((c) => [
+              c.clave,
+              `/movimientos?categoria=${c.clave}${esMesActual ? "" : `&mes=${mes.slice(0, 7)}`}`,
+            ]),
+          )}
           vacio={`No cargaste gastos en ${formatearMesLargo(mes)}. Cuando cargues alguno, acá vas a ver en qué se te fue.`}
         />
       ) : (

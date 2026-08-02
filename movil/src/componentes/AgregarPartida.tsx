@@ -12,15 +12,21 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
-import { centavosDesdeTexto } from "@dominio/dinero";
+import { centavosDesdeTexto, formatearImporte } from "@dominio/dinero";
 import { agregarPartida, type Resultado } from "@/lib/acciones";
 import type { SesionHogar } from "@/lib/datos";
 import { IconoCategoria } from "@/componentes/sistema";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 
 // Sumar una categoría a un mes YA armado. Espeja AgregarPartida de la web:
 // solo se ofrecen las categorías sin partida en el mes.
+//
+// El campo arranca en "$ 0" y sin referencia el monto se elige a ciegas: si cae
+// abajo de lo YA gastado, la partida nace en rojo. Por eso, elegida la
+// categoría, abajo del campo va cuánto se lleva gastado este mes, y si el monto
+// tipeado no lo cubre, un aviso en ámbar ANTES de guardar. No bloquea: es su
+// plata y puede querer asignar menos — lo que no puede es enterarse después.
 
 export type CategoriaLibre = { id: string; nombre: string; icono: string };
 
@@ -29,6 +35,7 @@ export function AgregarPartida({
   mes,
   ambito,
   categorias,
+  gastadoPorCategoria,
   sesion,
   alGuardar,
   alCerrar,
@@ -37,6 +44,8 @@ export function AgregarPartida({
   mes: string;
   ambito: "hogar" | "personal";
   categorias: CategoriaLibre[];
+  /** lo ya gastado este mes, en centavos, por id de categoría (solo las que tienen) */
+  gastadoPorCategoria: Record<string, number>;
   sesion: SesionHogar | null;
   alGuardar: () => Promise<void> | void;
   alCerrar: () => void;
@@ -58,6 +67,9 @@ export function AgregarPartida({
 
   const montoCentavos = centavosDesdeTexto(montoTexto);
   const listo = categoriaId !== null && montoCentavos !== null && montoCentavos > 0;
+  const yaGastado = categoriaId !== null ? (gastadoPorCategoria[categoriaId] ?? 0) : 0;
+  const naceExcedida =
+    yaGastado > 0 && montoCentavos !== null && montoCentavos > 0 && montoCentavos < yaGastado;
 
   async function guardar() {
     if (!listo || guardando || !sesion || categoriaId === null || montoCentavos === null)
@@ -133,6 +145,17 @@ export function AgregarPartida({
             ]}
           />
 
+          {/* la referencia: sin gasto todavía no hay nada que decir */}
+          {yaGastado > 0 && (
+            <Text style={e.yaGastado}>
+              ya gastaste <Text style={e.cifra}>{formatearImporte(yaGastado)}</Text> este
+              mes
+            </Text>
+          )}
+          {naceExcedida && (
+            <Text style={e.excedida}>con ese monto la partida ya nace excedida</Text>
+          )}
+
           {error && <Text style={e.error}>{error}</Text>}
 
           <Pressable
@@ -203,6 +226,14 @@ const e = StyleSheet.create({
     fontSize: 26,
     fontWeight: "600",
     color: color.tinta,
+  },
+  yaGastado: { marginTop: 6, fontSize: 11.5, color: color.tintaSecundaria },
+  cifra: { fontFamily: fuente.mono, fontVariant: ["tabular-nums"] },
+  excedida: {
+    marginTop: 4,
+    fontSize: 11.5,
+    fontWeight: "500",
+    color: color.ambarTexto,
   },
   error: { marginTop: 8, fontSize: 12.5, color: color.rojo },
   cta: {

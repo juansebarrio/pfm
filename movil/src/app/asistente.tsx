@@ -220,10 +220,19 @@ export default function Asistente() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.camara]);
 
-  const ultimo = turnos[turnos.length - 1];
-  const sugerencias =
-    !pensando && ultimo ? repreguntas(ultimo.bloques) : [];
-  const aOfrecer = sugerencias.length > 0 ? sugerencias : !pensando && ultimo ? REPREGUNTAS_BASE : [];
+  // Las repreguntas van ANCLADAS sobre el campo de escritura, no al final del
+  // hilo: ahí está el pulgar y ahí ya está mirando quien va a escribir. Dos
+  // consecuencias de anclarlas:
+  //
+  // - Se ofrecen SIEMPRE, también con la conversación vacía y mientras piensa
+  //   (ahí van deshabilitadas). Aparecer y desaparecer le cambiaría la altura
+  //   al pie en cada turno, y una barra que se mueve abajo del pulgar es peor
+  //   que una barra que por un segundo está apagada.
+  // - Mientras piensa se muestran las del último turno YA cerrado — el en curso
+  //   todavía no tiene bloques —, así el contenido tampoco parpadea.
+  const cerrado = turnos[turnos.length - (pensando ? 2 : 1)];
+  const sugerencias = cerrado ? repreguntas(cerrado.bloques) : [];
+  const aOfrecer = sugerencias.length > 0 ? sugerencias : REPREGUNTAS_BASE;
 
   return (
     <KeyboardAvoidingView
@@ -291,19 +300,32 @@ export default function Asistente() {
         ))}
 
         {error && <Text style={e.error}>{error}</Text>}
-
-        {aOfrecer.length > 0 && (
-          <View style={e.sugerencias}>
-            {aOfrecer.map((s) => (
-              <Pressable key={s} onPress={() => preguntar(s)} style={e.chip}>
-                <Text style={e.chipTexto}>{s}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
       </ScrollView>
 
+      {/* El pie es el último hijo del KeyboardAvoidingView: sube con el teclado
+          y se lleva las repreguntas con él, que es justo lo que se quiere. */}
       <View style={[e.pie, { paddingBottom: Math.max(14, insets.bottom) }]}>
+        {/* repreguntas, arriba de todo: una sola fila con scroll horizontal —
+            así el alto del pie no depende de cuántas ni de qué largo son */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={e.sugerencias}
+          contentContainerStyle={e.sugerenciasContenido}
+        >
+          {aOfrecer.map((s) => (
+            <Pressable
+              key={s}
+              onPress={() => preguntar(s)}
+              disabled={pensando}
+              style={[e.chip, pensando && { opacity: 0.4 }]}
+            >
+              <Text style={e.chipTexto}>{s}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
         {/* la foto elegida, antes de mandarla: se puede sacar */}
         {adjunta && (
           <View style={e.adjunto}>
@@ -385,7 +407,10 @@ const e = StyleSheet.create({
   },
   pensando: { fontSize: 13.5, color: color.tintaTerciaria },
   error: { fontSize: 12.5, fontWeight: "500", color: color.rojo },
-  sugerencias: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  // el marginHorizontal negativo cancela el padding del pie: los chips se
+  // desplazan de borde a borde y el primero sigue alineado con el input
+  sugerencias: { marginHorizontal: -20, marginBottom: 8, flexGrow: 0 },
+  sugerenciasContenido: { paddingHorizontal: 20, gap: 8 },
   chip: {
     borderRadius: radio.chip,
     borderWidth: 1,

@@ -26,7 +26,7 @@ import {
   mesDe,
   mesSiguiente,
 } from "@/lib/dominio/fechas";
-import { categoriasDelHogar } from "@/lib/datos/movimientos";
+import { categoriasDelHogar, gastosPorCategoria } from "@/lib/datos/movimientos";
 import { existePresupuesto } from "./datos";
 import { AgregarPartida } from "./AgregarPartida";
 import { BotonRepetir } from "./BotonRepetir";
@@ -90,13 +90,17 @@ export default async function PaginaPresupuesto({
   const mesProximo = mesSiguiente(mes);
 
   const sesion = await obtenerSesionHogar();
-  const [presupuesto, sugerencias, proximoArmado, hayAnterior, categorias] =
+  const [presupuesto, sugerencias, proximoArmado, hayAnterior, categorias, gastos] =
     await Promise.all([
       obtenerPresupuestoMes(sesion, mes, ambito),
       sugerenciasRecurrentes(sesion, mes),
       existePresupuesto(sesion, mesProximo, ambito),
       existePresupuesto(sesion, mesAnterior(mes), ambito),
       categoriasDelHogar(sesion),
+      // mismo ámbito que el presupuesto: lo que una partida de esta solapa
+      // contaría como gastado. Lo usa la hoja de "Sumar una partida" para que
+      // el monto no se elija a ciegas contra lo que ya se lleva gastado.
+      gastosPorCategoria(sesion, mes, ambito),
     ]);
 
   // categorías del ámbito sin partida este mes (las de ingreso no son partidas)
@@ -106,6 +110,9 @@ export default async function PaginaPresupuesto({
   const categoriasLibres = categorias
     .filter((c) => c.ambito === ambito && c.grupo !== "Ingresos" && !conPartida.has(c.id))
     .map((c) => ({ id: c.id, nombre: c.nombre, icono: c.icono }));
+  const gastadoPorCategoria = Object.fromEntries(
+    gastos.filter((g) => g.centavos > 0).map((g) => [g.clave, g.centavos]),
+  );
 
 
   const mesTitulo = formatearMesLargo(mes);
@@ -250,6 +257,8 @@ export default async function PaginaPresupuesto({
                   <PartidaEditable
                     key={p.id}
                     partidaId={p.id}
+                    categoriaId={p.categoriaId}
+                    mes={mes}
                     datos={aDatosPartida(p, mes, sugerencias)}
                   />
                 ))}
@@ -267,7 +276,12 @@ export default async function PaginaPresupuesto({
           );
         })}
 
-        <AgregarPartida mes={mes} ambito={ambito} categorias={categoriasLibres} />
+        <AgregarPartida
+          mes={mes}
+          ambito={ambito}
+          categorias={categoriasLibres}
+          gastadoPorCategoria={gastadoPorCategoria}
+        />
 
         {!proximoArmado && (
           <p className="mt-6 text-center">

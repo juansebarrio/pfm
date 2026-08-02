@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { centavosDesdeTexto, formatearImporte } from "@dominio/dinero";
@@ -19,9 +20,14 @@ import { tacto } from "@/lib/tacto";
 
 // La partida se ajusta tocándola: hoja con el monto asignado y listo. Espeja
 // PartidaEditable de la web — antes un presupuesto armado era intocable.
+//
+// Al pie, el camino al detalle: la hoja dice cuánto gastaste y hasta acá no
+// ofrecía nada para ver DE QUÉ está hecho ese número. Va como link discreto,
+// abajo del guardar: es la salida, no la acción de la hoja.
 
 export type PartidaParaEditar = {
   id: string;
+  /** el nombre de la partida ES el de su categoría: con eso filtra Movimientos */
   nombre: string;
   asignadoCentavos: number;
   gastadoCentavos: number;
@@ -30,15 +36,19 @@ export type PartidaParaEditar = {
 
 export function EditarPartida({
   partida,
+  mes,
   sesion,
   alGuardar,
   alCerrar,
 }: {
   partida: PartidaParaEditar | null;
+  /** "YYYY-MM-01": la partida es de un mes y sus gastos también */
+  mes: string;
   sesion: SesionHogar | null;
   alGuardar: () => Promise<void> | void;
   alCerrar: () => void;
 }) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [montoTexto, setMontoTexto] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +134,23 @@ export function EditarPartida({
           >
             <Text style={e.ctaTexto}>{guardando ? "Guardando…" : "Guardar monto"}</Text>
           </Pressable>
+
+          {/* la hoja se cierra ANTES de navegar: un Modal no se desmonta con la
+              navegación y si no, quedaría flotando arriba de Movimientos */}
+          <Pressable
+            onPress={() => {
+              if (!partida) return;
+              tacto.toque();
+              const categoria = partida.nombre;
+              alCerrar();
+              router.push({ pathname: "/movimientos", params: { categoria, mes } });
+            }}
+            style={e.verMovimientos}
+          >
+            <Text style={e.verMovimientosTexto}>
+              Ver los movimientos de {partida?.nombre ?? ""} →
+            </Text>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -183,4 +210,6 @@ const e = StyleSheet.create({
     justifyContent: "center",
   },
   ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  verMovimientos: { marginTop: 12, alignItems: "center", paddingVertical: 10 },
+  verMovimientosTexto: { fontSize: 13, fontWeight: "500", color: color.verde },
 });

@@ -82,7 +82,7 @@ export default function Login() {
           <Text style={e.marca}>Fin de mes</Text>
         </View>
         <Text style={e.subtitulo}>
-          Llegá tranquilo a fin de mes. Presupuesto del hogar y personal,
+          Llegá sin sobresaltos a fin de mes. Presupuesto del hogar y personal,
           tarjetas con ciclos reales y patrimonio, hecho para Argentina.
         </Text>
       </View>
