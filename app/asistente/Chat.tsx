@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, Camera, ChevronLeft, RotateCcw, X } from "lucide-react";
+import { ArrowUp, Camera, ChevronLeft, Images, RotateCcw, X } from "lucide-react";
 import type { CategoriaSimple, MedioDePago } from "@/lib/datos/movimientos";
 import {
   avisosDe,
@@ -71,7 +71,8 @@ export function Chat({
   const [pensando, setPensando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const finRef = useRef<HTMLDivElement>(null);
-  const archivoRef = useRef<HTMLInputElement>(null);
+  const camaraRef = useRef<HTMLInputElement>(null);
+  const galeriaRef = useRef<HTMLInputElement>(null);
   const arrancado = useRef(false);
 
   useEffect(() => {
@@ -315,10 +316,11 @@ export function Chat({
           }}
           className="flex items-center gap-2"
         >
-          {/* capture="environment" abre la cámara de atrás en el celu; en
-              desktop el mismo input ofrece elegir un archivo */}
+          {/* dos entradas separadas: capture="environment" abre la cámara de
+              atrás en el celu, pero también BLOQUEA elegir un screenshot ya
+              guardado — el caso más común —, así que la galería va sin capture */}
           <input
-            ref={archivoRef}
+            ref={camaraRef}
             type="file"
             accept={TIPOS_ACEPTADOS.join(",")}
             capture="environment"
@@ -328,14 +330,33 @@ export function Chat({
             }}
             className="hidden"
           />
+          <input
+            ref={galeriaRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              void adjuntar(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+            className="hidden"
+          />
           <button
             type="button"
-            onClick={() => archivoRef.current?.click()}
+            onClick={() => camaraRef.current?.click()}
             disabled={pensando || adjunta !== null}
-            aria-label="Adjuntar un comprobante"
+            aria-label="Sacarle una foto al comprobante"
             className="flex size-11 shrink-0 items-center justify-center rounded-cta border border-borde bg-superficie text-tinta disabled:opacity-40"
           >
             <Camera className="size-5" strokeWidth={1.6} aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => galeriaRef.current?.click()}
+            disabled={pensando || adjunta !== null}
+            aria-label="Elegir una imagen de la galería"
+            className="flex size-11 shrink-0 items-center justify-center rounded-cta border border-borde bg-superficie text-tinta disabled:opacity-40"
+          >
+            <Images className="size-5" strokeWidth={1.6} aria-hidden />
           </button>
           <input
             type="text"

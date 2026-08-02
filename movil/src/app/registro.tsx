@@ -92,6 +92,8 @@ export default function Registro() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
+        textContentType="emailAddress"
+        autoComplete="email"
         style={e.input}
       />
 
@@ -103,6 +105,8 @@ export default function Registro() {
         placeholderTextColor={color.tintaTerciaria}
         secureTextEntry
         autoCapitalize="none"
+        textContentType="newPassword"
+        autoComplete="new-password"
         style={e.input}
       />
 

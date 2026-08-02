@@ -40,7 +40,7 @@ import {
   type SesionHogar,
   type TotalesMes,
 } from "@/lib/datos";
-import { color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
 import {
   Badge,
   BarraAvance,
@@ -303,7 +303,7 @@ export default function Resumen() {
         </>
       )}
 
-      <View style={{ height: insets.bottom + 24 }} />
+      <View style={{ height: insets.bottom + AIRE_PASTILLA }} />
     </ScrollView>
 
     <DetalleMovimiento

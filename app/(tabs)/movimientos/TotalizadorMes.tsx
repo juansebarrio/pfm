@@ -23,9 +23,11 @@ export function TotalizadorMes({ totales }: { totales: TotalesMes }) {
       </div>
       <div className="px-3 py-2.5">
         <p className="text-[10.5px] text-tinta-secundaria">Balance</p>
+        {/* en negativo va en tinta con su signo: el rojo del sistema se
+            reserva para "excedido", y gastar más de lo que entró no lo es */}
         <p
           className={`cifra truncate text-[13.5px] font-semibold ${
-            balance < 0 ? "text-rojo" : "text-verde"
+            balance < 0 ? "text-tinta" : "text-verde"
           }`}
         >
           {formatearImporte(balance)}

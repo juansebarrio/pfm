@@ -10,9 +10,17 @@ type Props = {
   textoCtaPendiente: string;
   /** ruta interna a la que volver tras autenticarse (p. ej. una invitación) */
   volver?: string;
+  /** muestra "¿Olvidaste tu contraseña?" bajo el campo (solo en el login) */
+  conLinkOlvide?: boolean;
 };
 
-export function FormularioAuth({ accion, textoCta, textoCtaPendiente, volver }: Props) {
+export function FormularioAuth({
+  accion,
+  textoCta,
+  textoCtaPendiente,
+  volver,
+  conLinkOlvide,
+}: Props) {
   const [estado, despachar, pendiente] = useActionState(accion, {});
 
   return (
@@ -44,6 +52,13 @@ export function FormularioAuth({ accion, textoCta, textoCtaPendiente, volver }: 
           placeholder="Mínimo 8 caracteres"
         />
       </label>
+      {conLinkOlvide && (
+        <p className="text-right text-[12.5px]">
+          <Link href="/olvide" className="font-medium text-verde">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+      )}
 
       {estado.error && (
         <p role="alert" className="text-[12.5px] font-medium text-rojo">

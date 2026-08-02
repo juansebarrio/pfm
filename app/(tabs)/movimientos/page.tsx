@@ -9,6 +9,7 @@ import {
   type MovimientoLista,
 } from "@/lib/datos/movimientos";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
+import { formatearImporte } from "@/lib/dominio/dinero";
 import {
   etiquetaDia,
   formatearMesLargo,
@@ -113,6 +114,9 @@ export default async function PaginaMovimientos({
   }
 
   const hayFiltros = Boolean(q || ambito || medio || categoriaId || miembroId || tipo);
+  // suma bruta de lo filtrado: los importes son absolutos (el signo lo lleva
+  // el tipo), así que esto no netea ingresos contra gastos — cuánto es lo visto
+  const totalFiltradoCentavos = historial.reduce((suma, m) => suma + m.importeCentavos, 0);
 
   // lo que hay que arrastrar al cambiar de mes o de solapa
   const comunes: Record<string, string> = Object.fromEntries(
@@ -190,6 +194,16 @@ export default async function PaginaMovimientos({
           miembros={miembros.map((m) => ({ valor: m.userId, etiqueta: m.nombre }))}
         />
       </div>
+
+      {/* Con filtros activos, cuánto suma lo que quedó a la vista. El
+          TotalizadorMes de arriba sigue midiendo el mes completo. */}
+      {hayFiltros && historial.length > 0 && (
+        <p className="mt-3 text-[11.5px] text-tinta-secundaria">
+          <span className="cifra">{historial.length}</span>{" "}
+          {historial.length === 1 ? "movimiento" : "movimientos"} ·{" "}
+          <span className="cifra">{formatearImporte(totalFiltradoCentavos)}</span>
+        </p>
+      )}
 
       {/* La bandeja se corre al filtrar por tipo (el historial ya muestra todo
           ese tipo, incluido lo sin categorizar) y también fuera del mes en

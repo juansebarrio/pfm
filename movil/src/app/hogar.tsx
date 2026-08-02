@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -18,13 +23,16 @@ import {
   ChevronRight,
   CreditCard,
   Lock,
+  Mail,
   ScanFace,
   Sparkles,
   Tags,
   Users,
   Wallet,
   GraduationCap,
+  X,
 } from "lucide-react-native";
+import { diasEntre, fechaDesdeMs, hoyBA } from "@dominio/fechas";
 import { useBloqueo } from "@/lib/bloqueo";
 import { borrarMiCuenta } from "@/lib/cuenta";
 import {
@@ -34,13 +42,19 @@ import {
   reprogramarAvisos,
 } from "@/lib/avisos";
 import {
+  invitarAlHogar,
+  reenviarInvitacion,
+  revocarInvitacion,
+} from "@/lib/acciones";
+import {
   obtenerHogar,
   obtenerSesionHogar,
   type MiembroFila,
   type SesionHogar,
 } from "@/lib/datos";
 import { supabase } from "@/lib/supabase";
-import { color } from "@/lib/tema";
+import { tacto } from "@/lib/tacto";
+import { color, radio } from "@/lib/tema";
 import { Onboarding } from "@/componentes/Onboarding";
 import { Badge, Card } from "@/componentes/sistema";
 
@@ -55,6 +69,34 @@ function losVen(nombres: string[]): string {
   return `los ven ${nombres.slice(0, -1).join(", ")} y ${nombres[nombres.length - 1]}`;
 }
 
+type InvitacionFila = { id: string; email: string; creadoEl: string };
+
+/** Espeja la consulta de la web (lib/datos/hogar.ts): solo pendientes, más viejas primero. */
+async function invitacionesPendientes(hogarId: string): Promise<InvitacionFila[]> {
+  const { data } = await supabase
+    .from("invitaciones")
+    .select("id, email, creado_el")
+    .eq("hogar_id", hogarId)
+    .eq("estado", "pendiente")
+    .order("creado_el", { ascending: true });
+  return (data ?? []).map((i) => ({
+    id: i.id as string,
+    email: i.email as string,
+    creadoEl: i.creado_el as string,
+  }));
+}
+
+/** "invitada hoy" / "invitada hace 1 día" / "invitada hace N días", en BA. */
+function etiquetaInvitada(creadoEl: string, hoy: string): string {
+  const fecha = fechaDesdeMs(Date.parse(creadoEl));
+  const dias = Math.max(0, diasEntre(fecha, hoy));
+  const cuando =
+    dias === 0 ? "invitada hoy" : dias === 1 ? "invitada hace 1 día" : `invitada hace ${dias} días`;
+  return `${cuando} · sin responder`;
+}
+
+const EMAIL_VALIDO = /\S+@\S+\.\S+/;
+
 export default function Hogar() {
   const [onboardingAbierto, setOnboardingAbierto] = useState(false);
   const router = useRouter();
@@ -67,15 +109,28 @@ export default function Hogar() {
   const [avisos, setAvisos] = useState(false);
   const [programados, setProgramados] = useState(0);
   const [borrando, setBorrando] = useState(false);
+  const [invitaciones, setInvitaciones] = useState<InvitacionFila[]>([]);
+  // la fila con una acción en curso: evita reenviar y revocar a la vez
+  const [invitacionOcupada, setInvitacionOcupada] = useState<string | null>(null);
+  const [invitarAbierto, setInvitarAbierto] = useState(false);
+  const [email, setEmail] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
+  // sin RESEND_API_KEY el email no sale: el server devuelve el link para compartir
+  const [linkInvitacion, setLinkInvitacion] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const s = await obtenerSesionHogar();
       if (!s) return;
       setSesion(s);
-      const h = await obtenerHogar(s);
+      const [h, pendientes] = await Promise.all([
+        obtenerHogar(s),
+        invitacionesPendientes(s.hogarId),
+      ]);
       setNombre(h.nombre);
       setMiembros(h.miembros);
+      setInvitaciones(pendientes);
 
       // los avisos se reprograman en cada apertura: los ciclos se mueven
       if (await avisosActivos()) {
@@ -84,6 +139,62 @@ export default function Hogar() {
       }
     })().finally(() => setCargando(false));
   }, []);
+
+  async function refrescarInvitaciones() {
+    if (sesion) setInvitaciones(await invitacionesPendientes(sesion.hogarId));
+  }
+
+  function abrirInvitar() {
+    setEmail("");
+    setErrorInvitar(null);
+    setLinkInvitacion(null);
+    setInvitarAbierto(true);
+  }
+
+  async function enviarInvitacion() {
+    const limpio = email.trim();
+    if (!EMAIL_VALIDO.test(limpio) || enviando) return;
+    setEnviando(true);
+    setErrorInvitar(null);
+    const r = await invitarAlHogar(limpio);
+    setEnviando(false);
+    if (!r.ok) {
+      setErrorInvitar(r.error);
+      return;
+    }
+    tacto.guardado();
+    await refrescarInvitaciones();
+    if (r.enviado) setInvitarAbierto(false);
+    else setLinkInvitacion(r.link); // el mail no salió: se comparte a mano
+  }
+
+  async function reenviar(inv: InvitacionFila) {
+    if (invitacionOcupada) return;
+    setInvitacionOcupada(inv.id);
+    const r = await reenviarInvitacion(inv.id);
+    setInvitacionOcupada(null);
+    if (!r.ok) {
+      Alert.alert("No pudimos reenviar", r.error);
+      return;
+    }
+    tacto.guardado();
+    // el email no salió (sin RESEND): el link renovado se comparte a mano
+    if (!r.enviado && r.link) void Share.share({ message: r.link });
+    await refrescarInvitaciones();
+  }
+
+  async function revocar(inv: InvitacionFila) {
+    if (!sesion || invitacionOcupada) return;
+    setInvitacionOcupada(inv.id);
+    const r = await revocarInvitacion(sesion, inv.id);
+    setInvitacionOcupada(null);
+    if (!r.ok) {
+      Alert.alert("No pudimos revocar", r.error);
+      return;
+    }
+    tacto.guardado();
+    await refrescarInvitaciones();
+  }
 
   /**
    * Dos pasos a propósito: el primero explica qué se lleva puesto, el segundo
@@ -143,6 +254,14 @@ export default function Hogar() {
   }
 
   const n = miembros.length;
+  const nInv = invitaciones.length;
+  const subtitulo =
+    `${n} ${n === 1 ? "miembro" : "miembros"}` +
+    (nInv > 0
+      ? ` · ${nInv} ${nInv === 1 ? "invitación pendiente" : "invitaciones pendientes"}`
+      : "");
+  const hoy = hoyBA();
+  const emailListo = EMAIL_VALIDO.test(email.trim());
 
   return (
     <View style={e.pantalla}>
@@ -172,9 +291,7 @@ export default function Hogar() {
                 <Text numberOfLines={1} style={e.hogarNombre}>
                   {nombre}
                 </Text>
-                <Text style={e.hogarMeta}>
-                  {n} {n === 1 ? "miembro" : "miembros"}
-                </Text>
+                <Text style={e.hogarMeta}>{subtitulo}</Text>
               </View>
             </View>
             {miembros.map((m) => (
@@ -198,6 +315,70 @@ export default function Hogar() {
                 <Badge variante="neutro">{m.rol}</Badge>
               </View>
             ))}
+
+            {/* Invitaciones pendientes: avatar punteado ámbar, como en la web */}
+            {invitaciones.map((inv) => (
+              <View key={inv.id} style={[e.invitacion, e.conBorde]}>
+                <View style={e.invitacionFila}>
+                  <View style={e.avatarPendiente}>
+                    <Text style={e.avatarPendienteTexto}>
+                      {(inv.email.trim()[0] ?? "?").toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text numberOfLines={1} style={e.miembroNombre}>
+                      {inv.email}
+                    </Text>
+                    <Text style={e.miembroMeta}>
+                      {etiquetaInvitada(inv.creadoEl, hoy)}
+                    </Text>
+                  </View>
+                  <Badge variante="pendiente">pendiente</Badge>
+                </View>
+                <View style={e.invitacionAcciones}>
+                  <Pressable
+                    onPress={() => reenviar(inv)}
+                    disabled={invitacionOcupada !== null}
+                    hitSlop={10}
+                  >
+                    <Text
+                      style={[
+                        e.accionReenviar,
+                        invitacionOcupada !== null && { opacity: 0.6 },
+                      ]}
+                    >
+                      Reenviar
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => revocar(inv)}
+                    disabled={invitacionOcupada !== null}
+                    hitSlop={10}
+                  >
+                    <Text
+                      style={[
+                        e.accionRevocar,
+                        invitacionOcupada !== null && { opacity: 0.6 },
+                      ]}
+                    >
+                      Revocar
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+
+            {/* CTA de invitar: fila del card, mismo lenguaje que la navegación */}
+            <Pressable onPress={abrirInvitar} style={[e.navFila, e.conBorde]}>
+              <Mail size={17} color={color.verde} strokeWidth={1.5} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={e.navTexto}>Invitar al hogar</Text>
+                <Text style={e.navAyuda}>
+                  Por email. La persona elige su clave al entrar.
+                </Text>
+              </View>
+              <ChevronRight size={16} color={color.tintaTerciaria} strokeWidth={1.5} />
+            </Pressable>
           </Card>
 
           {/* Navegación */}
@@ -330,6 +511,79 @@ export default function Hogar() {
         </ScrollView>
       )}
 
+      {/* Hoja inferior de invitar: mismo patrón que AgregarPartida */}
+      <Modal
+        visible={invitarAbierto}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInvitarAbierto(false)}
+      >
+        <KeyboardAvoidingView
+          style={e.lleno}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <Pressable style={e.fondoHoja} onPress={() => setInvitarAbierto(false)} />
+          <View style={[e.hoja, { paddingBottom: Math.max(20, insets.bottom) }]}>
+            <View aria-hidden style={e.agarre} />
+            <View style={e.filaTituloHoja}>
+              <Text style={e.tituloHoja}>Invitar al hogar</Text>
+              <Pressable onPress={() => setInvitarAbierto(false)} hitSlop={10}>
+                <X size={22} color={color.tintaSecundaria} strokeWidth={2} />
+              </Pressable>
+            </View>
+
+            {linkInvitacion ? (
+              <>
+                {/* el email no salió (sin RESEND): el link se comparte a mano */}
+                <Text style={e.avisoLink}>
+                  La invitación ya está creada, pero el email no salió. Compartí
+                  este link (vence en 14 días):
+                </Text>
+                <Text selectable style={e.link}>
+                  {linkInvitacion}
+                </Text>
+                <Pressable
+                  onPress={() => Share.share({ message: linkInvitacion })}
+                  style={e.ctaHoja}
+                >
+                  <Text style={e.ctaHojaTexto}>Compartir el link</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Text style={e.etiquetaHoja}>Email</Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  autoComplete="email"
+                  placeholder="nombre@email.com"
+                  placeholderTextColor={color.tintaTerciaria}
+                  style={e.inputEmail}
+                />
+                <Text style={e.ayudaHoja}>
+                  Por email. La persona elige su clave al entrar.
+                </Text>
+
+                {errorInvitar && <Text style={e.errorHoja}>{errorInvitar}</Text>}
+
+                <Pressable
+                  onPress={enviarInvitacion}
+                  disabled={!emailListo || enviando}
+                  style={[e.ctaHoja, (!emailListo || enviando) && { opacity: 0.4 }]}
+                >
+                  <Text style={e.ctaHojaTexto}>
+                    {enviando ? "Enviando…" : "Enviar invitación"}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       <Onboarding
         abierto={onboardingAbierto}
         alCerrar={() => setOnboardingAbierto(false)}
@@ -407,4 +661,78 @@ const e = StyleSheet.create({
     color: color.tintaTerciaria,
     textDecorationLine: "underline",
   },
+
+  // invitaciones pendientes (espejan la fila de miembro; avatar como ESTIMADA)
+  invitacion: { paddingHorizontal: 16, paddingVertical: 12 },
+  invitacionFila: { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatarPendiente: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: color.bordeEstimada,
+    backgroundColor: color.fondoEstimada,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarPendienteTexto: { fontSize: 14, fontWeight: "600", color: color.ambarTexto },
+  // alineadas al texto: avatar (36) + gap (12) = 48
+  invitacionAcciones: { flexDirection: "row", gap: 16, paddingLeft: 48, marginTop: 8 },
+  accionReenviar: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  accionRevocar: { fontSize: 12.5, fontWeight: "500", color: color.rojo },
+
+  // hoja de invitar (calca AgregarPartida)
+  lleno: { flex: 1, justifyContent: "flex-end" },
+  fondoHoja: {
+    ...(StyleSheet.absoluteFill as object),
+    backgroundColor: "rgba(20, 19, 18, 0.6)",
+  },
+  hoja: {
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderTopWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  agarre: {
+    alignSelf: "center",
+    height: 4,
+    width: 36,
+    borderRadius: 2,
+    backgroundColor: color.tintaMuda,
+  },
+  filaTituloHoja: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  tituloHoja: { fontSize: 16, fontWeight: "600", color: color.tinta },
+  etiquetaHoja: { marginTop: 16, marginBottom: 6, fontSize: 11.5, color: color.tintaSecundaria },
+  inputEmail: {
+    height: 48,
+    borderRadius: radio.cta,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.papel,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: color.tinta,
+  },
+  ayudaHoja: { marginTop: 8, fontSize: 11.5, color: color.tintaSecundaria },
+  errorHoja: { marginTop: 8, fontSize: 12.5, color: color.rojo },
+  avisoLink: { marginTop: 16, fontSize: 12.5, lineHeight: 18, color: color.tintaSecundaria },
+  link: { marginTop: 8, fontSize: 12.5, color: color.verde },
+  ctaHoja: {
+    marginTop: 16,
+    height: 48,
+    borderRadius: radio.cta,
+    backgroundColor: color.verde,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  ctaHojaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
 });

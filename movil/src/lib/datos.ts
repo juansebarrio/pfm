@@ -822,6 +822,8 @@ export type Patrimonio = {
   tenencias: TenenciaValuada[];
   tcFuente: string | null;
   tcValorCentavos: number | null;
+  /** Fecha YYYY-MM-DD de la cotización activa: el TC siempre se muestra con fecha (§1.2). */
+  tcFecha: string | null;
 };
 
 const CONVERTIBLES_AL_TC = new Set(["dolar_billete", "dolar_mep"]);
@@ -860,9 +862,10 @@ export async function obtenerPatrimonio(
   ]);
 
   // último valor cargado por fuente
-  const porFuente = new Map<string, { valorCentavos: number }>();
+  const porFuente = new Map<string, { valorCentavos: number; fecha: string }>();
   for (const t of tcs ?? []) {
-    if (!porFuente.has(t.fuente)) porFuente.set(t.fuente, { valorCentavos: t.valor_centavos });
+    if (!porFuente.has(t.fuente))
+      porFuente.set(t.fuente, { valorCentavos: t.valor_centavos, fecha: t.fecha });
   }
   const tcActivo =
     porFuente.get(fuente) ?? [...porFuente.values()][0] ?? null;
@@ -904,6 +907,7 @@ export async function obtenerPatrimonio(
     })),
     tcFuente: fuenteActiva,
     tcValorCentavos: tcActivo?.valorCentavos ?? null,
+    tcFecha: tcActivo?.fecha ?? null,
   };
 }
 

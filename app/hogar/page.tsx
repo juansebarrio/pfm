@@ -5,7 +5,7 @@
 import Link from "next/link";
 import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Lock, Sparkles, Tags, Users, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Lock, Sparkles, Tags, Users, Wallet } from "lucide-react";
 import { cerrarSesion } from "@/app/(auth)/acciones";
 import { Badge } from "@/components/sistema/Badge";
 import { Card } from "@/components/sistema/Card";
@@ -122,6 +122,19 @@ export default async function Hogar() {
         <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
           <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
           <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-tinta-terciaria"
+            strokeWidth={1.5}
+            aria-hidden
+          />
+        </Link>
+      </Card>
+
+      {/* ...y a las compras en cuotas: /cuotas no tiene otra entrada en la web */}
+      <Card className="mt-4">
+        <Link href="/cuotas" className="flex items-center gap-2.5 px-4 py-3.5">
+          <CreditCard className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+          <span className="flex-1 text-[14px] font-medium text-tinta">Compras en cuotas</span>
           <ChevronRight
             className="size-4 shrink-0 text-tinta-terciaria"
             strokeWidth={1.5}

@@ -1,4 +1,11 @@
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import {
   ArrowDownLeft,
   Baby,
@@ -46,7 +53,7 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 import { formatearImporte, type Moneda } from "@dominio/dinero";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 
 // Componentes del sistema de diseño, portados de components/sistema/ de la web.
 // Misma anatomía y mismo léxico; lo que cambia es CSS → StyleSheet y <div> →
@@ -70,14 +77,17 @@ export function EncabezadoSeccion({ children }: { children: React.ReactNode }) {
 
 // ─────────────────────────────────────────────────────── Importe
 
+// Toda cifra en Spline Sans Mono (§2.2); el peso va en el archivo de la
+// fuente, no en fontWeight. Las cifras de 28–40px llevan el −0.02em del
+// export, pasado a px sobre su fontSize.
 const variantesImporte = {
-  hero: { fontSize: 40, fontWeight: "500" },
-  card: { fontSize: 34, fontWeight: "500" },
-  patrimonio: { fontSize: 28, fontWeight: "500" },
-  fila: { fontSize: 13, fontWeight: "600" },
-  filaChica: { fontSize: 12.5, fontWeight: "600" },
-  meta: { fontSize: 11, fontWeight: "400" },
-} as const;
+  hero: { fontSize: 40, fontFamily: fuente.monoMedio, letterSpacing: -0.8 },
+  card: { fontSize: 34, fontFamily: fuente.monoMedio, letterSpacing: -0.68 },
+  patrimonio: { fontSize: 28, fontFamily: fuente.monoMedio, letterSpacing: -0.56 },
+  fila: { fontSize: 13, fontFamily: fuente.monoSemi },
+  filaChica: { fontSize: 12.5, fontFamily: fuente.monoSemi },
+  meta: { fontSize: 11, fontFamily: fuente.mono },
+} satisfies Record<string, TextStyle>;
 
 export function Importe({
   centavos,
@@ -95,7 +105,7 @@ export function Importe({
   const texto = formatearImporte(Math.abs(centavos), moneda);
   const prefijo = conSigno && centavos > 0 ? "+ " : centavos < 0 ? "− " : "";
   return (
-    <Text style={[variantesImporte[variante], { color: colorTexto }]}>
+    <Text style={[e.cifra, variantesImporte[variante], { color: colorTexto }]}>
       {prefijo}
       {texto}
     </Text>
@@ -155,7 +165,14 @@ export function Badge({
 }) {
   return (
     <View style={[e.badge, estilosBadge[variante]]}>
-      <Text style={[e.badgeTexto, { color: colorBadge[variante] }]}>
+      <Text
+        style={[
+          e.badgeTexto,
+          // CUOTA 4/12 es cifra: mono con el tracking del export (.05em)
+          variante === "cuota" && e.badgeTextoCuota,
+          { color: colorBadge[variante] },
+        ]}
+      >
         {children.toUpperCase()}
       </Text>
     </View>
@@ -404,7 +421,9 @@ export function CardPartida(p: DatosPartida) {
             a este ritmo terminás {formatearImporte(p.excedenteProyectadoCentavos)} arriba
           </Text>
         ) : p.estado === "excedido" ? (
-          <Text style={[e.partidaAviso, { color: color.rojo, fontWeight: "500" }]}>
+          <Text
+            style={[e.partidaAviso, { color: color.rojo, fontFamily: fuente.textoMedio }]}
+          >
             te pasaste {formatearImporte(-queda)}
           </Text>
         ) : p.textoRollover ? (
@@ -484,7 +503,7 @@ const e = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 2,
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tintaSecundaria,
   },
   badge: {
@@ -493,7 +512,13 @@ const e = StyleSheet.create({
     paddingVertical: 2,
     alignSelf: "flex-start",
   },
-  badgeTexto: { fontSize: 8.5, fontWeight: "600", letterSpacing: 0.7 },
+  badgeTexto: { fontSize: 8.5, fontFamily: fuente.textoSemi, letterSpacing: 0.7 },
+  badgeTextoCuota: {
+    fontFamily: fuente.monoSemi,
+    letterSpacing: 0.43, // .05em sobre 8.5px
+    fontVariant: ["tabular-nums"],
+  },
+  cifra: { fontVariant: ["tabular-nums"] },
   pista: {
     width: "100%",
     borderRadius: 2,
@@ -512,7 +537,7 @@ const e = StyleSheet.create({
   vacioTitulo: {
     marginTop: 20,
     fontSize: 19,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
     textAlign: "center",
   },
@@ -521,6 +546,7 @@ const e = StyleSheet.create({
     maxWidth: 280,
     fontSize: 13.5,
     lineHeight: 21,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
     textAlign: "center",
   },
@@ -531,7 +557,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 13,
   },
-  vacioCtaTexto: { fontSize: 14.5, fontWeight: "600", color: color.papel },
+  vacioCtaTexto: { fontSize: 14.5, fontFamily: fuente.textoSemi, color: color.papel },
   partida: { paddingHorizontal: 14, paddingVertical: 11 },
   partidaFila: { flexDirection: "row", alignItems: "center", gap: 10 },
   partidaNombre: {
@@ -541,11 +567,16 @@ const e = StyleSheet.create({
     gap: 6,
     minWidth: 0,
   },
-  partidaTitulo: { flexShrink: 1, fontSize: 14, fontWeight: "500", color: color.tinta },
+  partidaTitulo: {
+    flexShrink: 1,
+    fontSize: 14,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
   pagada: { flexDirection: "row", alignItems: "center", gap: 4 },
-  pagadaTexto: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  pagadaTexto: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.verde },
   quedaFila: { flexDirection: "row", alignItems: "baseline", gap: 4 },
-  quedaEtiqueta: { fontSize: 11, color: color.tintaSecundaria },
+  quedaEtiqueta: { fontSize: 11, fontFamily: fuente.texto, color: color.tintaSecundaria },
   partidaPie: {
     marginTop: 6,
     flexDirection: "row",
@@ -553,8 +584,20 @@ const e = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  partidaMeta: { fontSize: 11, color: color.tintaSecundaria, flexShrink: 1 },
-  partidaAviso: { fontSize: 11, textAlign: "right", flexShrink: 1 },
+  // "$ X de $ Y" es cifra: mono 400 como en la web (clase .cifra)
+  partidaMeta: {
+    fontSize: 11,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaSecundaria,
+    flexShrink: 1,
+  },
+  partidaAviso: {
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    textAlign: "right",
+    flexShrink: 1,
+  },
   movimiento: {
     flexDirection: "row",
     alignItems: "center",
@@ -563,8 +606,17 @@ const e = StyleSheet.create({
     paddingVertical: 10,
   },
   movimientoTexto: { flex: 1, minWidth: 0 },
-  movimientoDescripcion: { fontSize: 14, fontWeight: "500", color: color.tinta },
-  movimientoMeta: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
+  movimientoDescripcion: {
+    fontSize: 14,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
+  movimientoMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   movimientoDerecha: { alignItems: "flex-end" },
   movimientoBadges: { flexDirection: "row", gap: 4, marginTop: 4 },
 });

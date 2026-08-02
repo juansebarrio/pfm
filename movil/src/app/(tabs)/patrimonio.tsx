@@ -10,17 +10,36 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { LineChart } from "lucide-react-native";
-import { formatearImporte } from "@dominio/dinero";
+import { arsAUsd, formatearImporte } from "@dominio/dinero";
+import { etiquetaDia, formatearDiaCorto, hoyBA } from "@dominio/fechas";
 import {
   obtenerPatrimonio,
   obtenerSesionHogar,
   type Patrimonio as DatosPatrimonio,
 } from "@/lib/datos";
-import { color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
 import { Card, EncabezadoSeccion, EstadoVacio, Importe } from "@/componentes/sistema";
 
-// 08 — Patrimonio: total valuado, composición y tenencias con su frescura.
-// Las barras se normalizan al MÁXIMO, no al 100 % (regla del export §3.28).
+// 08 — Patrimonio: total del hogar, composición y tenencias con su frescura.
+// El hero redondea a la centena de mil con ≈ (DESIGN_NOTES §1.2); el detalle
+// exacto vive en las filas. Las barras se normalizan al MÁXIMO, no al 100 %
+// (regla del export §3.28).
+
+// Misma aritmética que el hero web (app/(tabs)/patrimonio/page.tsx).
+const CENTENA_DE_MIL = 10_000_000; // $ 100.000 en centavos
+const CENTENA_USD = 10_000; // USD 100 en centavos
+
+/** La sigla va en MAYÚSCULA (MEP); "blue" y "oficial" en minúscula (app/(tabs)/patrimonio/instrumentos.ts). */
+function etiquetaFuente(fuente: string): string {
+  return fuente === "mep" ? "MEP" : fuente;
+}
+
+/** "hoy 10 jul" / "ayer 9 jul" / "8 jul" — espeja etiquetaFechaTC de app/(tabs)/patrimonio/page.tsx. */
+function etiquetaFechaTC(fecha: string, hoy: string): string {
+  const corto = formatearDiaCorto(fecha);
+  const relativa = etiquetaDia(fecha, hoy).toLowerCase();
+  return relativa === corto ? corto : `${relativa} ${corto}`;
+}
 
 export default function Patrimonio() {
   const insets = useSafeAreaInsets();
@@ -70,13 +89,20 @@ export default function Patrimonio() {
     );
   }
 
+  const total = datos.totalArsCentavos;
+  const totalRedondeado = Math.round(total / CENTENA_DE_MIL) * CENTENA_DE_MIL;
+  const usdRedondeado =
+    datos.tcValorCentavos !== null
+      ? Math.round(arsAUsd(total, datos.tcValorCentavos) / CENTENA_USD) * CENTENA_USD
+      : null;
+
   return (
     <ScrollView
       style={e.pantalla}
       contentContainerStyle={{
         paddingTop: insets.top + 12,
         paddingHorizontal: 20,
-        paddingBottom: insets.bottom + 24,
+        paddingBottom: insets.bottom + AIRE_PASTILLA,
       }}
       refreshControl={
         <RefreshControl
@@ -88,15 +114,20 @@ export default function Patrimonio() {
     >
       <Text style={e.titulo}>Patrimonio</Text>
 
-      {/* Total valuado + tipo de cambio activo */}
+      {/* Total del hogar redondeado (≈, §1.2) + equivalente USD + TC con fecha */}
       <Card style={{ marginTop: 16, paddingHorizontal: 14, paddingVertical: 14 }}>
-        <Text style={e.etiqueta}>Total valuado</Text>
-        <View style={{ marginTop: 4 }}>
-          <Importe centavos={datos.totalArsCentavos} variante="patrimonio" />
+        <Text style={e.etiqueta}>Total del hogar</Text>
+        <View style={e.filaTotal}>
+          {totalRedondeado !== total && <Text style={e.aprox}>≈</Text>}
+          <Importe centavos={totalRedondeado} variante="patrimonio" />
         </View>
-        {datos.tcValorCentavos !== null && (
+        {usdRedondeado !== null && (
+          <Text style={e.usd}>≈ {formatearImporte(usdRedondeado, "USD")}</Text>
+        )}
+        {datos.tcFuente !== null && datos.tcValorCentavos !== null && (
           <Text style={e.tc}>
-            {datos.tcFuente?.toUpperCase()} {formatearImporte(datos.tcValorCentavos)}
+            {etiquetaFuente(datos.tcFuente)} {formatearImporte(datos.tcValorCentavos)}
+            {datos.tcFecha !== null && ` · ${etiquetaFechaTC(datos.tcFecha, hoyBA())}`}
           </Text>
         )}
       </Card>
@@ -160,6 +191,14 @@ const e = StyleSheet.create({
   },
   titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
   etiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
+  filaTotal: {
+    marginTop: 4,
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 6,
+  },
+  aprox: { fontSize: 20, fontWeight: "500", color: color.tintaSecundaria },
+  usd: { marginTop: 4, fontSize: 14, fontWeight: "500", color: color.tintaSecundaria },
   tc: { marginTop: 6, fontSize: 11, color: color.tintaSecundaria },
   compFila: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   compNombre: { flex: 1, fontSize: 12.5, color: color.tinta },

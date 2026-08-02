@@ -15,11 +15,16 @@ import { entrarDemo } from "@/lib/cuenta";
 import { supabase } from "@/lib/supabase";
 import { color, radio } from "@/lib/tema";
 import { MarcaFinDeMes } from "@/componentes/MarcaFinDeMes";
+import OlvideClave from "./olvide-clave";
 
 const DEMO = process.env.EXPO_PUBLIC_DEMO === "true";
 
 // Login nativo. Mismo copy y jerarquía visual que app/(auth)/login de la web,
 // con inputs nativos: teclado de email, sin autocapitalize y KeyboardAvoiding.
+//
+// "¿Olvidaste tu contraseña?" no navega a /olvide-clave: el Portero global
+// expulsaría la ruta por no tener sesión. Se renderiza la pantalla acá mismo,
+// con la ruta todavía en "login", y `alVolver` la cierra.
 
 export default function Login() {
   const router = useRouter();
@@ -28,6 +33,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState(false);
+  const [olvide, setOlvide] = useState(false);
 
   async function entrar() {
     if (pendiente) return;
@@ -61,6 +67,8 @@ export default function Login() {
 
   if (sesion) return <Redirect href="/(tabs)/resumen" />;
 
+  if (olvide) return <OlvideClave alVolver={() => setOlvide(false)} />;
+
   const listo = email.trim() !== "" && password !== "" && !pendiente;
 
   return (
@@ -88,6 +96,8 @@ export default function Login() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
+        textContentType="emailAddress"
+        autoComplete="email"
         style={e.input}
       />
 
@@ -99,8 +109,14 @@ export default function Login() {
         placeholderTextColor={color.tintaTerciaria}
         secureTextEntry
         autoCapitalize="none"
+        textContentType="password"
+        autoComplete="current-password"
         style={e.input}
       />
+
+      <Pressable onPress={() => setOlvide(true)} style={e.olvide} hitSlop={8}>
+        <Text style={e.olvideTexto}>¿Olvidaste tu contraseña?</Text>
+      </Pressable>
 
       {error && <Text style={e.error}>{error}</Text>}
 
@@ -193,6 +209,8 @@ const e = StyleSheet.create({
     fontWeight: "500",
     color: color.rojo,
   },
+  olvide: { marginTop: 10, alignSelf: "flex-end" },
+  olvideTexto: { fontSize: 13, fontWeight: "600", color: color.verde },
   cta: {
     marginTop: 20,
     height: 50,

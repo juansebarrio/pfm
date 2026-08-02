@@ -17,8 +17,12 @@ export function Portero() {
 
   useEffect(() => {
     if (cargando) return;
-    // login y registro son las pantallas públicas: ahí no hay adónde sacar a nadie
-    const publica = segmentos[0] === "login" || segmentos[0] === "registro";
+    // login, registro y olvide-clave son las pantallas públicas: ahí no hay
+    // adónde sacar a nadie (recuperar la clave pasa justamente sin sesión)
+    const publica =
+      segmentos[0] === "login" ||
+      segmentos[0] === "registro" ||
+      segmentos[0] === "olvide-clave";
     if (!sesion && !publica) router.replace("/login");
   }, [sesion, cargando, segmentos, router]);
 

@@ -12,7 +12,7 @@ export const color = {
   superficie: "#1e1c1a",
   tinta: "#f2efe9",
   tintaSecundaria: "#a39d93",
-  tintaTerciaria: "#7d776d",
+  tintaTerciaria: "#8a847a", // AA en texto chico: 4.6:1 sobre superficie, 5:1 sobre papel
   tintaMuda: "#4a453f",
   tintaDeshabilitada: "#5f594f",
   verde: "#4fa37f",
@@ -34,7 +34,32 @@ export const color = {
   blanco: "#ffffff",
 } as const;
 
+/**
+ * Familias tipográficas (DESIGN_AUDIT §2.2). La convención dura del sistema:
+ * número = mono (Spline Sans Mono), palabra = Rubik. Los nombres son los de
+ * los archivos de @expo-google-fonts cargados en _layout.tsx — en nativo el
+ * peso vive en el archivo, no en fontWeight (en Android fontWeight con fuente
+ * custom no funciona: elegí el miembro del peso correcto y no lo combines).
+ */
+export const fuente = {
+  texto: "Rubik_400Regular",
+  textoMedio: "Rubik_500Medium",
+  textoSemi: "Rubik_600SemiBold",
+  textoNegrita: "Rubik_700Bold",
+  mono: "SplineSansMono_400Regular",
+  monoMedio: "SplineSansMono_500Medium",
+  monoSemi: "SplineSansMono_600SemiBold",
+  monoNegrita: "SplineSansMono_700Bold",
+} as const;
+
 /** Radios del export (DESIGN_AUDIT §2.3). */
+/**
+ * Aire inferior de los ScrollView de las 4 tabs: la pastilla flota en
+ * insets.bottom + 58 y mide 54 de alto, así que el contenido necesita
+ * 58 + 54 + un respiro para que la última fila nunca quede tapada.
+ */
+export const AIRE_PASTILLA = 124;
+
 export const radio = {
   card: 14,
   cta: 12,

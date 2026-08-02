@@ -52,6 +52,7 @@ export default async function Resumen() {
   const nombreMes = formatearMesSolo(mesActual);
   const quedanDias = diasDelMes(hoy) - diaDelMes(hoy);
   const balanceCentavos = totales.ingresosCentavos - totales.gastosCentavos;
+  const sinIngresos = totales.ingresosCentavos === 0;
 
   return (
     <div className="px-5 pt-14">
@@ -92,30 +93,43 @@ export default async function Resumen() {
 
       {/* Card principal: la CAJA del mes, como el totalizador de Movimientos —
           el balance (ingresos − gastos) protagonista y las dos cifras que lo
-          componen en voz baja. Tocable → /movimientos. */}
-      <Link href="/movimientos" className="mt-4 block">
-        <Card className="px-3.5 py-3.5">
-          <div className="flex items-center justify-between">
-            <p className="text-[12px] font-medium text-tinta-secundaria">
-              Balance de {nombreMes}
-            </p>
-            <ChevronRight
-              className="size-4 shrink-0 text-tinta-muda"
-              strokeWidth={1.5}
-              aria-hidden
+          componen en voz baja. Tocable → /movimientos.
+          Sin ingresos cargados no hay balance que evaluar: la card pasa a
+          "Gastos de {mes}" en tinta (el rojo se reserva para "excedido") y lo
+          dice abajo. Sin ningún movimiento, directamente no aparece. */}
+      {(totales.ingresosCentavos > 0 || totales.gastosCentavos > 0) && (
+        <Link href="/movimientos" className="mt-4 block">
+          <Card className="px-3.5 py-3.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[12px] font-medium text-tinta-secundaria">
+                {sinIngresos ? `Gastos de ${nombreMes}` : `Balance de ${nombreMes}`}
+              </p>
+              <ChevronRight
+                className="size-4 shrink-0 text-tinta-muda"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            </div>
+            <Importe
+              centavos={sinIngresos ? totales.gastosCentavos : balanceCentavos}
+              variante="card"
+              className={`mt-1 block ${
+                sinIngresos ? "text-tinta" : balanceCentavos < 0 ? "text-rojo" : "text-verde"
+              }`}
             />
-          </div>
-          <Importe
-            centavos={balanceCentavos}
-            variante="card"
-            className={`mt-1 block ${balanceCentavos < 0 ? "text-rojo" : "text-verde"}`}
-          />
-          <p className="cifra mt-1.5 text-[11px] text-tinta-secundaria">
-            ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
-            {formatearImporte(totales.gastosCentavos)}
-          </p>
-        </Card>
-      </Link>
+            {sinIngresos ? (
+              <p className="mt-1.5 text-[11px] text-tinta-secundaria">
+                sin ingresos cargados este mes
+              </p>
+            ) : (
+              <p className="cifra mt-1.5 text-[11px] text-tinta-secundaria">
+                ingresos {formatearImporte(totales.ingresosCentavos)} · gastos{" "}
+                {formatearImporte(totales.gastosCentavos)}
+              </p>
+            )}
+          </Card>
+        </Link>
+      )}
 
       {/* Card de disponible del presupuesto, tocable → /presupuesto. Segunda a
           propósito y en formato de DATO, no de héroe: etiqueta a la izquierda,

@@ -145,6 +145,92 @@ export async function registrarse(
   redirect(volverSeguro(formulario));
 }
 
+/**
+ * Manda el correo para cambiar la clave. El link vuelve por /auth/callback,
+ * que canjea el código y aterriza en /clave-nueva ya con sesión. Responde
+ * SIEMPRE el mismo aviso, exista o no la casilla: contestar distinto sería
+ * regalar qué emails tienen cuenta.
+ */
+export async function mandarCorreoRecuperacion(
+  _estadoAnterior: EstadoAuth,
+  formulario: FormData,
+): Promise<EstadoAuth> {
+  const parseo = z
+    .email("Ingresá un email válido")
+    .safeParse(formulario.get("email"));
+  if (!parseo.success) {
+    return { error: parseo.error.issues[0].message };
+  }
+
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const supabase = await crearClienteServidor();
+  // El resultado se ignora a propósito (ver arriba): mismo aviso siempre.
+  await supabase.auth.resetPasswordForEmail(parseo.data, {
+    redirectTo: `${base}/auth/callback?volver=/clave-nueva`,
+  });
+
+  return {
+    aviso:
+      "Si esa casilla tiene cuenta, te mandamos un correo para cambiar la clave.",
+  };
+}
+
+const esquemaClaveNueva = z
+  .object({
+    password: z
+      .string()
+      .min(8, "La contraseña necesita al menos 8 caracteres")
+      .max(72, "La contraseña no puede superar 72 caracteres"),
+    confirmacion: z.string(),
+  })
+  .refine((datos) => datos.password === datos.confirmacion, {
+    message: "Las contraseñas no coinciden. Escribí la misma en los dos campos.",
+  });
+
+/**
+ * Cambia la clave usando la sesión que /auth/callback ya canjeó del link del
+ * correo. La página /clave-nueva muestra el caso sin sesión con un link a
+ * /olvide; acá se revalida igual por si la action llega sin ella.
+ */
+export async function cambiarClave(
+  _estadoAnterior: EstadoAuth,
+  formulario: FormData,
+): Promise<EstadoAuth> {
+  const parseo = esquemaClaveNueva.safeParse({
+    password: formulario.get("password"),
+    confirmacion: formulario.get("confirmacion"),
+  });
+  if (!parseo.success) {
+    return { error: parseo.error.issues[0].message };
+  }
+
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {
+      error:
+        "El enlace venció o ya se usó. Pedí un correo nuevo desde “¿Olvidaste tu contraseña?”.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parseo.data.password,
+  });
+  if (error) {
+    if (error.code === "same_password") {
+      return { error: "Esa ya es tu contraseña actual. Elegí una distinta." };
+    }
+    if (error.code === "weak_password") {
+      return { error: "Esa contraseña es demasiado débil. Probá otra." };
+    }
+    return { error: "No pudimos cambiar la clave. Probá de nuevo." };
+  }
+
+  redirect("/resumen");
+}
+
 export async function cerrarSesion() {
   const supabase = await crearClienteServidor();
   await supabase.auth.signOut();

@@ -15,7 +15,7 @@
   --superficie: #1e1c1a;
   --tinta: #f2efe9;
   --tinta-secundaria: #a39d93;
-  --tinta-terciaria: #7d776d;
+  --tinta-terciaria: #8a847a; /* AA en texto chico: 4.6:1 sobre superficie, 5:1 sobre papel */
   --tinta-muda: #4a453f;
   --tinta-deshabilitada: #5f594f;
   --verde: #4fa37f;

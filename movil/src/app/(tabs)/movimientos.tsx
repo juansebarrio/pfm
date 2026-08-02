@@ -39,7 +39,7 @@ import {
   type CategoriaSimple,
   type MedioDePago,
 } from "@/lib/acciones";
-import { color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
 import { useModoSeleccion } from "@/lib/modo-seleccion";
 import { tacto } from "@/lib/tacto";
 import {
@@ -239,7 +239,7 @@ export default function Movimientos() {
       contentContainerStyle={{
         paddingTop: insets.top + 12,
         paddingHorizontal: 20,
-        paddingBottom: insets.bottom + 24,
+        paddingBottom: insets.bottom + AIRE_PASTILLA,
       }}
       refreshControl={
         <RefreshControl

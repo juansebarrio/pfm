@@ -1,3 +1,4 @@
+import { fetch } from "expo/fetch";
 import { generarCuotas } from "@dominio/cuotas";
 import { asignarCiclo, generarCiclosHasta, primerCicloEstimado } from "@dominio/ciclos";
 import { hoyBA } from "@dominio/fechas";
@@ -1043,6 +1044,87 @@ export async function borrarMovimiento(
     if (error || !data?.length) {
       return { ok: false, error: "No pudimos borrar el movimiento" };
     }
+  }
+  return { ok: true };
+}
+
+// ────────────────────────────────────────────── invitaciones al hogar
+//
+// Invitar y reenviar NO son escrituras directas: el email sale del server de la
+// web (/api/invitaciones), porque RESEND_API_KEY es server-only y jamás baja al
+// dispositivo. Revocar sí es un update directo — la server action de la web
+// hace exactamente eso, sin lógica extra, y la RLS de administradores es la
+// misma barrera en los dos clientes.
+
+export type ResultadoInvitacion =
+  | { ok: true; enviado: boolean; link: string }
+  | { ok: false; error: string };
+
+/** POST autenticado a /api/invitaciones; los errores llegan en castellano. */
+async function llamarInvitaciones(
+  cuerpo: Record<string, string>,
+): Promise<ResultadoInvitacion> {
+  const api = process.env.EXPO_PUBLIC_API_URL;
+  if (!api) return { ok: false, error: "Falta EXPO_PUBLIC_API_URL" };
+
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { ok: false, error: "Sesión vencida. Entrá de nuevo." };
+
+  try {
+    const respuesta = await fetch(`${api}/api/invitaciones`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(cuerpo),
+    });
+    const json = (await respuesta.json().catch(() => null)) as {
+      ok?: boolean;
+      enviado?: boolean;
+      link?: string;
+      error?: string;
+    } | null;
+    if (!respuesta.ok || !json?.ok) {
+      return {
+        ok: false,
+        error: json?.error ?? "El servidor no respondió. Probá de nuevo.",
+      };
+    }
+    return { ok: true, enviado: json.enviado === true, link: json.link ?? "" };
+  } catch {
+    return { ok: false, error: "Sin conexión. Probá de nuevo." };
+  }
+}
+
+/** Invitar por email (09). El server valida y manda el mail; rol miembro. */
+export function invitarAlHogar(email: string): Promise<ResultadoInvitacion> {
+  return llamarInvitaciones({ email });
+}
+
+/** Reenviar: renueva el vencimiento y reintenta el email. */
+export function reenviarInvitacion(invitacionId: string): Promise<ResultadoInvitacion> {
+  return llamarInvitaciones({ accion: "reenviar", invitacionId });
+}
+
+/**
+ * Revocar: la invitación queda "revocada" y su token deja de servir. Espeja
+ * revocarInvitacion de app/acciones/hogar.ts; el select confirma que la RLS
+ * dejó pasar el update (sin él, un update de 0 filas parecería un éxito).
+ */
+export async function revocarInvitacion(
+  sesion: SesionHogar,
+  invitacionId: string,
+): Promise<Resultado> {
+  const { error, data } = await supabase
+    .from("invitaciones")
+    .update({ estado: "revocada" })
+    .eq("id", invitacionId)
+    .eq("hogar_id", sesion.hogarId)
+    .select("id");
+  if (error || !data?.length) {
+    return { ok: false, error: "No pudimos revocar la invitación." };
   }
   return { ok: true };
 }

@@ -37,7 +37,7 @@ import { AgregarPartida } from "@/componentes/AgregarPartida";
 import { EditarPartida, type PartidaParaEditar } from "@/componentes/EditarPartida";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 import { PorCategoria } from "@/componentes/PorCategoria";
-import { color, radio } from "@/lib/tema";
+import { AIRE_PASTILLA, color, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import {
   Card,
@@ -214,7 +214,7 @@ export default function Presupuesto() {
       ) : !presupuesto && vista === "categorias" ? (
         /* sin presupuesto no hay plan que repartir: el CTA de armar aplica igual */
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + AIRE_PASTILLA }}
         >
           <PorCategoria
             items={[]}
@@ -228,7 +228,7 @@ export default function Presupuesto() {
            no lo gastado — eso vive en Movimientos. Presupuesto es a dónde
            querés que vaya la plata; Movimientos, a dónde fue. */
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + AIRE_PASTILLA }}
         >
           <PorCategoria
             items={presupuesto.grupos
@@ -276,7 +276,7 @@ export default function Presupuesto() {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + AIRE_PASTILLA,
           }}
           refreshControl={
             <RefreshControl
