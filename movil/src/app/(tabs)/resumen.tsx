@@ -17,6 +17,7 @@ import {
   CreditCard,
   Inbox,
   Sparkles,
+  Zap,
   type LucideIcon,
 } from "lucide-react-native";
 // ⭐ Dominio COMPARTIDO con la web: los mismos archivos, sin copiar ni adaptar.
@@ -67,6 +68,7 @@ import {
 const iconosAviso: Record<Aviso["tipo"], LucideIcon> = {
   cierre: CreditCard,
   vencimiento: CalendarClock,
+  recurrente: Zap,
   bandeja: Inbox,
 };
 
@@ -141,6 +143,11 @@ export default function Resumen() {
     ? totales.ingresosCentavos - totales.gastosCentavos
     : 0;
   const sinIngresos = totales !== null && totales.ingresosCentavos === 0;
+  // tope de 3 avisos: la pantalla corta a propósito, el resto se resume en
+  // "y N más →". Los ocultos vienen en orden de prioridad, así que el destino
+  // del primero (el más urgente de los que no entraron) es el que más sirve.
+  const avisosVisibles = avisos.slice(0, 3);
+  const avisosOcultos = avisos.slice(3);
 
   return (
     <>
@@ -246,7 +253,7 @@ export default function Resumen() {
             <View style={e.filaPie}>
               <Text style={e.pieTexto}>{formatearPorcentaje(progreso * 100)} gastado</Text>
               <Text style={[e.pieTexto, { color: color.verde }]}>
-                {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+                {quedanDias === 0 ? "último día del mes" : quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
               </Text>
             </View>
           </Card>
@@ -271,7 +278,7 @@ export default function Resumen() {
         </Card>
       ) : (
         <View style={{ gap: 8 }}>
-          {avisos.map((a) => {
+          {avisosVisibles.map((a) => {
             const Icono = iconosAviso[a.tipo];
             return (
               <Pressable
@@ -284,7 +291,7 @@ export default function Resumen() {
                 <Card style={e.aviso}>
                   <Icono
                     size={18}
-                    color={color.tintaSecundaria}
+                    color={a.tipo === "recurrente" ? color.ambar : color.tintaSecundaria}
                     strokeWidth={1.5}
                   />
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -311,6 +318,18 @@ export default function Resumen() {
               </Pressable>
             );
           })}
+          {avisosOcultos.length > 0 && (
+            <Pressable
+              onPress={() => {
+                tacto.toque();
+                router.push(avisosOcultos[0].href);
+              }}
+              hitSlop={8}
+              style={{ alignSelf: "flex-end" }}
+            >
+              <Text style={e.masAvisos}>y {avisosOcultos.length} más →</Text>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -421,5 +440,6 @@ const e = StyleSheet.create({
   avisoMetaFila: { marginTop: 3, flexDirection: "row", alignItems: "center", gap: 6 },
   avisoMeta: { fontSize: 11, color: color.tintaSecundaria, flexShrink: 1 },
   avisoAccion: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  masAvisos: { fontSize: 12, fontFamily: fuente.texto, color: color.tintaSecundaria },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
 });

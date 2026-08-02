@@ -230,7 +230,7 @@ export default async function PaginaPresupuesto({
           {esMesActual && (
             <p className="cifra text-[10.5px] text-verde">
               día {dia} de {dias} ·{" "}
-              {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+              {quedanDias === 0 ? "último día del mes" : quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
             </p>
           )}
         </div>

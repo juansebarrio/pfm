@@ -330,7 +330,7 @@ export default function Presupuesto() {
               {esMesActual && (
                 <Text style={[e.heroPieTexto, { color: color.verde }]}>
                   día {dia} de {dias} ·{" "}
-                  {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+                  {quedanDias === 0 ? "último día del mes" : quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
                 </Text>
               )}
             </View>

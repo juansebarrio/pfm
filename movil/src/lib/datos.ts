@@ -1,9 +1,11 @@
 import { estadoPartida, type ResultadoEstadoPartida } from "@dominio/presupuesto";
+import { proyectadoResumen } from "@dominio/tarjetas";
 import { formatearImporte as formatearImporteLocal, usdAArs } from "@dominio/dinero";
 import {
   diaDelMes,
   diasEntre,
   diasDelMes,
+  formatearDiaCorto,
   hoyBA,
   mesAnterior,
   mesDe,
@@ -343,6 +345,57 @@ export async function obtenerPresupuestoMes(
   };
 }
 
+export type SugerenciaRecurrente = {
+  id: string;
+  descripcion: string;
+  categoriaId: string | null;
+  categoriaNombre: string | null;
+  importeSugeridoCentavos: number;
+  diaMes: number;
+  fechaVencimiento: string; // YYYY-MM-DD dentro del mes
+};
+
+/**
+ * Recurrentes del hogar que todavía no tienen movimiento este mes.
+ * Nunca se autoinsertan: son filas fantasma que se confirman con un tap.
+ * Espeja sugerenciasRecurrentes de lib/datos/presupuesto.ts de la web.
+ */
+export async function sugerenciasRecurrentes(
+  sesion: SesionHogar,
+  mes: string,
+): Promise<SugerenciaRecurrente[]> {
+  const { data: recurrentes } = await supabase
+    .from("recurrentes")
+    .select("id, descripcion, categoria_id, importe_sugerido_centavos, dia_mes, categorias(nombre)")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("activa", true);
+  if (!recurrentes || recurrentes.length === 0) return [];
+
+  const hasta = ultimoDiaDelMes(mes);
+  const { data: movsDelMes } = await supabase
+    .from("movimientos")
+    .select("categoria_id")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("tipo", "gasto")
+    .gte("fecha", mes)
+    .lte("fecha", hasta)
+    .not("categoria_id", "is", null);
+  const categoriasConGasto = new Set((movsDelMes ?? []).map((m) => m.categoria_id));
+
+  return recurrentes
+    .filter((r) => !r.categoria_id || !categoriasConGasto.has(r.categoria_id))
+    .map((r) => ({
+      id: r.id,
+      descripcion: r.descripcion,
+      categoriaId: r.categoria_id,
+      categoriaNombre:
+        (r.categorias as unknown as { nombre: string } | null)?.nombre ?? null,
+      importeSugeridoCentavos: r.importe_sugerido_centavos,
+      diaMes: r.dia_mes,
+      fechaVencimiento: `${mes.slice(0, 7)}-${String(r.dia_mes).padStart(2, "0")}`,
+    }));
+}
+
 // ──────────────────────────────────────────────────────── movimientos
 
 export type MovimientoFila = {
@@ -490,13 +543,14 @@ export async function bandejaDeEntrada(sesion: SesionHogar): Promise<MovimientoF
 // ──────────────────────────────────────────────────────── avisos (resumen)
 
 const DIAS_AVISO_TARJETA = 3;
+const DIAS_AVISO_RECURRENTE = 10; // el export avisa Luz (18 jul) el día 10: ventana de 10 días
 
 export type Aviso = {
   id: string;
-  tipo: "cierre" | "vencimiento" | "bandeja";
+  tipo: "cierre" | "vencimiento" | "recurrente" | "bandeja";
   titulo: string;
   meta: string;
-  /** a dónde lleva el toque: cierre/vencimiento → la tarjeta, bandeja → movimientos */
+  /** a dónde lleva el toque: cierre/vencimiento → la tarjeta, recurrente → presupuesto, bandeja → movimientos */
   href: Href;
   badge?: "estimada" | "confirmada";
   /** acción textual verde ("Categorizar"): sin acción, la card lleva chevron */
@@ -523,28 +577,34 @@ function resumenBandeja(items: MovimientoFila[]): string {
 }
 
 /**
- * Avisos de "Para atender" (04). Espeja app/(tabs)/resumen/datos.ts de la web:
- * cierres de tarjeta cercanos y bandeja con pendientes. El proyectado de cada
- * ciclo = consumos del ciclo + impuestos estimados de la tarjeta.
+ * Avisos de "Para atender" (04). Espeja app/(tabs)/resumen/datos.ts de la web
+ * en sus cuatro fuentes y su orden de prioridad: cierres de tarjeta cercanos,
+ * vencimientos de resumen, recurrentes por vencer sin movimiento y bandeja con
+ * pendientes. (La fuente "correo" no aplica: la feature Gmail está dormida y
+ * el nativo no tiene pantalla de sugerencias.) El proyectado de cada ciclo =
+ * consumos del ciclo + impuestos estimados de la tarjeta.
  */
 export async function avisosParaAtender(sesion: SesionHogar): Promise<Aviso[]> {
   const hoy = hoyBA();
-  const [{ data: tarjetas }, bandeja] = await Promise.all([
+  const [{ data: tarjetas }, recurrentes, bandeja] = await Promise.all([
     supabase
       .from("tarjetas")
       .select(
-        "id, nombre, impuestos_estimados_centavos, ciclos_tarjeta(id, fecha_cierre, estado_fechas, estado)",
+        "id, nombre, impuestos_estimados_centavos, ciclos_tarjeta(id, fecha_cierre, fecha_vencimiento, estado_fechas, estado, total_real_centavos)",
       )
       .eq("hogar_id", sesion.hogarId)
       .eq("activa", true),
+    sugerenciasRecurrentes(sesion, mesDe(hoy)),
     bandejaDeEntrada(sesion),
   ]);
 
   type Ciclo = {
     id: string;
     fecha_cierre: string;
+    fecha_vencimiento: string;
     estado_fechas: "estimado" | "confirmado";
     estado: string;
+    total_real_centavos: number | null;
   };
   type Tarjeta = {
     id: string;
@@ -552,41 +612,101 @@ export async function avisosParaAtender(sesion: SesionHogar): Promise<Aviso[]> {
     impuestos_estimados_centavos: number;
     ciclos_tarjeta: Ciclo[];
   };
+  type Candidato = { tarjeta: Tarjeta; ciclo: Ciclo };
 
-  const cierres: Array<{ tarjeta: Tarjeta; ciclo: Ciclo; dias: number }> = [];
+  const cierres: Array<Candidato & { dias: number }> = [];
+  const vencimientos: Candidato[] = [];
   for (const t of (tarjetas ?? []) as unknown as Tarjeta[]) {
     for (const c of t.ciclos_tarjeta ?? []) {
-      const dias = diasEntre(hoy, c.fecha_cierre);
-      if (c.estado === "abierto" && dias >= 0 && dias <= DIAS_AVISO_TARJETA) {
-        cierres.push({ tarjeta: t, ciclo: c, dias });
+      const aCierre = diasEntre(hoy, c.fecha_cierre);
+      if (c.estado === "abierto" && aCierre >= 0 && aCierre <= DIAS_AVISO_TARJETA) {
+        cierres.push({ tarjeta: t, ciclo: c, dias: aCierre });
+      }
+      const aVencimiento = diasEntre(hoy, c.fecha_vencimiento);
+      if (aVencimiento >= 0 && aVencimiento <= DIAS_AVISO_TARJETA) {
+        vencimientos.push({ tarjeta: t, ciclo: c });
       }
     }
   }
 
-  // consumos por ciclo, para el proyectado
+  // consumos por ciclo, para el proyectado (cierres y vencimientos sin total real)
+  const idsConProyectado = [
+    ...cierres.map((c) => c.ciclo.id),
+    ...vencimientos
+      .filter((v) => v.ciclo.total_real_centavos === null)
+      .map((v) => v.ciclo.id),
+  ];
   const consumos = new Map<string, number>();
-  if (cierres.length > 0) {
+  if (idsConProyectado.length > 0) {
     const { data } = await supabase
       .from("movimientos")
       .select("ciclo_id, importe_centavos")
       .eq("hogar_id", sesion.hogarId)
       .eq("tipo", "gasto")
-      .in("ciclo_id", cierres.map((c) => c.ciclo.id));
+      .in("ciclo_id", [...new Set(idsConProyectado)]);
     for (const m of data ?? []) {
       consumos.set(m.ciclo_id, (consumos.get(m.ciclo_id) ?? 0) + m.importe_centavos);
     }
   }
 
-  const avisos: Aviso[] = cierres.map((c) => ({
-    id: `cierre-${c.ciclo.id}`,
-    tipo: "cierre" as const,
-    titulo: `${c.tarjeta.nombre} ${fraseCierre(c.dias)}`,
-    meta: `proyectado ${formatearImporteLocal(
-      (consumos.get(c.ciclo.id) ?? 0) + c.tarjeta.impuestos_estimados_centavos,
-    )}`,
-    href: `/tarjeta/${c.tarjeta.id}` as Href,
-    badge: c.ciclo.estado_fechas === "confirmado" ? ("confirmada" as const) : ("estimada" as const),
-  }));
+  // pagos de resumen ya aplicados a cada ciclo con vencimiento cercano
+  const pagos = new Map<string, number>();
+  if (vencimientos.length > 0) {
+    const { data } = await supabase
+      .from("movimientos")
+      .select("ciclo_id, importe_centavos")
+      .eq("hogar_id", sesion.hogarId)
+      .eq("tipo", "pago_resumen")
+      .in("ciclo_id", [...new Set(vencimientos.map((v) => v.ciclo.id))]);
+    for (const m of data ?? []) {
+      pagos.set(m.ciclo_id, (pagos.get(m.ciclo_id) ?? 0) + m.importe_centavos);
+    }
+  }
+
+  const proyectado = (c: Candidato) =>
+    (consumos.get(c.ciclo.id) ?? 0) + c.tarjeta.impuestos_estimados_centavos;
+  const totalAPagar = (c: Candidato) => c.ciclo.total_real_centavos ?? proyectado(c);
+
+  const avisos: Aviso[] = [];
+
+  for (const c of cierres) {
+    avisos.push({
+      id: `cierre-${c.ciclo.id}`,
+      tipo: "cierre",
+      titulo: `${c.tarjeta.nombre} ${fraseCierre(c.dias)}`,
+      meta: `proyectado ${formatearImporteLocal(proyectado(c))}`,
+      href: `/tarjeta/${c.tarjeta.id}` as Href,
+      badge: c.ciclo.estado_fechas === "confirmado" ? "confirmada" : "estimada",
+    });
+  }
+
+  for (const v of vencimientos) {
+    // si ya se pagó (total o más), el resumen dejó de estar pendiente: sin aviso
+    if ((pagos.get(v.ciclo.id) ?? 0) >= totalAPagar(v)) continue;
+    const total = v.ciclo.total_real_centavos;
+    avisos.push({
+      id: `vencimiento-${v.ciclo.id}`,
+      tipo: "vencimiento",
+      titulo: `Vence el resumen de ${v.tarjeta.nombre} el ${formatearDiaCorto(v.ciclo.fecha_vencimiento)}`,
+      meta:
+        total !== null
+          ? formatearImporteLocal(total)
+          : `proyectado ${formatearImporteLocal(proyectado(v))}`,
+      href: `/tarjeta/${v.tarjeta.id}` as Href,
+    });
+  }
+
+  for (const r of recurrentes) {
+    const dias = diasEntre(hoy, r.fechaVencimiento);
+    if (dias < 0 || dias > DIAS_AVISO_RECURRENTE) continue;
+    avisos.push({
+      id: `recurrente-${r.id}`,
+      tipo: "recurrente",
+      titulo: `Vence ${r.descripcion} el ${formatearDiaCorto(r.fechaVencimiento)}`,
+      meta: `${formatearImporteLocal(r.importeSugeridoCentavos)} sugerido · recurrente`,
+      href: "/presupuesto",
+    });
+  }
 
   if (bandeja.length > 0) {
     avisos.push({
@@ -742,6 +862,81 @@ export async function obtenerTarjeta(
       proyectadoCentavos:
         (consumos.get(c.id) ?? 0) + t.impuestos_estimados_centavos,
     })),
+  };
+}
+
+/**
+ * Los consumos de un ciclo de tarjeta, con TODOS los campos del detalle.
+ * Espeja movimientosDeCiclo de lib/datos/movimientos.ts (web): existe para que
+ * las filas del detalle de ciclo abran el mismo detalle de movimiento que el
+ * resto de la app. Los totales del ciclo los calcula totalesDeCiclo.
+ */
+export async function movimientosDeCiclo(
+  sesion: SesionHogar,
+  cicloId: string,
+): Promise<MovimientoFila[]> {
+  const { data } = await supabase
+    .from("movimientos")
+    .select(SELECT_MOVIMIENTO)
+    .eq("hogar_id", sesion.hogarId)
+    .eq("ciclo_id", cicloId)
+    .eq("tipo", "gasto")
+    .order("fecha", { ascending: false })
+    .order("creado_el", { ascending: false });
+  return ((data ?? []) as unknown as FilaMovimientoDb[]).map(aFila);
+}
+
+export type TotalesCiclo = {
+  consumosCentavos: number; // sin cuotas
+  cuotasCentavos: number; // cuotas del ciclo
+  impuestosCentavos: number; // estimados de la tarjeta, tal cual llegan
+  proyectadoCentavos: number; // consumos + cuotas + impuestos
+  pagadoCentavos: number; // pagos de resumen aplicados a este ciclo
+};
+
+/**
+ * Totales de un ciclo para el desglose de 06: consumos sueltos, cuotas del
+ * mes, proyectado y pagado. Espeja los agregados de detalleCiclo de
+ * lib/datos/tarjetas.ts (web), con la misma función de dominio para el
+ * proyectado.
+ */
+export async function totalesDeCiclo(
+  sesion: SesionHogar,
+  cicloId: string,
+  impuestosEstimadosCentavos: number,
+): Promise<TotalesCiclo> {
+  const { data } = await supabase
+    .from("movimientos")
+    .select("tipo, importe_centavos, compra_id")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("ciclo_id", cicloId);
+
+  let consumos = 0;
+  let cuotas = 0;
+  let pagado = 0;
+  for (const m of (data ?? []) as Array<{
+    tipo: string;
+    importe_centavos: number;
+    compra_id: string | null;
+  }>) {
+    if (m.tipo === "pago_resumen") pagado += m.importe_centavos;
+    else if (m.tipo === "gasto") {
+      if (m.compra_id !== null) cuotas += m.importe_centavos;
+      else consumos += m.importe_centavos;
+    }
+  }
+
+  return {
+    consumosCentavos: consumos,
+    cuotasCentavos: cuotas,
+    impuestosCentavos: impuestosEstimadosCentavos,
+    // ⭐ misma función de dominio que usa la web
+    proyectadoCentavos: proyectadoResumen({
+      consumosCentavos: consumos,
+      cuotasCentavos: cuotas,
+      impuestosCentavos: impuestosEstimadosCentavos,
+    }),
+    pagadoCentavos: pagado,
   };
 }
 

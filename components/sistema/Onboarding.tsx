@@ -6,6 +6,7 @@ import {
   CreditCard,
   Inbox,
   Lock,
+  Plus,
   Sparkles,
   Wallet,
   type LucideIcon,
@@ -14,6 +15,12 @@ import {
   CLAVE_ONBOARDING,
   PASOS_ONBOARDING,
 } from "@/lib/dominio/onboarding";
+import { Badge } from "./Badge";
+import { CardPartida } from "./CardPartida";
+import { Chip } from "./Chip";
+import { FilaMovimiento } from "./FilaMovimiento";
+import { IconoCategoria } from "./IconoCategoria";
+import { Importe } from "./Importe";
 
 // El recorrido de bienvenida. El contenido vive en lib/dominio/onboarding.ts
 // (compartido con el nativo); acá solo se dibuja: pantalla completa, un paso
@@ -31,6 +38,122 @@ const ICONOS: Record<string, LucideIcon> = {
   lock: Lock,
   sparkles: Sparkles,
 };
+
+// La viñeta de cada paso: el sistema mostrándose a sí mismo. Antes el paso
+// contaba con palabras lo que la app dibuja con componentes (y el de la cámara
+// describía un botón que este mismo modal tapa); ahora cada paso trae una
+// mini-vista armada con los componentes reales del sistema donde alcanzan
+// (CardPartida, FilaMovimiento, Badge, Chip) y réplicas con los mismos tokens
+// donde el real es navegación (la pastilla) o requiere datos (la bandeja).
+// Datos de mentira FIJOS: la viñeta enseña la anatomía, no un estado de cuenta.
+function MiniVista({ paso }: { paso: string }) {
+  switch (paso) {
+    case "wallet":
+      // el sobre tal cual se ve en Presupuesto: nombre, "queda", barrita, meta
+      return (
+        <div className="rounded-card border border-borde bg-superficie text-left shadow-card">
+          <CardPartida
+            nombre="Supermercado"
+            icono="shopping-cart"
+            asignadoCentavos={45000000}
+            gastadoCentavos={19840000}
+            estado="ok"
+          />
+        </div>
+      );
+    case "camera":
+      // réplica chica de la pastilla del TabBar — que este modal está tapando
+      return (
+        <div className="flex justify-center">
+          <div className="flex items-center rounded-full bg-verde text-papel shadow-fab">
+            <span className="flex h-[46px] w-[52px] items-center justify-center rounded-l-full">
+              <Camera className="size-5" strokeWidth={2} aria-hidden />
+            </span>
+            <span aria-hidden className="h-[22px] w-px bg-black/30" />
+            <span className="flex h-[46px] w-[52px] items-center justify-center rounded-r-full">
+              <Plus className="size-[22px]" strokeWidth={2.4} aria-hidden />
+            </span>
+          </div>
+        </div>
+      );
+    case "inbox":
+      // la card de la bandeja: borde cálido, contador ámbar, fila sin categoría
+      // y los chips sugeridos abiertos
+      return (
+        <div className="rounded-card border border-borde-bandeja bg-superficie text-left shadow-card">
+          <div className="flex items-center gap-2 px-3.5 pt-3 pb-1.5">
+            <Inbox className="size-[15px] text-ambar" strokeWidth={1.5} aria-hidden />
+            <p className="text-[13.5px] font-semibold text-tinta">Bandeja de entrada</p>
+            <span className="cifra ml-auto flex h-5 min-w-5 items-center justify-center rounded-[10px] bg-ambar px-1.5 text-[11px] font-semibold text-blanco">
+              2
+            </span>
+          </div>
+          <div className="flex items-center gap-[11px] border-t border-separador px-3.5 py-[9px]">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-medium text-tinta">Coto Digital</p>
+              <p className="mt-0.5 truncate text-[11px] text-tinta-secundaria">
+                hoy · Visa •• 4321
+              </p>
+            </div>
+            <Importe centavos={4830000} variante="fila" />
+          </div>
+          <div className="flex flex-wrap gap-1.5 px-3.5 pb-3">
+            <Chip escala="mini" disabled>
+              <IconoCategoria nombre="shopping-cart" className="size-[13px]" />
+              Supermercado
+            </Chip>
+            <Chip escala="mini" disabled>
+              <IconoCategoria nombre="utensils" className="size-[13px]" />
+              Comida afuera
+            </Chip>
+            <Chip escala="mini" disabled>
+              todas →
+            </Chip>
+          </div>
+        </div>
+      );
+    case "credit-card":
+      // un consumo en cuotas: el cierre en ámbar y el badge CUOTA, de verdad
+      return (
+        <div className="rounded-card border border-borde bg-superficie text-left shadow-card">
+          <FilaMovimiento
+            descripcion="Vuelo a Salta"
+            icono="plane"
+            metadata="Viajes · Visa •• 4321"
+            metadataCiclo="cierra 28 jul"
+            importeCentavos={8940000}
+            badgeCuota="cuota 3/6"
+          />
+        </div>
+      );
+    case "lock":
+      // los dos ámbitos, lado a lado, con el Badge real
+      return (
+        <div className="flex items-center justify-center gap-2 rounded-card border border-borde bg-superficie px-3.5 py-4 shadow-card">
+          <Badge variante="hogar">hogar</Badge>
+          <Badge variante="personal">personal</Badge>
+        </div>
+      );
+    case "sparkles":
+      // como en el asistente: la pregunta es un encabezado tenue y la
+      // respuesta llega con tus números — cifra en mono
+      return (
+        <div className="text-left">
+          <p className="text-[12.5px] font-semibold text-tinta-secundaria">
+            ¿Cuánto va el súper?
+          </p>
+          <div className="mt-2 inline-block rounded-card border border-borde bg-superficie px-3.5 py-2.5 shadow-card">
+            <p className="text-[13px] leading-[1.55] text-tinta">
+              Van <span className="cifra font-semibold">$ 198.400</span> de{" "}
+              <span className="cifra font-semibold">$ 450.000</span>. Venís bien.
+            </p>
+          </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
 
 export function Onboarding({
   abierto,
@@ -89,6 +212,13 @@ export function Onboarding({
         <p className="mt-3.5 max-w-[300px] text-[14.5px] leading-[1.6] text-tinta-secundaria">
           {p.cuerpo}
         </p>
+        {/* la viñeta: decorativa y quieta (los lectores ya tienen el cuerpo) */}
+        <div
+          aria-hidden
+          className="pointer-events-none mt-7 w-full max-w-[300px] select-none"
+        >
+          <MiniVista paso={p.icono} />
+        </div>
       </div>
 
       {/* puntos + avance */}

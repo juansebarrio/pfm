@@ -53,6 +53,11 @@ export default async function Resumen() {
   const quedanDias = diasDelMes(hoy) - diaDelMes(hoy);
   const balanceCentavos = totales.ingresosCentavos - totales.gastosCentavos;
   const sinIngresos = totales.ingresosCentavos === 0;
+  // tope de 3 avisos: la pantalla corta a propósito, el resto se resume en
+  // "y N más →". Los ocultos vienen en orden de prioridad, así que el destino
+  // del primero (el más urgente de los que no entraron) es el que más sirve.
+  const avisosVisibles = avisos.slice(0, 3);
+  const avisosOcultos = avisos.slice(3);
 
   return (
     <div className="px-5 pt-14">
@@ -172,7 +177,7 @@ export default async function Resumen() {
                 gastado
               </span>
               <span className="cifra text-[10.5px] text-verde">
-                {quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
+                {quedanDias === 0 ? "último día del mes" : quedanDias === 1 ? "queda 1 día" : `quedan ${quedanDias} días`}
               </span>
             </div>
           </Card>
@@ -195,7 +200,7 @@ export default async function Resumen() {
         </Card>
       ) : (
         <div className="flex flex-col gap-2">
-          {avisos.map((aviso) => {
+          {avisosVisibles.map((aviso) => {
             const Icono = iconosAviso[aviso.tipo];
             return (
               <Link key={aviso.id} href={aviso.href} className="block">
@@ -235,6 +240,14 @@ export default async function Resumen() {
               </Link>
             );
           })}
+          {avisosOcultos.length > 0 && (
+            <Link
+              href={avisosOcultos[0].href}
+              className="self-end px-1 text-[12px] text-tinta-secundaria"
+            >
+              y {avisosOcultos.length} más →
+            </Link>
+          )}
         </div>
       )}
 
