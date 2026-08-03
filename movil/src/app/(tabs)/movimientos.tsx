@@ -60,6 +60,7 @@ import {
   EstadoVacio,
   IconoCategoria,
   Importe,
+  TotalizadorMes,
 } from "@/componentes/sistema";
 import { FilaSwipe } from "@/componentes/FilaSwipe";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
@@ -465,42 +466,7 @@ export default function Movimientos() {
         <>
       {/* Totalizador del mes: lo que entró, lo que salió y el saldo. Es caja
           (ingresos − gastos), no el "disponible" del presupuesto. */}
-      {totales && (
-        <View style={e.totalizador}>
-          <View style={e.totalCol}>
-            <Text style={e.totalEtiqueta}>Ingresos</Text>
-            <Text numberOfLines={1} style={[e.totalCifra, { color: color.verde }]}>
-              {formatearImporte(totales.ingresosCentavos)}
-            </Text>
-          </View>
-          <View style={[e.totalCol, e.totalConBorde]}>
-            <Text style={e.totalEtiqueta}>Gastos</Text>
-            <Text numberOfLines={1} style={e.totalCifra}>
-              {formatearImporte(totales.gastosCentavos)}
-            </Text>
-          </View>
-          <View style={[e.totalCol, e.totalConBorde]}>
-            <Text style={e.totalEtiqueta}>Balance</Text>
-            {/* en negativo va en tinta con su signo: el rojo del sistema se
-                reserva para "excedido", y gastar más de lo que entró no lo es
-                (espejo de TotalizadorMes.tsx de la web) */}
-            <Text
-              numberOfLines={1}
-              style={[
-                e.totalCifra,
-                {
-                  color:
-                    totales.ingresosCentavos - totales.gastosCentavos < 0
-                      ? color.tinta
-                      : color.verde,
-                },
-              ]}
-            >
-              {formatearImporte(totales.ingresosCentavos - totales.gastosCentavos)}
-            </Text>
-          </View>
-        </View>
-      )}
+      {totales && <TotalizadorMes totales={totales} />}
 
       {/* Búsqueda + filtros, espejo de app/(tabs)/movimientos/Filtros.tsx en
           versión mínima: buscar por comercio o categoría, y dos chips que
@@ -1076,14 +1042,6 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.papel,
   },
-  totalizador: {
-    marginTop: 14,
-    flexDirection: "row",
-    borderRadius: radio.card,
-    borderWidth: 1,
-    borderColor: color.borde,
-    backgroundColor: color.superficie,
-  },
   buscador: {
     marginTop: 14,
     flexDirection: "row",
@@ -1146,16 +1104,6 @@ const e = StyleSheet.create({
     lineHeight: 21,
     fontFamily: fuente.texto,
     color: color.tintaSecundaria,
-  },
-  totalCol: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
-  totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },
-  totalEtiqueta: { fontSize: 10.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
-  totalCifra: {
-    marginTop: 2,
-    fontSize: 14,
-    fontFamily: fuente.monoSemi,
-    fontVariant: ["tabular-nums"],
-    color: color.tinta,
   },
   encabezado: {
     flexDirection: "row",
