@@ -31,7 +31,7 @@ import {
   sacarFoto,
   type ImagenLista,
 } from "@/lib/imagen";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { BloquesAsistente } from "@/componentes/BloquesAsistente";
 
@@ -375,16 +375,16 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
   },
-  titulo: { fontSize: 17, fontWeight: "600", color: color.tinta },
-  subtitulo: { fontSize: 11.5, color: color.tintaSecundaria },
+  titulo: { fontSize: 17, fontFamily: fuente.textoSemi, color: color.tinta },
+  subtitulo: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   pregunta: {
     fontSize: 12.5,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tintaSecundaria,
     textTransform: "none",
   },
-  pensando: { fontSize: 13.5, color: color.tintaTerciaria },
-  error: { fontSize: 12.5, fontWeight: "500", color: color.rojo },
+  pensando: { fontSize: 13.5, fontFamily: fuente.texto, color: color.tintaTerciaria },
+  error: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.rojo },
   sugerencias: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     borderRadius: radio.chip,
@@ -394,7 +394,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  chipTexto: { fontSize: 12.5, color: color.tinta },
+  chipTexto: { fontSize: 12.5, fontFamily: fuente.texto, color: color.tinta },
   pie: {
     paddingHorizontal: 20,
     paddingTop: 8,
@@ -422,7 +422,13 @@ const e = StyleSheet.create({
     padding: 8,
   },
   adjuntoMini: { width: 46, height: 46, borderRadius: 8, backgroundColor: color.papel },
-  adjuntoTexto: { flex: 1, fontSize: 12.5, lineHeight: 18, color: color.tintaSecundaria },
+  adjuntoTexto: {
+    flex: 1,
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   filaInput: { flexDirection: "row", alignItems: "center", gap: 7 },
   secundario: {
     width: 42,
@@ -443,6 +449,7 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   enviar: {
@@ -458,6 +465,7 @@ const e = StyleSheet.create({
     textAlign: "center",
     fontSize: 10.5,
     lineHeight: 15,
+    fontFamily: fuente.texto,
     color: color.tintaTerciaria,
   },
 });
