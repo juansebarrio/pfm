@@ -27,11 +27,14 @@ export function ListaMovimientosTocables({
   medios,
   /** fila extra al final (p. ej. "Ver los N consumos →") */
   pie,
+  /** en el teléfono mostrar solo las primeras N filas (en escritorio, todas) */
+  visiblesEnMovil,
 }: {
   movimientos: MovimientoLista[];
   categorias: CategoriaSimple[];
   medios: MedioDePago[];
   pie?: React.ReactNode;
+  visiblesEnMovil?: number;
 }) {
   const router = useRouter();
   const [, iniciar] = useTransition();
@@ -69,12 +72,16 @@ export function ListaMovimientosTocables({
         </p>
       )}
       <Card className="divide-y divide-separador">
-        {visibles.map((m) => (
+        {visibles.map((m, i) => (
           <button
             key={m.id}
             type="button"
             onClick={() => setDetalle(m)}
-            className="block w-full text-left"
+            className={`w-full text-left ${
+              visiblesEnMovil !== undefined && i >= visiblesEnMovil
+                ? "hidden lg:block"
+                : "block"
+            }`}
           >
             <FilaMovimiento
               descripcion={m.descripcion}

@@ -43,7 +43,8 @@ export default async function Resumen() {
   const [presupuesto, avisos, ultimos, categorias, medios, totales] = await Promise.all([
     obtenerPresupuestoMes(sesion, mesActual, "hogar"),
     avisosParaAtender(sesion, hoy),
-    movimientosCategorizados(sesion, { limite: 3 }),
+    // 10 para el escritorio; el teléfono corta en 3 (visiblesEnMovil)
+    movimientosCategorizados(sesion, { limite: 10 }),
     categoriasDelHogar(sesion),
     mediosDePago(sesion),
     totalesDelMes(sesion, mesActual),
@@ -265,7 +266,8 @@ export default async function Resumen() {
 
       </div>
 
-      {/* Últimos movimientos: 3 filas, sin "ver más" (corta a propósito) */}
+      {/* Últimos movimientos: 3 filas en el teléfono (corta a propósito),
+          10 en escritorio, donde la columna propia les da el lugar */}
       {ultimos.length > 0 && (
         <div>
           <EncabezadoSeccion>Últimos movimientos</EncabezadoSeccion>
@@ -273,6 +275,7 @@ export default async function Resumen() {
             movimientos={ultimos}
             categorias={categorias}
             medios={medios}
+            visiblesEnMovil={3}
           />
         </div>
       )}
