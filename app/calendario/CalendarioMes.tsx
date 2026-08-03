@@ -58,6 +58,7 @@ export function CalendarioMes({
   const delDia = movimientos.filter((m) => m.fecha === elegido);
   const fijosDelDia = fijos.get(elegido) ?? [];
   const esFuturo = elegido > hoy;
+  const plataDelDia = plata.get(elegido) ?? { gastosCentavos: 0, ingresosCentavos: 0 };
 
   return (
     <div>
@@ -128,10 +129,29 @@ export function CalendarioMes({
         </span>
       </p>
 
-      {/* el día elegido */}
-      <h2 className="mt-6 mb-3 text-[13px] font-semibold text-tinta">
-        {formatearDiaLargo(elegido)}
-      </h2>
+      {/* el día elegido: título + su totalizador. Pasado/hoy suma lo que pasó;
+          futuro, lo que viene (los fijos sugeridos). Cero = silencio. */}
+      <div className="mt-6 mb-3 flex items-baseline justify-between gap-2">
+        <h2 className="text-[13px] font-semibold text-tinta">{formatearDiaLargo(elegido)}</h2>
+        <p className="cifra shrink-0 text-[12px] text-tinta-secundaria">
+          {esFuturo
+            ? fijosDelDia.length > 0 &&
+              `${formatearImporte(
+                fijosDelDia.reduce((s, r) => s + r.importeSugeridoCentavos, 0),
+              )} en fijos`
+            : [
+                plataDelDia.gastosCentavos > 0 &&
+                  `gastos ${formatearImporte(plataDelDia.gastosCentavos)}`,
+                plataDelDia.ingresosCentavos > 0 && (
+                  <span key="i" className="text-verde">
+                    ingresos {formatearImporte(plataDelDia.ingresosCentavos)}
+                  </span>
+                ),
+              ]
+                .filter(Boolean)
+                .flatMap((parte, i) => (i > 0 ? [" · ", parte] : [parte]))}
+        </p>
+      </div>
 
       {/* los fijos que vencen ese día (solo mirando adelante) */}
       {fijosDelDia.length > 0 && esFuturo && (
