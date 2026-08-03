@@ -162,8 +162,10 @@ export function RevaluarTenencia({
           )}
           <Text style={e.nota}>
             Última valuación:{" "}
-            {tenencia ? etiquetaFecha(tenencia.fechaValuacion, hoyBA()) : ""}. Al
-            guardar queda valuada hoy.
+            <Text style={e.notaFecha}>
+              {tenencia ? etiquetaFecha(tenencia.fechaValuacion, hoyBA()) : ""}
+            </Text>
+            . Al guardar queda valuada hoy.
           </Text>
 
           <Pressable
@@ -214,8 +216,13 @@ const e = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  titulo: { flexShrink: 1, fontSize: 16, fontWeight: "600", color: color.tinta },
-  etiqueta: { marginTop: 16, fontSize: 11.5, color: color.tintaSecundaria },
+  titulo: { flexShrink: 1, fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  etiqueta: {
+    marginTop: 16,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   campo: {
     marginTop: 6,
     height: 56,
@@ -243,7 +250,14 @@ const e = StyleSheet.create({
     fontVariant: ["tabular-nums"],
     color: color.tintaSecundaria,
   },
-  nota: { marginTop: 8, fontSize: 11.5, lineHeight: 16, color: color.tintaTerciaria },
+  nota: {
+    marginTop: 8,
+    fontSize: 11.5,
+    lineHeight: 16,
+    fontFamily: fuente.texto,
+    color: color.tintaTerciaria,
+  },
+  notaFecha: { fontFamily: fuente.mono, fontVariant: ["tabular-nums"] },
   cta: {
     marginTop: 16,
     height: 48,
@@ -252,7 +266,7 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   desactivar: {
     marginTop: 12,
     textAlign: "center",

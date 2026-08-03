@@ -7,7 +7,7 @@ import {
   ProveedorModoSeleccion,
   useModoSeleccion,
 } from "@/lib/modo-seleccion";
-import { color } from "@/lib/tema";
+import { color, fuente } from "@/lib/tema";
 
 // Tab bar nativa. En la web esto era un <nav> fijo con CSS; acá lo da el
 // sistema: blur, safe area y comportamiento de scroll nativos, gratis.
@@ -42,38 +42,6 @@ function Tabs_() {
 
   return (
     <View style={{ flex: 1 }}>
-      {!seleccionando && (
-      <View style={[e.fabCapa, { bottom: insets.bottom + 58 }]} pointerEvents="box-none">
-        <View style={e.pastilla}>
-          <Pressable
-            onPress={() => router.push("/asistente?camara=1")}
-            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
-            accessibilityRole="button"
-            // la web dice "Leer un comprobante con el asistente" porque allá el
-            // link lleva al chat; acá la cámara se abre sola, y la etiqueta
-            // tiene que decir lo que el botón hace, no lo que hace su gemelo
-            accessibilityLabel="Sacarle una foto a un comprobante"
-          >
-            <Camera size={23} color={color.papel} strokeWidth={2} />
-          </Pressable>
-          {/* aria-hidden en la web: el divisor es dibujo, no contenido */}
-          <View
-            style={e.divisor}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          />
-          <Pressable
-            onPress={() => router.push("/gasto-nuevo")}
-            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Cargar un movimiento a mano"
-          >
-            <Plus size={25} color={color.papel} strokeWidth={2.5} />
-          </Pressable>
-        </View>
-      </View>
-      )}
-
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -83,7 +51,9 @@ function Tabs_() {
           backgroundColor: "#1e1c1a",
           borderTopColor: "#34302b",
         },
-        tabBarLabelStyle: { fontSize: 11 },
+        // Rubik también acá: sin fontFamily las cuatro etiquetas salían en la
+        // fuente del sistema, la única tipografía ajena que quedaba a la vista
+        tabBarLabelStyle: { fontSize: 11, fontFamily: fuente.textoMedio },
         sceneStyle: { backgroundColor: "#141312" },
       }}
     >
@@ -120,6 +90,45 @@ function Tabs_() {
         }}
       />
       </Tabs>
+
+      {/* La pastilla va DESPUÉS de <Tabs> en el JSX, no antes: es orden de
+          LECTURA, no de dibujo. VoiceOver recorre el árbol como está escrito, y
+          arriba de <Tabs> anunciaba los dos botones flotantes ANTES que el
+          contenido de la pantalla — el atajo primero y la pantalla después.
+          Visualmente es idéntica: sigue absolute con zIndex 10 sobre unas tabs
+          sin zIndex, así que queda arriba por las dos vías (orden natural y
+          zIndex), y el box-none deja pasar los toques igual que antes. */}
+      {!seleccionando && (
+      <View style={[e.fabCapa, { bottom: insets.bottom + 58 }]} pointerEvents="box-none">
+        <View style={e.pastilla}>
+          <Pressable
+            onPress={() => router.push("/asistente?camara=1")}
+            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            // la web dice "Leer un comprobante con el asistente" porque allá el
+            // link lleva al chat; acá la cámara se abre sola, y la etiqueta
+            // tiene que decir lo que el botón hace, no lo que hace su gemelo
+            accessibilityLabel="Sacarle una foto a un comprobante"
+          >
+            <Camera size={23} color={color.papel} strokeWidth={2} />
+          </Pressable>
+          {/* aria-hidden en la web: el divisor es dibujo, no contenido */}
+          <View
+            style={e.divisor}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          />
+          <Pressable
+            onPress={() => router.push("/gasto-nuevo")}
+            style={({ pressed }) => [e.mitad, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Cargar un movimiento a mano"
+          >
+            <Plus size={25} color={color.papel} strokeWidth={2.5} />
+          </Pressable>
+        </View>
+      </View>
+      )}
     </View>
   );
 }

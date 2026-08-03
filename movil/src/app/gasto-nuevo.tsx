@@ -40,7 +40,7 @@ import {
   type CategoriaSimple,
   type MedioDePago,
 } from "@/lib/acciones";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { Badge, EstadoVacio, IconoCategoria } from "@/componentes/sistema";
 
@@ -230,11 +230,15 @@ export default function GastoNuevo() {
       </Pressable>
       <Text style={e.titulo}>{esIngreso ? "Nuevo ingreso" : "Nuevo gasto"}</Text>
       {medios.length > 0 && (
+        /* botones, no solapas: no se cambia de vista, se elige de qué bolsillo
+           sale. Es el role="group" + aria-pressed del gemelo web. */
         <View style={e.segmentedMini}>
           {(["hogar", "personal"] as const).map((a) => (
             <Pressable
               key={a}
               onPress={() => elegirAmbito(a)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: ambito === a }}
               style={[e.segmentoMini, ambito === a && e.segmentoMiniActivo]}
             >
               <Text style={[e.segmentoMiniTexto, ambito === a && e.segmentoMiniTextoActivo]}>
@@ -295,6 +299,8 @@ export default function GastoNuevo() {
               <Pressable
                 key={t}
                 onPress={() => elegirTipo(t)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sel }}
                 style={[e.segmentoTipo, sel && e.segmentoTipoActivo]}
               >
                 <Icono
@@ -366,9 +372,7 @@ export default function GastoNuevo() {
                 <CalendarDays size={15} color={color.tintaSecundaria} strokeWidth={1.5} />
                 <Text style={e.cicloTexto}>
                   Cae en el ciclo que cierra el{" "}
-                  <Text style={{ fontWeight: "600" }}>
-                    {formatearDiaCorto(medio.cicloCierre)}
-                  </Text>
+                  <Text style={e.cicloFecha}>{formatearDiaCorto(medio.cicloCierre)}</Text>
                 </Text>
                 <Badge variante={medio.cicloEstado === "confirmado" ? "confirmada" : "estimada"}>
                   {medio.cicloEstado === "confirmado" ? "confirmada" : "estimada"}
@@ -519,7 +523,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 8,
   },
-  titulo: { flex: 1, fontSize: 16, fontWeight: "600", color: color.tinta },
+  titulo: { flex: 1, fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
   segmentedMini: {
     flexDirection: "row",
     borderRadius: radio.chipChico,
@@ -528,8 +532,13 @@ const e = StyleSheet.create({
   },
   segmentoMini: { borderRadius: 7, paddingHorizontal: 12, paddingVertical: 5 },
   segmentoMiniActivo: { backgroundColor: color.segmentedActivo },
-  segmentoMiniTexto: { fontSize: 11.5, fontWeight: "500", color: color.tintaSecundaria },
-  segmentoMiniTextoActivo: { fontWeight: "600", color: color.tinta },
+  segmentoMiniTexto: {
+    fontSize: 11.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
+  // el peso del activo es OTRO archivo de Rubik, no un fontWeight encima
+  segmentoMiniTextoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
   segmentedTipo: {
     marginTop: 16,
     flexDirection: "row",
@@ -547,8 +556,12 @@ const e = StyleSheet.create({
     paddingVertical: 9,
   },
   segmentoTipoActivo: { backgroundColor: color.segmentedActivo },
-  segmentoTipoTexto: { fontSize: 13.5, fontWeight: "500", color: color.tintaSecundaria },
-  segmentoTipoTextoActivo: { fontWeight: "600", color: color.tinta },
+  segmentoTipoTexto: {
+    fontSize: 13.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
+  segmentoTipoTextoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
   avisoSinCuenta: {
     marginTop: 12,
     borderRadius: radio.cta,
@@ -559,6 +572,7 @@ const e = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 12.5,
     lineHeight: 19,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   montoFila: {
@@ -567,7 +581,15 @@ const e = StyleSheet.create({
     justifyContent: "center",
     alignItems: "baseline",
   },
-  monto: { fontSize: 52, fontWeight: "500", color: color.tinta },
+  // la cifra más grande del sistema (DESIGN_AUDIT §2.2): mono 500 52px con el
+  // −0.03em del export pasado a px
+  monto: {
+    fontSize: 52,
+    fontFamily: fuente.monoMedio,
+    fontVariant: ["tabular-nums"],
+    letterSpacing: -1.56,
+    color: color.tinta,
+  },
   chipsFila: { gap: 8, paddingVertical: 4 },
   chipMedio: {
     flexDirection: "row",
@@ -581,8 +603,12 @@ const e = StyleSheet.create({
     paddingVertical: 8,
   },
   chipMedioSel: { backgroundColor: color.tinta, borderColor: color.tinta },
-  chipMedioTexto: { fontSize: 12.5, fontWeight: "500", color: color.tintaSecundaria },
-  chipMedioTextoSel: { fontWeight: "600", color: color.papel },
+  chipMedioTexto: {
+    fontSize: 12.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
+  chipMedioTextoSel: { fontFamily: fuente.textoSemi, color: color.papel },
   cardTarjeta: {
     marginTop: 12,
     borderRadius: radio.cta,
@@ -593,7 +619,8 @@ const e = StyleSheet.create({
     paddingVertical: 12,
   },
   cicloFila: { flexDirection: "row", alignItems: "center", gap: 8 },
-  cicloTexto: { flex: 1, fontSize: 12.5, color: color.tinta },
+  cicloTexto: { flex: 1, fontSize: 12.5, fontFamily: fuente.texto, color: color.tinta },
+  cicloFecha: { fontFamily: fuente.textoSemi },
   cuotasFila: { flexDirection: "row", alignItems: "center", gap: 8 },
   cuotasConBorde: {
     marginTop: 10,
@@ -601,7 +628,12 @@ const e = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: color.separador,
   },
-  cuotasEtiqueta: { flex: 1, fontSize: 12, color: color.tintaSecundaria },
+  cuotasEtiqueta: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   cuotaBoton: {
     width: 44,
     borderRadius: radio.chipChico,
@@ -612,9 +644,20 @@ const e = StyleSheet.create({
     alignItems: "center",
   },
   cuotaBotonSel: { backgroundColor: color.tinta, borderColor: color.tinta },
-  cuotaTexto: { fontSize: 13, fontWeight: "500", color: color.tinta },
-  cuotaTextoSel: { fontWeight: "600", color: color.papel },
-  etiquetaSeccion: { marginTop: 20, fontSize: 12, color: color.tintaSecundaria },
+  // el número de cuotas es cifra (mono, §2.2)
+  cuotaTexto: {
+    fontSize: 13,
+    fontFamily: fuente.monoMedio,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  cuotaTextoSel: { fontFamily: fuente.monoSemi, color: color.papel },
+  etiquetaSeccion: {
+    marginTop: 20,
+    fontSize: 12,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   grillaCategorias: { marginTop: 8, flexDirection: "row", flexWrap: "wrap", gap: 7 },
   tile: {
     width: "23%",
@@ -630,8 +673,13 @@ const e = StyleSheet.create({
   tileSel: { borderWidth: 1.5, borderColor: color.verde, backgroundColor: color.verdeSuave },
   // el tile de "todas" no es una categoría: fondo del papel para que no compita
   tileTodas: { backgroundColor: color.papel, borderStyle: "dashed" },
-  tileTexto: { maxWidth: "100%", fontSize: 10, fontWeight: "500", color: color.tinta },
-  tileTextoSel: { fontWeight: "600", color: color.verde },
+  tileTexto: {
+    maxWidth: "100%",
+    fontSize: 10,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
+  tileTextoSel: { fontFamily: fuente.textoSemi, color: color.verde },
   filaFecha: {
     marginTop: 12,
     flexDirection: "row",
@@ -644,7 +692,12 @@ const e = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  etiquetaFecha: { flex: 1, fontSize: 12.5, color: color.tintaSecundaria },
+  etiquetaFecha: {
+    flex: 1,
+    fontSize: 12.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   inputNota: {
     marginTop: 12,
     marginBottom: 16,
@@ -655,6 +708,7 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   pie: {
@@ -668,13 +722,14 @@ const e = StyleSheet.create({
     marginBottom: 8,
     textAlign: "center",
     fontSize: 12,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
   avisoCuotas: {
     marginBottom: 8,
     textAlign: "center",
     fontSize: 11.5,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   teclado: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
@@ -688,7 +743,13 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  teclaTexto: { fontSize: 22, fontWeight: "500", color: color.tinta },
+  // numpad: mono 500 22px (§2.2)
+  teclaTexto: {
+    fontSize: 22,
+    fontFamily: fuente.monoMedio,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
   cta: {
     marginTop: 12,
     borderRadius: radio.cta,
@@ -696,5 +757,5 @@ const e = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
 });

@@ -410,7 +410,13 @@ export default function Movimientos() {
           texto de ancho completo la hacía parecer otra cosa —y se comía una
           banda entera de alto arriba del totalizador. */}
       <View style={e.filaVista}>
-        <View style={e.conmutadorVista}>
+        {/* mismo rol que su gemelo de Presupuesto: el <nav aria-label="Vista">
+            de la web es un tablist, y cada ícono una solapa con su selected */}
+        <View
+          accessibilityRole="tablist"
+          accessibilityLabel="Vista"
+          style={e.conmutadorVista}
+        >
           {(
             [
               { clave: "lista", Icono: List, etiqueta: "Ver lista" },
@@ -426,7 +432,7 @@ export default function Movimientos() {
                 setVista(clave);
               }}
               accessibilityLabel={etiqueta}
-              accessibilityRole="button"
+              accessibilityRole="tab"
               accessibilityState={{ selected: vista === clave }}
               style={[e.botonVista, vista === clave && e.vistaActiva]}
             >
@@ -1049,15 +1055,19 @@ const e = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 14,
   },
-  accionSeleccion: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  accionSeleccion: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.verde },
   botonSeleccionar: { flexDirection: "row", alignItems: "center", gap: 6 },
-  textoSeleccionar: { fontSize: 12.5, fontWeight: "500", color: color.tintaSecundaria },
+  textoSeleccionar: {
+    fontSize: 12.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   aviso: {
     marginTop: 10,
     textAlign: "center",
     fontSize: 12.5,
     lineHeight: 19,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
   },
   centrado: {
@@ -1139,14 +1149,20 @@ const e = StyleSheet.create({
   },
   totalCol: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
   totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },
-  totalEtiqueta: { fontSize: 10.5, color: color.tintaSecundaria },
-  totalCifra: { marginTop: 2, fontSize: 14, fontWeight: "600", color: color.tinta },
+  totalEtiqueta: { fontSize: 10.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  totalCifra: {
+    marginTop: 2,
+    fontSize: 14,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
   encabezado: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 22, fontFamily: fuente.textoSemi, color: color.tinta },
   avatar: {
     width: 34,
     height: 34,
@@ -1155,7 +1171,7 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.tinta,
   },
-  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
+  avatarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
   bandeja: {
     marginTop: 16,
     borderRadius: radio.card,
@@ -1172,7 +1188,12 @@ const e = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 6,
   },
-  bandejaTitulo: { flex: 1, fontSize: 13.5, fontWeight: "600", color: color.tinta },
+  bandejaTitulo: {
+    flex: 1,
+    fontSize: 13.5,
+    fontFamily: fuente.textoSemi,
+    color: color.tinta,
+  },
   contador: {
     minWidth: 20,
     height: 20,
@@ -1182,7 +1203,13 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.ambar,
   },
-  contadorTexto: { fontSize: 11, fontWeight: "600", color: color.blanco },
+  // el contador de la bandeja es cifra
+  contadorTexto: {
+    fontSize: 11,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.blanco,
+  },
   bandejaFila: {
     flexDirection: "row",
     alignItems: "center",
@@ -1190,8 +1217,13 @@ const e = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  bandejaDescripcion: { fontSize: 14, fontWeight: "500", color: color.tinta },
-  bandejaMeta: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
+  bandejaDescripcion: { fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
+  bandejaMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   chipsCategoria: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1210,7 +1242,11 @@ const e = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
-  chipCategoriaTexto: { fontSize: 11.5, fontWeight: "500", color: color.tintaSecundaria },
+  chipCategoriaTexto: {
+    fontSize: 11.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   grillaCategorias: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1233,14 +1269,14 @@ const e = StyleSheet.create({
     width: "100%",
     textAlign: "center",
     fontSize: 10,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.tinta,
   },
   dia: {
     marginTop: 20,
     marginBottom: 8,
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tintaSecundaria,
   },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },

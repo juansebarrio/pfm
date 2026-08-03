@@ -199,6 +199,8 @@ export function AgregarTenencia({
                           tacto.toque();
                           setMoneda(m);
                         }}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: moneda === m }}
                         style={[e.mini, moneda === m && e.miniActivo]}
                       >
                         <Text
@@ -278,8 +280,14 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titulo: { fontSize: 16, fontWeight: "600", color: color.tinta },
-  etiqueta: { marginTop: 14, marginBottom: 6, fontSize: 11.5, color: color.tintaSecundaria },
+  titulo: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  etiqueta: {
+    marginTop: 14,
+    marginBottom: 6,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   // grilla 2 columnas como la hoja web (grid-cols-2)
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: {
@@ -294,7 +302,11 @@ const e = StyleSheet.create({
     paddingVertical: 9,
   },
   chipActiva: { borderColor: color.verde, backgroundColor: color.verdeSuave },
-  chipTexto: { fontSize: 12.5, fontWeight: "500", color: color.tintaSecundaria },
+  chipTexto: {
+    fontSize: 12.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   chipTextoActivo: { color: color.verde },
   input: {
     height: 44,
@@ -304,6 +316,7 @@ const e = StyleSheet.create({
     backgroundColor: color.papel,
     paddingHorizontal: 12,
     fontSize: 15,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   filaMoneda: {
@@ -321,7 +334,11 @@ const e = StyleSheet.create({
     paddingVertical: 3,
   },
   miniActivo: { borderColor: color.verde, backgroundColor: color.verdeSuave },
-  miniTexto: { fontSize: 10.5, fontWeight: "500", color: color.tintaSecundaria },
+  miniTexto: {
+    fontSize: 10.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   miniTextoActivo: { color: color.verde },
   campo: {
     height: 52,
@@ -357,5 +374,5 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
 });

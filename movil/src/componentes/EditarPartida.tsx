@@ -15,7 +15,7 @@ import { X } from "lucide-react-native";
 import { centavosDesdeTexto, formatearImporte } from "@dominio/dinero";
 import { actualizarPartida, type Resultado } from "@/lib/acciones";
 import type { SesionHogar } from "@/lib/datos";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 
 // La partida se ajusta tocándola: hoja con el monto asignado y listo. Espeja
@@ -121,8 +121,11 @@ export function EditarPartida({
             ]}
           />
           <Text style={e.nota}>
-            Gastado hasta ahora: {formatearImporte(partida?.gastadoCentavos ?? 0)}. Cambiar
-            el monto no toca los movimientos, solo cuánto le das al sobre.
+            Gastado hasta ahora:{" "}
+            <Text style={e.notaCifra}>
+              {formatearImporte(partida?.gastadoCentavos ?? 0)}
+            </Text>
+            . Cambiar el monto no toca los movimientos, solo cuánto le das al sobre.
           </Text>
 
           {error && <Text style={e.error}>{error}</Text>}
@@ -185,8 +188,14 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titulo: { fontSize: 16, fontWeight: "600", color: color.tinta },
-  etiqueta: { marginTop: 16, fontSize: 11.5, color: color.tintaSecundaria },
+  titulo: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  etiqueta: {
+    marginTop: 16,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  // el campo del monto es cifra: mono con el peso en el archivo de la fuente
   monto: {
     marginTop: 6,
     height: 56,
@@ -196,11 +205,19 @@ const e = StyleSheet.create({
     backgroundColor: color.papel,
     paddingHorizontal: 14,
     fontSize: 26,
-    fontWeight: "600",
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
     color: color.tinta,
   },
-  nota: { marginTop: 8, fontSize: 11.5, lineHeight: 16, color: color.tintaTerciaria },
-  error: { marginTop: 8, fontSize: 12.5, color: color.rojo },
+  nota: {
+    marginTop: 8,
+    fontSize: 11.5,
+    lineHeight: 16,
+    fontFamily: fuente.texto,
+    color: color.tintaTerciaria,
+  },
+  notaCifra: { fontFamily: fuente.mono, fontVariant: ["tabular-nums"] },
+  error: { marginTop: 8, fontSize: 12.5, fontFamily: fuente.texto, color: color.rojo },
   cta: {
     marginTop: 16,
     height: 48,
@@ -209,7 +226,7 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   verMovimientos: { marginTop: 12, alignItems: "center", paddingVertical: 10 },
-  verMovimientosTexto: { fontSize: 13, fontWeight: "500", color: color.verde },
+  verMovimientosTexto: { fontSize: 13, fontFamily: fuente.textoMedio, color: color.verde },
 });

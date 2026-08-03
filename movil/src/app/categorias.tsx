@@ -19,7 +19,7 @@ import {
   editarCategoria,
   type CategoriaSimple,
 } from "@/lib/acciones";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { Card, IconoCategoria } from "@/componentes/sistema";
 
@@ -200,11 +200,16 @@ function Formulario({
       {/* tipo y ámbito solo al crear: cambiarlos después movería movimientos */}
       {!editando && (
         <>
+          {/* botones, no solapas: acá no se cambia de vista, se elige QUÉ
+              categoría se está creando. Es el aria-pressed del gemelo web, que
+              en nativo se dice con selected. */}
           <View style={e.segmented}>
             {[false, true].map((ing) => (
               <Pressable
                 key={String(ing)}
                 onPress={() => setEsIngreso(ing)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: esIngreso === ing }}
                 style={[e.segmento, esIngreso === ing && e.segmentoActivo]}
               >
                 <Text style={[e.segmentoTexto, esIngreso === ing && e.segmentoTextoActivo]}>
@@ -218,6 +223,8 @@ function Formulario({
               <Pressable
                 key={a}
                 onPress={() => setAmbito(a)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: ambito === a }}
                 style={[e.segmento, ambito === a && e.segmentoActivo]}
               >
                 <Text style={[e.segmentoTexto, ambito === a && e.segmentoTextoActivo]}>
@@ -313,8 +320,8 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
   },
-  titulo: { fontSize: 19, fontWeight: "600", color: color.tinta },
-  subtitulo: { fontSize: 11.5, color: color.tintaSecundaria },
+  titulo: { fontSize: 19, fontFamily: fuente.textoSemi, color: color.tinta },
+  subtitulo: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   cta: {
     marginTop: 16,
     flexDirection: "row",
@@ -325,10 +332,10 @@ const e = StyleSheet.create({
     backgroundColor: color.verde,
     paddingVertical: 14,
   },
-  ctaTexto: { fontSize: 14.5, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 14.5, fontFamily: fuente.textoSemi, color: color.papel },
   grupo: {
     fontSize: 11.5,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     letterSpacing: 0.5,
     color: color.tintaSecundaria,
   },
@@ -340,12 +347,24 @@ const e = StyleSheet.create({
     paddingVertical: 11,
   },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
-  nombre: { flex: 1, minWidth: 0, fontSize: 14, color: color.tinta },
-  marcaPersonal: { fontSize: 9.5, letterSpacing: 0.5, color: color.tintaTerciaria },
+  nombre: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 14,
+    fontFamily: fuente.texto,
+    color: color.tinta,
+  },
+  marcaPersonal: {
+    fontSize: 9.5,
+    fontFamily: fuente.texto,
+    letterSpacing: 0.5,
+    color: color.tintaTerciaria,
+  },
   aclaracion: {
     marginTop: 24,
     fontSize: 11.5,
     lineHeight: 18,
+    fontFamily: fuente.texto,
     color: color.tintaTerciaria,
   },
   formulario: {
@@ -361,7 +380,7 @@ const e = StyleSheet.create({
     justifyContent: "space-between",
     gap: 10,
   },
-  formTitulo: { flex: 1, fontSize: 15, fontWeight: "600", color: color.tinta },
+  formTitulo: { flex: 1, fontSize: 15, fontFamily: fuente.textoSemi, color: color.tinta },
   segmented: {
     marginTop: 12,
     flexDirection: "row",
@@ -371,8 +390,9 @@ const e = StyleSheet.create({
   },
   segmento: { flex: 1, borderRadius: 9, paddingVertical: 9, alignItems: "center" },
   segmentoActivo: { backgroundColor: color.segmentedActivo },
-  segmentoTexto: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria },
-  segmentoTextoActivo: { fontWeight: "600", color: color.tinta },
+  segmentoTexto: { fontSize: 13, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  // el peso del activo es OTRO archivo de Rubik, no un fontWeight encima
+  segmentoTextoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
   input: {
     marginTop: 12,
     height: 46,
@@ -382,9 +402,10 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
-  etiqueta: { fontSize: 12, color: color.tintaSecundaria },
+  etiqueta: { fontSize: 12, fontFamily: fuente.texto, color: color.tintaSecundaria },
   chips: { marginTop: 6, flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: {
     borderRadius: radio.chipMini,
@@ -395,8 +416,8 @@ const e = StyleSheet.create({
     paddingVertical: 6,
   },
   chipSel: { borderColor: color.verde, backgroundColor: color.verdeSuave },
-  chipTexto: { fontSize: 12, color: color.tinta },
-  chipTextoSel: { fontWeight: "600", color: color.verde },
+  chipTexto: { fontSize: 12, fontFamily: fuente.texto, color: color.tinta },
+  chipTextoSel: { fontFamily: fuente.textoSemi, color: color.verde },
   iconoBoton: {
     width: 38,
     height: 38,
@@ -415,7 +436,7 @@ const e = StyleSheet.create({
   error: {
     marginTop: 12,
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
 });

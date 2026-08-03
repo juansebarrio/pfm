@@ -54,7 +54,7 @@ import {
 } from "@/lib/datos";
 import { supabase } from "@/lib/supabase";
 import { tacto } from "@/lib/tacto";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { Onboarding } from "@/componentes/Onboarding";
 import { Badge, Card } from "@/componentes/sistema";
 
@@ -602,7 +602,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  titulo: { fontSize: 17, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 17, fontFamily: fuente.textoSemi, color: color.tinta },
   hogarHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -610,8 +610,8 @@ const e = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  hogarNombre: { fontSize: 16, fontWeight: "600", color: color.tinta },
-  hogarMeta: { fontSize: 11.5, color: color.tintaSecundaria },
+  hogarNombre: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  hogarMeta: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   miembro: {
     flexDirection: "row",
     alignItems: "center",
@@ -627,9 +627,9 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
-  miembroNombre: { fontSize: 14, fontWeight: "500", color: color.tinta },
-  miembroMeta: { fontSize: 11.5, color: color.tintaSecundaria },
+  avatarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
+  miembroNombre: { fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
+  miembroMeta: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   navFila: {
     flexDirection: "row",
     alignItems: "center",
@@ -637,27 +637,40 @@ const e = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  navTexto: { flex: 1, fontSize: 14, fontWeight: "500", color: color.tinta },
-  navSubtexto: { fontSize: 11.5, color: color.tintaSecundaria },
-  navAyuda: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
+  navTexto: { flex: 1, fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
+  navSubtexto: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  navAyuda: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   lockFila: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   statement: {
     flex: 1,
     fontSize: 13.5,
     lineHeight: 20,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
   },
   leyenda: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  leyendaTexto: { flex: 1, fontSize: 11.5, lineHeight: 17, color: color.tintaSecundaria },
+  leyendaTexto: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 17,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   privacidad: {
     fontSize: 12.5,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
     textDecorationLine: "underline",
   },
-  cerrar: { fontSize: 13, fontWeight: "500", color: color.rojo },
+  cerrar: { fontSize: 13, fontFamily: fuente.textoMedio, color: color.rojo },
   borrarCuenta: {
     fontSize: 12.5,
+    fontFamily: fuente.texto,
     color: color.tintaTerciaria,
     textDecorationLine: "underline",
   },
@@ -676,11 +689,15 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarPendienteTexto: { fontSize: 14, fontWeight: "600", color: color.ambarTexto },
+  avatarPendienteTexto: {
+    fontSize: 14,
+    fontFamily: fuente.textoSemi,
+    color: color.ambarTexto,
+  },
   // alineadas al texto: avatar (36) + gap (12) = 48
   invitacionAcciones: { flexDirection: "row", gap: 16, paddingLeft: 48, marginTop: 8 },
-  accionReenviar: { fontSize: 12.5, fontWeight: "500", color: color.verde },
-  accionRevocar: { fontSize: 12.5, fontWeight: "500", color: color.rojo },
+  accionReenviar: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.verde },
+  accionRevocar: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.rojo },
 
   // hoja de invitar (calca AgregarPartida)
   lleno: { flex: 1, justifyContent: "flex-end" },
@@ -710,8 +727,14 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  tituloHoja: { fontSize: 16, fontWeight: "600", color: color.tinta },
-  etiquetaHoja: { marginTop: 16, marginBottom: 6, fontSize: 11.5, color: color.tintaSecundaria },
+  tituloHoja: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  etiquetaHoja: {
+    marginTop: 16,
+    marginBottom: 6,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   inputEmail: {
     height: 48,
     borderRadius: radio.cta,
@@ -720,12 +743,24 @@ const e = StyleSheet.create({
     backgroundColor: color.papel,
     paddingHorizontal: 14,
     fontSize: 15,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
-  ayudaHoja: { marginTop: 8, fontSize: 11.5, color: color.tintaSecundaria },
-  errorHoja: { marginTop: 8, fontSize: 12.5, color: color.rojo },
-  avisoLink: { marginTop: 16, fontSize: 12.5, lineHeight: 18, color: color.tintaSecundaria },
-  link: { marginTop: 8, fontSize: 12.5, color: color.verde },
+  ayudaHoja: {
+    marginTop: 8,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  errorHoja: { marginTop: 8, fontSize: 12.5, fontFamily: fuente.texto, color: color.rojo },
+  avisoLink: {
+    marginTop: 16,
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  link: { marginTop: 8, fontSize: 12.5, fontFamily: fuente.texto, color: color.verde },
   ctaHoja: {
     marginTop: 16,
     height: 48,
@@ -734,5 +769,5 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaHojaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaHojaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
 });

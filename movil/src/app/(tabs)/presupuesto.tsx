@@ -262,12 +262,21 @@ export default function Presupuesto() {
             se ven distintas: Hogar/Personal elige QUÉ plata (texto, ancho) y el
             conmutador de íconos elige CÓMO verla (lista o anillo). Dos
             segmented apilados se leían como el mismo control dos veces. */}
+        {/* Los dos segmented se declaran como el <nav> + aria-current de sus
+            gemelos web: tablist con sus tab, y el activo con selected. Sin eso
+            VoiceOver los lee como dos botones sueltos y no dice cuál rige. */}
         <View style={e.filaControles}>
-          <View style={[e.segmented, { flex: 1, marginTop: 0 }]}>
+          <View
+            accessibilityRole="tablist"
+            accessibilityLabel="Ámbito del presupuesto"
+            style={[e.segmented, { flex: 1, marginTop: 0 }]}
+          >
             {(["hogar", "personal"] as const).map((a) => (
               <Pressable
                 key={a}
                 onPress={() => setAmbito(a)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: ambito === a }}
                 style={[e.segmentoBoton, ambito === a && e.segmentoActivo]}
               >
                 <Text style={[e.segmentoTexto, ambito === a && e.segmentoTextoActivo]}>
@@ -276,7 +285,7 @@ export default function Presupuesto() {
               </Pressable>
             ))}
           </View>
-          <View style={e.conmutadorVista}>
+          <View accessibilityRole="tablist" accessibilityLabel="Vista" style={e.conmutadorVista}>
             {(
               [
                 { clave: "partidas", Icono: List, etiqueta: "Ver partidas" },
@@ -291,6 +300,8 @@ export default function Presupuesto() {
                     setVista(clave);
                   }
                 }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: vista === clave }}
                 accessibilityLabel={etiqueta}
                 style={[e.botonVista, vista === clave && e.segmentoActivo]}
               >
@@ -525,7 +536,7 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 22, fontFamily: fuente.textoSemi, color: color.tinta },
   avatar: {
     width: 34,
     height: 34,
@@ -534,7 +545,7 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.tinta,
   },
-  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
+  avatarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
   filaControles: {
     marginTop: 14,
     flexDirection: "row",
@@ -562,19 +573,31 @@ const e = StyleSheet.create({
   },
   segmentoBoton: { flex: 1, borderRadius: 7, paddingVertical: 6, alignItems: "center" },
   segmentoActivo: { backgroundColor: color.segmentedActivo },
-  segmentoTexto: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
-  segmentoTextoActivo: { fontWeight: "600", color: color.tinta },
+  segmentoTexto: { fontSize: 12, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  // el peso del activo es OTRO archivo de Rubik, no un fontWeight encima
+  segmentoTextoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
   sumar: { marginTop: 16, alignSelf: "center", paddingVertical: 6, paddingHorizontal: 10 },
-  sumarTexto: { fontSize: 13.5, fontWeight: "500", color: color.verde },
+  sumarTexto: { fontSize: 13.5, fontFamily: fuente.textoMedio, color: color.verde },
   repetir: {
     marginTop: 14,
     fontSize: 13,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
     textDecorationLine: "underline",
   },
-  heroEtiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
-  heroMeta: { marginTop: 4, fontSize: 11, color: color.tintaSecundaria },
+  heroEtiqueta: {
+    fontSize: 12,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
+  // "asignado $ X · gastado $ Y" lleva .cifra en la web: mono entero
+  heroMeta: {
+    marginTop: 4,
+    fontSize: 11,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaSecundaria,
+  },
   pistaHero: {
     marginTop: 12,
     height: 4,
@@ -589,7 +612,13 @@ const e = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  heroPieTexto: { fontSize: 10.5, color: color.tintaSecundaria },
+  // también .cifra en la web ("52 % gastado", "día 12 de 31 · quedan 19 días")
+  heroPieTexto: {
+    fontSize: 10.5,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaSecundaria,
+  },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
   // Fila fantasma: no es una partida, es un recordatorio. Por eso el título va
   // en tinta secundaria — pesa menos que los sobres reales de arriba.
@@ -600,13 +629,23 @@ const e = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
-  fantasmaTitulo: { fontSize: 14, fontWeight: "500", color: color.tintaSecundaria },
+  fantasmaTitulo: {
+    fontSize: 14,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   fantasmaDetalle: {
     marginTop: 2,
     fontSize: 11,
     fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
     color: color.tintaSecundaria,
   },
-  fantasmaError: { marginTop: 2, fontSize: 11, fontWeight: "500", color: color.rojo },
-  fantasmaAccion: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  fantasmaError: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.textoMedio,
+    color: color.rojo,
+  },
+  fantasmaAccion: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.verde },
 });
