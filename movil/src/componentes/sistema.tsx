@@ -123,6 +123,48 @@ export function EncabezadoSeccion({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ─────────────────────────────────────────────────────── TotalizadorMes
+
+// Franja de tres cifras arriba de Movimientos y del Calendario: lo que entró,
+// lo que salió y el saldo entre ambos en el mes que se mira. Es CAJA (ingresos
+// − gastos), no el "disponible" del presupuesto. Espejo de
+// components/sistema/TotalizadorMes.tsx de la web.
+
+export function TotalizadorMes({
+  totales,
+}: {
+  totales: { ingresosCentavos: number; gastosCentavos: number };
+}) {
+  const balance = totales.ingresosCentavos - totales.gastosCentavos;
+  return (
+    <View style={e.totalizador}>
+      <View style={e.totalCol}>
+        <Text style={e.totalEtiqueta}>Ingresos</Text>
+        <Text numberOfLines={1} style={[e.totalCifra, { color: color.verde }]}>
+          {formatearImporte(totales.ingresosCentavos)}
+        </Text>
+      </View>
+      <View style={[e.totalCol, e.totalConBorde]}>
+        <Text style={e.totalEtiqueta}>Gastos</Text>
+        <Text numberOfLines={1} style={e.totalCifra}>
+          {formatearImporte(totales.gastosCentavos)}
+        </Text>
+      </View>
+      <View style={[e.totalCol, e.totalConBorde]}>
+        <Text style={e.totalEtiqueta}>Balance</Text>
+        {/* en negativo va en tinta con su signo: el rojo del sistema se
+            reserva para "excedido", y gastar más de lo que entró no lo es */}
+        <Text
+          numberOfLines={1}
+          style={[e.totalCifra, { color: balance < 0 ? color.tinta : color.verde }]}
+        >
+          {formatearImporte(balance)}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 // ─────────────────────────────────────────────────────── Importe
 
 // Toda cifra en Spline Sans Mono (§2.2); el peso va en el archivo de la
@@ -633,6 +675,24 @@ const e = StyleSheet.create({
     fontSize: 12,
     fontFamily: fuente.textoSemi,
     color: color.tintaSecundaria,
+  },
+  totalizador: {
+    marginTop: 14,
+    flexDirection: "row",
+    borderRadius: radio.card,
+    borderWidth: 1,
+    borderColor: color.borde,
+    backgroundColor: color.superficie,
+  },
+  totalCol: { flex: 1, paddingHorizontal: 12, paddingVertical: 10 },
+  totalConBorde: { borderLeftWidth: 1, borderLeftColor: color.separador },
+  totalEtiqueta: { fontSize: 10.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  totalCifra: {
+    marginTop: 2,
+    fontSize: 14,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
   },
   badge: {
     borderRadius: radio.tag,

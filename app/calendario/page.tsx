@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
+import { TotalizadorMes } from "@/components/sistema/TotalizadorMes";
 import {
   categoriasDelHogar,
   mediosDePago,
   movimientosCategorizados,
+  totalesDelMes,
 } from "@/lib/datos/movimientos";
 import { recurrentesActivos } from "@/lib/datos/presupuesto";
 import { obtenerSesionHogar } from "@/lib/datos/sesion";
@@ -25,11 +27,12 @@ export default async function PaginaCalendario({
   const mes = mesDesdeParametro(params.mes) ?? mesDe(hoy);
 
   const sesion = await obtenerSesionHogar();
-  const [movimientos, recurrentes, categorias, medios] = await Promise.all([
+  const [movimientos, recurrentes, categorias, medios, totales] = await Promise.all([
     movimientosCategorizados(sesion, { mes }),
     recurrentesActivos(sesion),
     categoriasDelHogar(sesion),
     mediosDePago(sesion),
+    totalesDelMes(sesion, mes),
   ]);
 
   return (
@@ -48,6 +51,10 @@ export default async function PaginaCalendario({
       </p>
 
       <NavegadorMes mes={mes} mesActual={mesDe(hoy)} ruta="/calendario" otrosParametros={{}} />
+
+      {/* El mismo totalizador de Movimientos: la grilla dice CUÁNDO pasó la
+          plata y esta franja dice CUÁNTA fue en el mes entero. */}
+      <TotalizadorMes totales={totales} />
 
       <CalendarioMes
         mes={mes}

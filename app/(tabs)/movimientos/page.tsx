@@ -21,7 +21,7 @@ import {
 import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import { PorCategoria } from "@/components/sistema/PorCategoria";
 import { Bandeja, type CategoriaChip, type ItemBandeja } from "./Bandeja";
-import { TotalizadorMes } from "./TotalizadorMes";
+import { TotalizadorMes } from "@/components/sistema/TotalizadorMes";
 import { Filtros } from "./Filtros";
 import { Historial } from "./Historial";
 import { miembrosDelHogar, movimientosFiltrados } from "./datos";

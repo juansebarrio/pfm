@@ -31,9 +31,11 @@ import {
   movimientosCategorizados,
   obtenerSesionHogar,
   recurrentesActivos,
+  totalesDelMes,
   type MovimientoFila,
   type RecurrenteActivo,
   type SesionHogar,
+  type TotalesMes,
 } from "@/lib/datos";
 import {
   borrarMovimiento,
@@ -44,7 +46,7 @@ import {
 } from "@/lib/acciones";
 import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
-import { Card, FilaMovimiento } from "@/componentes/sistema";
+import { Card, FilaMovimiento, TotalizadorMes } from "@/componentes/sistema";
 import { DetalleMovimiento } from "@/componentes/DetalleMovimiento";
 import { NavegadorMes } from "@/componentes/NavegadorMes";
 
@@ -67,6 +69,7 @@ export default function Calendario() {
   const [sesion, setSesion] = useState<SesionHogar | null>(null);
   const [movimientos, setMovimientos] = useState<MovimientoFila[]>([]);
   const [recurrentes, setRecurrentes] = useState<RecurrenteActivo[]>([]);
+  const [totales, setTotales] = useState<TotalesMes | null>(null);
   const [categorias, setCategorias] = useState<CategoriaSimple[]>([]);
   const [medios, setMedios] = useState<MedioDePago[]>([]);
   const [detalle, setDetalle] = useState<MovimientoFila | null>(null);
@@ -76,16 +79,18 @@ export default function Calendario() {
     const s = await obtenerSesionHogar();
     if (!s) return;
     setSesion(s);
-    const [m, r, c, md] = await Promise.all([
+    const [m, r, c, md, t] = await Promise.all([
       movimientosCategorizados(s, { mes }),
       recurrentesActivos(s),
       categoriasDelHogar(s),
       mediosDePago(s),
+      totalesDelMes(s, mes),
     ]);
     setMovimientos(m);
     setRecurrentes(r);
     setCategorias(c);
     setMedios(md);
+    setTotales(t);
   }, [mes]);
 
   useEffect(() => {
@@ -150,6 +155,10 @@ export default function Calendario() {
           }}
         >
           <NavegadorMes mes={mes} mesActual={mesActual} alCambiar={cambiarMes} />
+
+          {/* El mismo totalizador de Movimientos: la grilla dice CUÁNDO pasó
+              la plata y esta franja dice CUÁNTA fue en el mes entero. */}
+          {totales && <TotalizadorMes totales={totales} />}
 
           {/* etiquetas L a D */}
           <View style={e.filaEtiquetas}>

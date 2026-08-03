@@ -1,9 +1,10 @@
 import { formatearImporte } from "@/lib/dominio/dinero";
 import type { TotalesMes } from "@/lib/datos/movimientos";
 
-// Franja de tres cifras arriba de Movimientos: lo que entró, lo que salió y el
-// saldo entre ambos en el mes en curso. Es CAJA (ingresos − gastos), no el
-// "disponible" del presupuesto — ese vive en Resumen y mide contra lo asignado.
+// Franja de tres cifras arriba de Movimientos y del Calendario: lo que entró,
+// lo que salió y el saldo entre ambos en el mes que se mira. Es CAJA (ingresos
+// − gastos), no el "disponible" del presupuesto — ese vive en Resumen y mide
+// contra lo asignado.
 
 export function TotalizadorMes({ totales }: { totales: TotalesMes }) {
   const balance = totales.ingresosCentavos - totales.gastosCentavos;
