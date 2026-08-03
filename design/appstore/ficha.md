@@ -19,7 +19,7 @@ Los límites de caracteres van anotados; los textos ya los respetan.
 ```
 Fin de mes es la app de plata pensada para Argentina: presupuesto por
 sobres, tarjetas con ciclos reales y una vista clara de cuánto te queda
-para llegar tranquilo a fin de mes.
+para llegar sin sobresaltos a fin de mes.
 
 CÓMO FUNCIONA
 Cada mes le ponés un monto a cada partida — alquiler, súper, salidas,
@@ -71,7 +71,7 @@ presupuesto,gastos,finanzas,sobres,tarjeta,cuotas,ahorro,plata,sueldo,hogar,dola
 
 ```
 Presupuesto por sobres, tarjetas con cierres y cuotas de verdad, y un
-asistente que lee tus tickets. Llegá tranquilo a fin de mes.
+asistente que lee tus tickets. Llegá sin sobresaltos a fin de mes.
 ```
 
 ## URLs
