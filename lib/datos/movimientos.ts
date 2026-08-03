@@ -178,7 +178,13 @@ export async function bandejaDeEntrada(sesion: SesionHogar): Promise<MovimientoL
 /** Historial categorizado, más nuevo primero. */
 export async function movimientosCategorizados(
   sesion: SesionHogar,
-  opciones: { limite?: number; buscar?: string; ambito?: "hogar" | "personal" } = {},
+  opciones: {
+    limite?: number;
+    buscar?: string;
+    ambito?: "hogar" | "personal";
+    /** "YYYY-MM-01": acota al mes y sube el tope (espejo de la nativa) */
+    mes?: string;
+  } = {},
 ): Promise<MovimientoLista[]> {
   let consulta = sesion.supabase
     .from("movimientos")
@@ -188,7 +194,10 @@ export async function movimientosCategorizados(
     .in("tipo", ["gasto", "ingreso"])
     .order("fecha", { ascending: false })
     .order("creado_el", { ascending: false })
-    .limit(opciones.limite ?? 60);
+    .limit(opciones.mes ? 300 : (opciones.limite ?? 60));
+  if (opciones.mes) {
+    consulta = consulta.gte("fecha", opciones.mes).lte("fecha", ultimoDiaDelMes(opciones.mes));
+  }
   if (opciones.buscar) {
     consulta = consulta.ilike("descripcion", `%${opciones.buscar}%`);
   }

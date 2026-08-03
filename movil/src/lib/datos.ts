@@ -396,6 +396,40 @@ export async function sugerenciasRecurrentes(
     }));
 }
 
+export type RecurrenteActivo = {
+  id: string;
+  descripcion: string;
+  diaMes: number;
+  importeSugeridoCentavos: number;
+  categoria: string | null;
+};
+
+/**
+ * Todos los recurrentes activos del hogar, para el calendario.
+ * Espeja recurrentesActivos de lib/datos/presupuesto.ts (web).
+ */
+export async function recurrentesActivos(sesion: SesionHogar): Promise<RecurrenteActivo[]> {
+  const { data } = await supabase
+    .from("recurrentes")
+    .select("id, descripcion, importe_sugerido_centavos, dia_mes, categorias(nombre)")
+    .eq("hogar_id", sesion.hogarId)
+    .eq("activa", true)
+    .order("dia_mes");
+  return ((data ?? []) as unknown as Array<{
+    id: string;
+    descripcion: string;
+    importe_sugerido_centavos: number;
+    dia_mes: number;
+    categorias: { nombre: string } | null;
+  }>).map((r) => ({
+    id: r.id,
+    descripcion: r.descripcion,
+    diaMes: r.dia_mes,
+    importeSugeridoCentavos: r.importe_sugerido_centavos,
+    categoria: r.categorias?.nombre ?? null,
+  }));
+}
+
 // ──────────────────────────────────────────────────────── movimientos
 
 export type MovimientoFila = {

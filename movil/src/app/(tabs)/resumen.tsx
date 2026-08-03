@@ -13,6 +13,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   CalendarClock,
+  CalendarDays,
   ChevronRight,
   CreditCard,
   Inbox,
@@ -170,6 +171,15 @@ export default function Resumen() {
           <Text style={e.fecha}>{formatearDiaLargo(hoy)}</Text>
         </View>
         <View style={e.accionesEncabezado}>
+          <Pressable
+            onPress={() => router.push("/calendario")}
+            hitSlop={8}
+            style={e.botonAsistente}
+            accessibilityRole="button"
+            accessibilityLabel="Calendario"
+          >
+            <CalendarDays size={17} color={color.tintaSecundaria} strokeWidth={1.5} />
+          </Pressable>
           <Pressable
             onPress={() => router.push("/asistente")}
             hitSlop={8}

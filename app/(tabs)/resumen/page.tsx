@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ChevronRight, CreditCard, Inbox, Mail, Sparkles, Zap, type LucideIcon } from "lucide-react";
+import { CalendarClock, CalendarDays, ChevronRight, CreditCard, Inbox, Mail, Sparkles, Zap, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/sistema/Badge";
 import { BarraAvance } from "@/components/sistema/BarraAvance";
 import { Card, EncabezadoSeccion } from "@/components/sistema/Card";
@@ -76,6 +76,13 @@ export default async function Resumen() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
+          <Link
+            href="/calendario"
+            aria-label="Calendario del mes"
+            className="hit-44 flex size-[34px] items-center justify-center rounded-full border border-borde bg-superficie text-tinta-secundaria"
+          >
+            <CalendarDays className="size-[17px]" strokeWidth={1.5} aria-hidden />
+          </Link>
           {/* asistente con IA — solo con ANTHROPIC_API_KEY configurada */}
           {process.env.ANTHROPIC_API_KEY && (
             <Link
