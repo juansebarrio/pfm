@@ -3,7 +3,7 @@ import { TriangleAlert } from "lucide-react-native";
 import type { BloqueAsistente, TonoDato } from "@dominio/asistente";
 import type { CategoriaSimple, MedioDePago } from "@/lib/acciones";
 import type { SesionHogar } from "@/lib/datos";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { BarraAvance } from "@/componentes/sistema";
 import { ComprobanteLeido } from "@/componentes/ComprobanteLeido";
 
@@ -109,7 +109,7 @@ export function BloquesAsistente({
 }
 
 const e = StyleSheet.create({
-  texto: { fontSize: 14, lineHeight: 22, color: color.tinta },
+  texto: { fontSize: 14, lineHeight: 22, fontFamily: fuente.texto, color: color.tinta },
   card: {
     borderRadius: radio.cta,
     borderWidth: 1,
@@ -118,12 +118,29 @@ const e = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  etiqueta: { fontSize: 11.5, color: color.tintaSecundaria },
-  cifra: { marginTop: 3, fontSize: 26, fontWeight: "600" },
+  etiqueta: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  cifra: {
+    marginTop: 3,
+    fontSize: 26,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+  },
   filaPartida: { flexDirection: "row", alignItems: "baseline", gap: 10 },
-  nombrePartida: { flex: 1, fontSize: 13.5, fontWeight: "500", color: color.tinta },
-  montoPartida: { fontSize: 12.5, fontWeight: "600", color: color.tinta },
-  deAsignado: { fontWeight: "400", color: color.tintaSecundaria },
+  nombrePartida: {
+    flex: 1,
+    fontSize: 13.5,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
+  // "$ X de $ Y" es cifra entera, "de" incluido: el .cifra de la web envuelve
+  // los dos importes y el peso liviano del segundo es OTRO archivo de la mono
+  montoPartida: {
+    fontSize: 12.5,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  deAsignado: { fontFamily: fuente.mono, color: color.tintaSecundaria },
   ojo: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -135,5 +152,11 @@ const e = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  ojoTexto: { flex: 1, fontSize: 12.5, lineHeight: 19, color: color.ambarTexto },
+  ojoTexto: {
+    flex: 1,
+    fontSize: 12.5,
+    lineHeight: 19,
+    fontFamily: fuente.texto,
+    color: color.ambarTexto,
+  },
 });

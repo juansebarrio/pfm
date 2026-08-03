@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { MarcaFinDeMes } from "@/componentes/MarcaFinDeMes";
 
 // Recuperar la contraseña desde la app. Acá solo se pide el correo: el cambio
@@ -127,17 +127,18 @@ const e = StyleSheet.create({
   },
   encabezado: { marginBottom: 32 },
   filaMarca: { flexDirection: "row", alignItems: "center", gap: 12 },
-  marca: { fontSize: 25, fontWeight: "600", color: color.tinta },
+  marca: { fontSize: 25, fontFamily: fuente.textoSemi, color: color.tinta },
   subtitulo: {
     marginTop: 16,
     fontSize: 13.5,
     lineHeight: 21,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   etiqueta: {
     marginBottom: 6,
     fontSize: 13,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
   },
   input: {
@@ -148,13 +149,14 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   aviso: {
     textAlign: "center",
     fontSize: 13.5,
     lineHeight: 21,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
   },
   cta: {
@@ -166,8 +168,9 @@ const e = StyleSheet.create({
     backgroundColor: color.verde,
   },
   ctaApagado: { opacity: 0.6 },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   pie: { marginTop: 18, alignItems: "center", paddingVertical: 8 },
-  pieTexto: { fontSize: 13, color: color.tintaSecundaria },
-  pieLink: { fontWeight: "600", color: color.verde },
+  pieTexto: { fontSize: 13, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  // el peso del link es OTRO archivo de Rubik, no un fontWeight encima
+  pieLink: { fontFamily: fuente.textoSemi, color: color.verde },
 });

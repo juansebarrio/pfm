@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { CalendarArrowDown, Check, Tag, X } from "lucide-react-native";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { aISO, desdeISO } from "@/lib/fecha-local";
 import { FilaMovimiento, type DatosFilaMovimiento } from "@/componentes/sistema";
@@ -187,9 +187,14 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  cuenta: { fontSize: 13.5, fontWeight: "600", color: color.tinta },
+  // "3 elegidos" queda en Rubik: es el mismo <p> sin .cifra del gemelo web
+  cuenta: { fontSize: 13.5, fontFamily: fuente.textoSemi, color: color.tinta },
   cancelar: { flexDirection: "row", alignItems: "center", gap: 4 },
-  cancelarTexto: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria },
+  cancelarTexto: {
+    fontSize: 13,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+  },
   barraAccion: {
     marginTop: 10,
     flexDirection: "row",
@@ -208,7 +213,7 @@ const e = StyleSheet.create({
     borderRadius: radio.cta,
     backgroundColor: color.verde,
   },
-  ctaTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
   ctaSecundaria: {
     marginTop: 10,
     flexDirection: "row",
@@ -220,5 +225,5 @@ const e = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.borde,
   },
-  ctaSecundariaTexto: { fontSize: 14, fontWeight: "600", color: color.tinta },
+  ctaSecundariaTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.tinta },
 });

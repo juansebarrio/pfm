@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { formatearMesLargo, mesAnterior, mesSiguiente } from "@dominio/fechas";
-import { color } from "@/lib/tema";
+import { color, fuente } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 
 // Flechas para ver el historial mes a mes. Espeja
@@ -69,14 +69,14 @@ const e = StyleSheet.create({
   centro: { alignItems: "center" },
   mes: {
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
     textTransform: "capitalize",
   },
   volver: {
     marginTop: 1,
     fontSize: 11.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
     textDecorationLine: "underline",
   },

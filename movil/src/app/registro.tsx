@@ -12,7 +12,7 @@ import {
 import { Redirect, useRouter } from "expo-router";
 import { useSesion } from "@/lib/sesion";
 import { supabase } from "@/lib/supabase";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { MarcaFinDeMes } from "@/componentes/MarcaFinDeMes";
 
 // Registro nativo. Espeja registrarse() de app/(auth)/acciones.ts: mismos
@@ -147,14 +147,20 @@ const e = StyleSheet.create({
   },
   encabezado: { marginBottom: 32 },
   filaMarca: { flexDirection: "row", alignItems: "center", gap: 12 },
-  marca: { fontSize: 25, fontWeight: "600", color: color.tinta },
+  marca: { fontSize: 25, fontFamily: fuente.textoSemi, color: color.tinta },
   subtitulo: {
     marginTop: 16,
     fontSize: 13.5,
     lineHeight: 21,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
-  etiqueta: { marginBottom: 6, fontSize: 13, fontWeight: "600", color: color.tinta },
+  etiqueta: {
+    marginBottom: 6,
+    fontSize: 13,
+    fontFamily: fuente.textoSemi,
+    color: color.tinta,
+  },
   input: {
     height: 50,
     borderRadius: radio.cta,
@@ -163,13 +169,14 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   error: {
     marginTop: 14,
     textAlign: "center",
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
   aviso: {
@@ -177,7 +184,7 @@ const e = StyleSheet.create({
     textAlign: "center",
     fontSize: 12.5,
     lineHeight: 19,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
   },
   cta: {
@@ -189,8 +196,9 @@ const e = StyleSheet.create({
     justifyContent: "center",
   },
   ctaApagado: { opacity: 0.5 },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   volver: { marginTop: 20, alignItems: "center", paddingVertical: 8 },
-  volverTexto: { fontSize: 13, color: color.tintaSecundaria },
-  volverLink: { fontWeight: "600", color: color.verde },
+  volverTexto: { fontSize: 13, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  // el peso del link es OTRO archivo de Rubik, no un fontWeight encima
+  volverLink: { fontFamily: fuente.textoSemi, color: color.verde },
 });

@@ -13,7 +13,7 @@ import { Redirect, useRouter } from "expo-router";
 import { useSesion } from "@/lib/sesion";
 import { entrarDemo } from "@/lib/cuenta";
 import { supabase } from "@/lib/supabase";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { MarcaFinDeMes } from "@/componentes/MarcaFinDeMes";
 import OlvideClave from "./olvide-clave";
 
@@ -179,17 +179,18 @@ const e = StyleSheet.create({
   },
   encabezado: { marginBottom: 32 },
   filaMarca: { flexDirection: "row", alignItems: "center", gap: 12 },
-  marca: { fontSize: 25, fontWeight: "600", color: color.tinta },
+  marca: { fontSize: 25, fontFamily: fuente.textoSemi, color: color.tinta },
   subtitulo: {
     marginTop: 16,
     fontSize: 13.5,
     lineHeight: 21,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   etiqueta: {
     marginBottom: 6,
     fontSize: 13,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
   },
   input: {
@@ -200,17 +201,18 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   error: {
     marginTop: 8,
     textAlign: "center",
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
   olvide: { marginTop: 10, alignSelf: "flex-end" },
-  olvideTexto: { fontSize: 13, fontWeight: "600", color: color.verde },
+  olvideTexto: { fontSize: 13, fontFamily: fuente.textoSemi, color: color.verde },
   cta: {
     marginTop: 20,
     height: 50,
@@ -220,13 +222,14 @@ const e = StyleSheet.create({
     backgroundColor: color.verde,
   },
   ctaApagado: { opacity: 0.6 },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   registro: { marginTop: 18, alignItems: "center", paddingVertical: 8 },
-  registroTexto: { fontSize: 13, color: color.tintaSecundaria },
-  registroLink: { fontWeight: "600", color: color.verde },
+  registroTexto: { fontSize: 13, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  // el peso del link es OTRO archivo de Rubik, no un fontWeight encima
+  registroLink: { fontFamily: fuente.textoSemi, color: color.verde },
   separadorFila: { flexDirection: "row", alignItems: "center", gap: 12 },
   linea: { flex: 1, height: 1, backgroundColor: color.borde },
-  separadorTexto: { fontSize: 11.5, color: color.tintaSecundaria },
+  separadorTexto: { fontSize: 11.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   ctaDemo: {
     marginTop: 16,
     height: 50,
@@ -236,11 +239,12 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaDemoTexto: { fontSize: 15, fontWeight: "600", color: color.verde },
+  ctaDemoTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.verde },
   avisoDemo: {
     marginTop: 8,
     textAlign: "center",
     fontSize: 11,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
 });

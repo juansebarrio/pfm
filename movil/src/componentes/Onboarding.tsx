@@ -321,7 +321,7 @@ const e = StyleSheet.create({
   // caiga justo; el aire lateral lo ponen cada página, el saltar y el pie
   pantalla: { flex: 1, backgroundColor: color.papel },
   filaSaltar: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 24 },
-  saltar: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria, padding: 6 },
+  saltar: { fontSize: 13, fontFamily: fuente.textoMedio, color: color.tintaSecundaria, padding: 6 },
   carrusel: { flex: 1 },
   paginaPaso: {
     paddingHorizontal: 24,
@@ -340,7 +340,7 @@ const e = StyleSheet.create({
     marginTop: 28,
     fontSize: 24,
     lineHeight: 30,
-    fontWeight: "600",
+    fontFamily: fuente.textoSemi,
     color: color.tinta,
     textAlign: "center",
   },
@@ -359,7 +359,7 @@ const e = StyleSheet.create({
   puntoActivo: { width: 20, backgroundColor: color.verde },
   filaBotones: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "stretch" },
   atras: { paddingHorizontal: 12 },
-  atrasTexto: { fontSize: 13.5, fontWeight: "500", color: color.tintaSecundaria },
+  atrasTexto: { fontSize: 13.5, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
   cta: {
     flex: 1,
     height: 48,
@@ -368,7 +368,7 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
   contador: { fontSize: 10.5, color: color.tintaTerciaria },
 });
 

@@ -274,7 +274,7 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  titulo: { fontSize: 22, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 22, fontFamily: fuente.textoSemi, color: color.tinta },
   avatar: {
     width: 34,
     height: 34,
@@ -283,16 +283,16 @@ const e = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: color.tinta,
   },
-  avatarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
-  etiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
+  avatarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
+  etiqueta: { fontSize: 12, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
   filaTotal: {
     marginTop: 4,
     flexDirection: "row",
     alignItems: "baseline",
     gap: 6,
   },
-  aprox: { fontSize: 20, fontWeight: "500", color: color.tintaSecundaria },
-  usd: { marginTop: 4, fontSize: 14, fontWeight: "500", color: color.tintaSecundaria },
+  aprox: { fontSize: 20, fontFamily: fuente.monoMedio, fontVariant: ["tabular-nums"], color: color.tintaSecundaria },
+  usd: { marginTop: 4, fontSize: 14, fontFamily: fuente.monoMedio, fontVariant: ["tabular-nums"], color: color.tintaSecundaria },
   tc: { marginTop: 6, fontSize: 11, color: color.tintaSecundaria },
   // fila única de composición: nombre 110 + barra 6px + % mono, como la web
   compFila: { flexDirection: "row", alignItems: "center", gap: 10 },
@@ -320,7 +320,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
-  tenenciaNombre: { fontSize: 14, fontWeight: "500", color: color.tinta },
+  tenenciaNombre: { fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
   tenenciaMeta: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
   // el sufijo es acción, no alarma: VERDE aunque la fila esté en ámbar

@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 
 // Solapas de vista. Es el mismo dibujo que el segmented de ámbito del
@@ -63,6 +63,7 @@ const e = StyleSheet.create({
     borderRadius: 9,
   },
   activo: { backgroundColor: color.segmentedActivo },
-  texto: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria },
-  textoActivo: { fontWeight: "600", color: color.tinta },
+  texto: { fontSize: 13, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  // el peso de la activa es OTRO archivo de Rubik, no un fontWeight encima
+  textoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
 });

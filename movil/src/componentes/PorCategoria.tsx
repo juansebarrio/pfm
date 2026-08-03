@@ -11,7 +11,7 @@ import Svg, { Circle, Path } from "react-native-svg";
 import { ChartPie, ChevronDown, ChevronRight, ChevronUp } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
 import { arcos, repartir, type ItemReparto, type Porcion } from "@dominio/reparto";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { Card, EstadoVacio, IconoCategoria, importeHablado } from "@/componentes/sistema";
 
@@ -342,14 +342,26 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  centroEtiqueta: { fontSize: 10.5, color: color.tintaSecundaria },
-  centroCifra: { fontSize: 19, fontWeight: "600", color: color.tinta },
+  centroEtiqueta: {
+    fontSize: 10.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  // el total del anillo es cifra: mono, como el .cifra del gemelo web
+  centroCifra: {
+    fontSize: 19,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  // frase con un importe adentro: se deja en Rubik, como el <p> sin .cifra de la web
   nota: {
     marginTop: -8,
     marginBottom: 14,
     textAlign: "center",
     fontSize: 11.5,
     lineHeight: 18,
+    fontFamily: fuente.texto,
     color: color.tintaTerciaria,
   },
   fila: {
@@ -361,16 +373,33 @@ const e = StyleSheet.create({
   },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
   punto: { width: 10, height: 10, borderRadius: 5 },
-  nombre: { flex: 1, fontSize: 14, color: color.tinta },
+  nombre: { flex: 1, fontSize: 14, fontFamily: fuente.texto, color: color.tinta },
   nombreConChevron: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
   },
-  nombreOtras: { flexShrink: 1, fontSize: 14, color: color.tinta },
-  importe: { fontSize: 13.5, fontWeight: "600", color: color.tinta },
-  porcentaje: { width: 36, textAlign: "right", fontSize: 12, color: color.tintaSecundaria },
+  nombreOtras: {
+    flexShrink: 1,
+    fontSize: 14,
+    fontFamily: fuente.texto,
+    color: color.tinta,
+  },
+  importe: {
+    fontSize: 13.5,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  porcentaje: {
+    width: 36,
+    textAlign: "right",
+    fontSize: 12,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaSecundaria,
+  },
   // las sub-filas de "Otras": misma anatomía, un toque más chicas e indentadas
   // para que se lean como el contenido de la bolsa y no como porciones nuevas
   subFila: {
@@ -384,7 +413,24 @@ const e = StyleSheet.create({
     borderTopColor: color.separador,
   },
   subPunto: { width: 6, height: 6, borderRadius: 3 },
-  subNombre: { flex: 1, fontSize: 13, color: color.tintaSecundaria },
-  subImporte: { fontSize: 12.5, fontWeight: "600", color: color.tinta },
-  subPorcentaje: { width: 36, textAlign: "right", fontSize: 11, color: color.tintaTerciaria },
+  subNombre: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  subImporte: {
+    fontSize: 12.5,
+    fontFamily: fuente.monoMedio,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  subPorcentaje: {
+    width: 36,
+    textAlign: "right",
+    fontSize: 11,
+    fontFamily: fuente.mono,
+    fontVariant: ["tabular-nums"],
+    color: color.tintaTerciaria,
+  },
 });

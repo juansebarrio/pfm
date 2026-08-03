@@ -5,7 +5,7 @@ import ReanimatedSwipeable, {
 } from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated, { useAnimatedStyle, type SharedValue } from "react-native-reanimated";
 import { Trash2 } from "lucide-react-native";
-import { color } from "@/lib/tema";
+import { color, fuente } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { FilaMovimiento, type DatosFilaMovimiento } from "@/componentes/sistema";
 
@@ -100,5 +100,5 @@ const e = StyleSheet.create({
     gap: 6,
     backgroundColor: color.rojo,
   },
-  texto: { fontSize: 12.5, fontWeight: "600", color: color.blanco },
+  texto: { fontSize: 12.5, fontFamily: fuente.textoSemi, color: color.blanco },
 });

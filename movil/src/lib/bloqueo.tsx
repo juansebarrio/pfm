@@ -11,7 +11,7 @@ import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
 import { Lock } from "lucide-react-native";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 
 // Bloqueo biométrico. Lo que la web no puede dar: la app se tapa sola cuando
 // pasa a segundo plano y pide Face ID para volver.
@@ -168,12 +168,12 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  titulo: { fontSize: 16, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
   boton: {
     borderRadius: radio.cta,
     backgroundColor: color.verde,
     paddingHorizontal: 24,
     paddingVertical: 13,
   },
-  botonTexto: { fontSize: 14.5, fontWeight: "600", color: color.papel },
+  botonTexto: { fontSize: 14.5, fontFamily: fuente.textoSemi, color: color.papel },
 });

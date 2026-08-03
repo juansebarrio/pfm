@@ -13,7 +13,7 @@ import { ChevronLeft, CreditCard } from "lucide-react-native";
 import { formatearImporte } from "@dominio/dinero";
 import { formatearDiaCorto } from "@dominio/fechas";
 import { comprasEnCuotas, obtenerSesionHogar, type CompraEnCuotas } from "@/lib/datos";
-import { color } from "@/lib/tema";
+import { color, fuente } from "@/lib/tema";
 import { BarraAvance, Card, EstadoVacio, Importe } from "@/componentes/sistema";
 
 // 07 — Compras en cuotas: los compromisos vigentes con su progreso. Las series
@@ -70,7 +70,8 @@ export default function Cuotas() {
               <Importe centavos={totalRestante} variante="hero" />
             </View>
             <Text style={e.meta}>
-              en {compras.length} {compras.length === 1 ? "compra" : "compras"} activas
+              en <Text style={e.cifra}>{compras.length}</Text>{" "}
+              {compras.length === 1 ? "compra" : "compras"} activas
             </Text>
           </Card>
 
@@ -90,14 +91,20 @@ export default function Cuotas() {
                 />
                 <View style={e.filaPie}>
                   <Text style={e.pieTexto}>
-                    cuota {c.pagadas} de {c.nCuotas}
+                    cuota{" "}
+                    <Text style={e.cifra}>
+                      {c.pagadas} de {c.nCuotas}
+                    </Text>
                     {c.tarjeta ? ` · ${c.tarjeta}` : ""}
                   </Text>
                   <Text style={[e.pieTexto, { color: color.ambarTexto }]}>
-                    quedan {formatearImporte(c.restanteCentavos)}
+                    quedan{" "}
+                    <Text style={e.cifra}>{formatearImporte(c.restanteCentavos)}</Text>
                   </Text>
                 </View>
-                <Text style={e.compra}>comprada el {formatearDiaCorto(c.fecha)}</Text>
+                <Text style={e.compra}>
+                  comprada el <Text style={e.cifra}>{formatearDiaCorto(c.fecha)}</Text>
+                </Text>
               </Card>
             ))}
           </View>
@@ -117,22 +124,39 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  titulo: { fontSize: 17, fontWeight: "600", color: color.tinta },
-  etiqueta: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
-  meta: { marginTop: 4, fontSize: 11, color: color.tintaSecundaria },
+  titulo: { fontSize: 17, fontFamily: fuente.textoSemi, color: color.tinta },
+  etiqueta: { fontSize: 12, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  meta: {
+    marginTop: 4,
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  // el pedazo de cifra dentro de una frase en Rubik (DESIGN_AUDIT §2.2)
+  cifra: { fontFamily: fuente.mono, fontVariant: ["tabular-nums"] },
   filaTitulo: {
     flexDirection: "row",
     alignItems: "baseline",
     justifyContent: "space-between",
     gap: 10,
   },
-  descripcion: { flex: 1, fontSize: 14, fontWeight: "500", color: color.tinta },
+  descripcion: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
   filaPie: {
     marginTop: 6,
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 8,
   },
-  pieTexto: { fontSize: 11, color: color.tintaSecundaria },
-  compra: { marginTop: 4, fontSize: 10.5, color: color.tintaTerciaria },
+  pieTexto: { fontSize: 11, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  compra: {
+    marginTop: 4,
+    fontSize: 10.5,
+    fontFamily: fuente.texto,
+    color: color.tintaTerciaria,
+  },
 });

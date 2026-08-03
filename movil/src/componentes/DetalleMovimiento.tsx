@@ -28,7 +28,7 @@ import { GRUPO_INGRESOS } from "@dominio/categorias";
 import { centavosDesdeTexto } from "@dominio/dinero";
 import { aISO, desdeISO } from "@/lib/fecha-local";
 import type { MovimientoFila, SesionHogar } from "@/lib/datos";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 import { Badge, IconoCategoria } from "@/componentes/sistema";
 
@@ -453,9 +453,10 @@ const f = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 15,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.tinta,
   },
+  // el campo del importe es cifra: mono, como el .cifra del gemelo web
   inputMonto: {
     marginTop: 10,
     height: 56,
@@ -465,10 +466,16 @@ const f = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 26,
-    fontWeight: "600",
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
     color: color.tinta,
   },
-  etiqueta: { marginTop: 14, fontSize: 11.5, color: color.tintaSecundaria },
+  etiqueta: {
+    marginTop: 14,
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   chips: { marginTop: 6, flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: {
     flexDirection: "row",
@@ -482,10 +489,23 @@ const f = StyleSheet.create({
     paddingVertical: 7,
   },
   chipActivo: { borderWidth: 1.5, borderColor: color.verde, backgroundColor: color.verdeSuave },
-  chipTexto: { fontSize: 12, color: color.tinta },
-  chipTextoActivo: { fontWeight: "600" },
-  nota: { marginTop: 10, fontSize: 11.5, lineHeight: 18, color: color.tintaSecundaria },
-  error: { marginTop: 10, fontSize: 12.5, fontWeight: "500", color: color.rojo },
+  chipTexto: { fontSize: 12, fontFamily: fuente.texto, color: color.tinta },
+  // el peso del activo es OTRO archivo de Rubik, no un fontWeight encima
+  chipTextoActivo: { fontFamily: fuente.textoSemi },
+  // "se aplica a las 6 cuotas": frase con un contador adentro, queda en Rubik
+  nota: {
+    marginTop: 10,
+    fontSize: 11.5,
+    lineHeight: 18,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  error: {
+    marginTop: 10,
+    fontSize: 12.5,
+    fontFamily: fuente.textoMedio,
+    color: color.rojo,
+  },
   acciones: { marginTop: 16, flexDirection: "row", alignItems: "center", gap: 10 },
   cta: {
     flex: 1,
@@ -497,8 +517,13 @@ const f = StyleSheet.create({
     borderRadius: radio.cta,
     backgroundColor: color.verde,
   },
-  ctaTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
-  cancelar: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria, paddingHorizontal: 6 },
+  ctaTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
+  cancelar: {
+    fontSize: 13,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+    paddingHorizontal: 6,
+  },
 });
 
 function Fila({
@@ -649,8 +674,19 @@ const e = StyleSheet.create({
     backgroundColor: color.borde,
     marginBottom: 16,
   },
-  importe: { fontSize: 30, fontWeight: "600", color: color.tinta },
-  descripcion: { marginTop: 4, fontSize: 15, fontWeight: "500", color: color.tinta },
+  // el importe de arriba es cifra: mono, como el <Importe> del gemelo web
+  importe: {
+    fontSize: 30,
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
+    color: color.tinta,
+  },
+  descripcion: {
+    marginTop: 4,
+    fontSize: 15,
+    fontFamily: fuente.textoMedio,
+    color: color.tinta,
+  },
   tabla: {
     marginTop: 16,
     borderRadius: radio.card,
@@ -666,11 +702,14 @@ const e = StyleSheet.create({
     paddingVertical: 12,
   },
   filaConBorde: { borderTopWidth: 1, borderTopColor: color.separador },
-  etiqueta: { fontSize: 12.5, color: color.tintaSecundaria },
-  valor: { fontSize: 13.5, fontWeight: "500", color: color.tinta },
-  valorApagado: { fontSize: 13.5, color: color.tintaSecundaria },
+  etiqueta: { fontSize: 12.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
+  // `valor` lo comparten Categoría, Medio, Fecha, Ciclo, Cargado por y Tipo: son
+  // palabras salvo la fecha larga y el "cierra 28 jul" del ciclo, que en la web
+  // también van sin .cifra. Rubik para toda la columna.
+  valor: { fontSize: 13.5, fontFamily: fuente.textoMedio, color: color.tinta },
+  valorApagado: { fontSize: 13.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   valorConIcono: { flexDirection: "row", alignItems: "center", gap: 6 },
-  etiquetaNota: { fontSize: 12, color: color.tintaSecundaria },
+  etiquetaNota: { fontSize: 12, fontFamily: fuente.texto, color: color.tintaSecundaria },
   inputNota: {
     marginTop: 6,
     height: 44,
@@ -680,6 +719,7 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 14,
     fontSize: 15,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
   guardarNota: {
@@ -690,12 +730,20 @@ const e = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
-  guardarNotaTexto: { fontSize: 13, fontWeight: "600", color: color.papel },
-  guardadoOk: { marginTop: 8, alignSelf: "flex-end", fontSize: 12, color: color.verde },
+  guardarNotaTexto: { fontSize: 13, fontFamily: fuente.textoSemi, color: color.papel },
+  guardadoOk: {
+    marginTop: 8,
+    alignSelf: "flex-end",
+    fontSize: 12,
+    fontFamily: fuente.texto,
+    color: color.verde,
+  },
+  // "(6 cuotas)": frase con un contador adentro, queda en Rubik
   avisoCuota: {
     marginTop: 10,
     fontSize: 11.5,
     lineHeight: 17,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   editar: {
@@ -708,7 +756,7 @@ const e = StyleSheet.create({
     borderRadius: radio.cta,
     backgroundColor: color.verde,
   },
-  editarTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
+  editarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
   borrar: {
     marginTop: 16,
     flexDirection: "row",
@@ -720,5 +768,6 @@ const e = StyleSheet.create({
     borderColor: color.rojo,
     paddingVertical: 14,
   },
-  borrarTexto: { fontSize: 14, fontWeight: "600", color: color.rojo },
+  // "Borrar la compra · 6 cuotas": contador dentro de la etiqueta, queda en Rubik
+  borrarTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.rojo },
 });

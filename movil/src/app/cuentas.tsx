@@ -22,7 +22,7 @@ import {
   type TarjetaFila,
 } from "@/lib/datos";
 import { cambiarActiva, crearCuenta, crearTarjeta } from "@/lib/acciones";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { Badge, Card, EncabezadoSeccion } from "@/componentes/sistema";
 
 // Cuentas y tarjetas: hueco declarado del export (§5). Lista con activas
@@ -341,7 +341,7 @@ function Campo({
         placeholderTextColor={color.tintaTerciaria}
         keyboardType={teclado ?? "default"}
         autoCapitalize="words"
-        style={e.input}
+        style={[e.input, teclado === "number-pad" && e.inputCifra]}
       />
     </View>
   );
@@ -389,7 +389,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  titulo: { fontSize: 17, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 17, fontFamily: fuente.textoSemi, color: color.tinta },
   fila: {
     flexDirection: "row",
     alignItems: "center",
@@ -398,13 +398,22 @@ const e = StyleSheet.create({
     paddingVertical: 12,
   },
   conBorde: { borderTopWidth: 1, borderTopColor: color.separador },
-  filaNombre: { fontSize: 14, fontWeight: "500", color: color.tinta },
-  filaMeta: { marginTop: 2, fontSize: 11, color: color.tintaSecundaria },
-  agregar: { fontSize: 13.5, fontWeight: "500", color: color.verde },
+  // "Visa Galicia •• 4321" y "visa · Galicia · cierra el 28" son frases con una
+  // cifra adentro: quedan en Rubik, como la página de cuentas de la web, que no
+  // usa .cifra en ninguna de sus dos líneas
+  filaNombre: { fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
+  filaMeta: {
+    marginTop: 2,
+    fontSize: 11,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
+  agregar: { fontSize: 13.5, fontFamily: fuente.textoMedio, color: color.verde },
   ayuda: {
     marginTop: 16,
     fontSize: 11,
     lineHeight: 17,
+    fontFamily: fuente.texto,
     color: color.tintaTerciaria,
     textAlign: "center",
   },
@@ -433,8 +442,13 @@ const e = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  hojaTitulo: { fontSize: 16, fontWeight: "600", color: color.tinta },
-  campoEtiqueta: { marginBottom: 6, fontSize: 12, color: color.tintaSecundaria },
+  hojaTitulo: { fontSize: 16, fontFamily: fuente.textoSemi, color: color.tinta },
+  campoEtiqueta: {
+    marginBottom: 6,
+    fontSize: 12,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   input: {
     height: 46,
     borderRadius: radio.cta,
@@ -443,8 +457,11 @@ const e = StyleSheet.create({
     backgroundColor: color.papel,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fuente.texto,
     color: color.tinta,
   },
+  // los últimos 4 y el día de cierre son cifras: mono, aunque el campo sea el mismo
+  inputCifra: { fontFamily: fuente.mono, fontVariant: ["tabular-nums"] },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: {
     borderRadius: radio.chipChico,
@@ -455,13 +472,14 @@ const e = StyleSheet.create({
     paddingVertical: 7,
   },
   chipSel: { backgroundColor: color.tinta, borderColor: color.tinta },
-  chipTexto: { fontSize: 12, fontWeight: "500", color: color.tintaSecundaria },
-  chipTextoSel: { fontWeight: "600", color: color.papel },
+  chipTexto: { fontSize: 12, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  // el peso del elegido es OTRO archivo de Rubik, no un fontWeight encima
+  chipTextoSel: { fontFamily: fuente.textoSemi, color: color.papel },
   error: {
     marginTop: 12,
     textAlign: "center",
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
   cta: {
@@ -471,5 +489,5 @@ const e = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
 });

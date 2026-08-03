@@ -368,7 +368,7 @@ const e = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
-  titulo: { fontSize: 17, fontWeight: "600", color: color.tinta },
+  titulo: { fontSize: 17, fontFamily: fuente.textoSemi, color: color.tinta },
   subtitulo: { fontSize: 11.5, color: color.tintaSecundaria, textTransform: "capitalize" },
   ayuda: { marginTop: 4, fontSize: 12.5, lineHeight: 19, color: color.tintaSecundaria },
   fila: {
@@ -390,7 +390,7 @@ const e = StyleSheet.create({
   },
   checkOn: { borderColor: color.verde, backgroundColor: color.verdeSuave },
   checkPunto: { width: 9, height: 9, borderRadius: 2, backgroundColor: color.verde },
-  nombre: { fontSize: 14, fontWeight: "500", color: color.tinta },
+  nombre: { fontSize: 14, fontFamily: fuente.textoMedio, color: color.tinta },
   anterior: {
     marginTop: 2,
     fontSize: 10.5,
@@ -421,7 +421,7 @@ const e = StyleSheet.create({
   // ── ajuste por inflación
   cardAjuste: { marginTop: 12, paddingHorizontal: 12, paddingVertical: 12 },
   filaAjuste: { flexDirection: "row", alignItems: "center", gap: 10 },
-  tituloAjuste: { flex: 1, fontSize: 13.5, fontWeight: "600", color: color.tinta },
+  tituloAjuste: { flex: 1, fontSize: 13.5, fontFamily: fuente.textoSemi, color: color.tinta },
   bajadaAjuste: {
     marginTop: 6,
     fontSize: 11.5,
@@ -453,7 +453,7 @@ const e = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: color.separador,
   },
-  copiar: { fontSize: 12.5, fontWeight: "500", color: color.verde },
+  copiar: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.verde },
   pie: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -467,12 +467,12 @@ const e = StyleSheet.create({
     justifyContent: "space-between",
   },
   totalEtiqueta: { fontSize: 12, color: color.tintaSecundaria },
-  total: { fontSize: 20, fontWeight: "600", color: color.tinta },
+  total: { fontSize: 20, fontFamily: fuente.monoSemi, fontVariant: ["tabular-nums"], color: color.tinta },
   error: {
     marginBottom: 8,
     textAlign: "center",
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.rojo,
   },
   cta: {
@@ -482,5 +482,5 @@ const e = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
   },
-  ctaTexto: { fontSize: 15, fontWeight: "600", color: color.papel },
+  ctaTexto: { fontSize: 15, fontFamily: fuente.textoSemi, color: color.papel },
 });

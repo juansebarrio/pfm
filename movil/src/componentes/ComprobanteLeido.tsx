@@ -21,7 +21,7 @@ import {
 import type { SesionHogar } from "@/lib/datos";
 import { IconoCategoria } from "@/componentes/sistema";
 import { aISO, desdeISO } from "@/lib/fecha-local";
-import { color, radio } from "@/lib/tema";
+import { color, fuente, radio } from "@/lib/tema";
 import { tacto } from "@/lib/tacto";
 
 // La tarjeta de confirmación de un comprobante leído, en nativo.
@@ -387,6 +387,7 @@ const e = StyleSheet.create({
   rotulo: {
     fontSize: 11,
     letterSpacing: 0.5,
+    fontFamily: fuente.texto,
     color: color.tintaSecundaria,
   },
   inputComercio: {
@@ -397,9 +398,10 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 12,
     fontSize: 15,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.tinta,
   },
+  // el campo del monto es cifra: mono, como el .cifra del gemelo web
   inputMonto: {
     height: 58,
     borderRadius: radio.cta,
@@ -408,13 +410,19 @@ const e = StyleSheet.create({
     backgroundColor: color.superficie,
     paddingHorizontal: 12,
     fontSize: 28,
-    fontWeight: "600",
+    fontFamily: fuente.monoSemi,
+    fontVariant: ["tabular-nums"],
     color: color.tinta,
   },
-  errorCampo: { fontSize: 11.5, color: color.rojo },
+  errorCampo: { fontSize: 11.5, fontFamily: fuente.texto, color: color.rojo },
   filaDoble: { flexDirection: "row", gap: 8 },
   cajaFecha: { height: 40, justifyContent: "center", marginTop: 4 },
-  etiqueta: { fontSize: 11.5, color: color.tintaSecundaria, marginTop: 2 },
+  etiqueta: {
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+    marginTop: 2,
+  },
   pendiente: { color: color.ambarTexto },
   segmentado: {
     flexDirection: "row",
@@ -426,8 +434,9 @@ const e = StyleSheet.create({
   },
   opcion: { flex: 1, alignItems: "center", justifyContent: "center", borderRadius: 8 },
   opcionActiva: { backgroundColor: color.segmentedActivo },
-  opcionTexto: { fontSize: 12.5, fontWeight: "500", color: color.tintaSecundaria },
-  opcionTextoActivo: { fontWeight: "600", color: color.tinta },
+  opcionTexto: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.tintaSecundaria },
+  // el peso del activo es OTRO archivo de Rubik, no un fontWeight encima
+  opcionTextoActivo: { fontFamily: fuente.textoSemi, color: color.tinta },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   chip: {
     flexDirection: "row",
@@ -441,10 +450,16 @@ const e = StyleSheet.create({
     paddingVertical: 7,
   },
   chipActivo: { borderWidth: 1.5, borderColor: color.verde, backgroundColor: color.verdeSuave },
-  chipTexto: { fontSize: 12, color: color.tinta },
-  chipTextoActivo: { fontWeight: "600" },
+  chipTexto: { fontSize: 12, fontFamily: fuente.texto, color: color.tinta },
+  chipTextoActivo: { fontFamily: fuente.textoSemi },
   filaNota: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
-  nota: { flex: 1, fontSize: 11.5, lineHeight: 18, color: color.tintaSecundaria },
+  nota: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 18,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   ojo: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -456,8 +471,15 @@ const e = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  ojoTexto: { flex: 1, fontSize: 12, lineHeight: 18, color: color.ambarTexto },
-  error: { fontSize: 12.5, fontWeight: "500", color: color.rojo },
+  // "El comprobante dice 6 cuotas…": frase con un contador adentro, queda en Rubik
+  ojoTexto: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: fuente.texto,
+    color: color.ambarTexto,
+  },
+  error: { fontSize: 12.5, fontFamily: fuente.textoMedio, color: color.rojo },
   acciones: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4 },
   cta: {
     flex: 1,
@@ -469,10 +491,20 @@ const e = StyleSheet.create({
     borderRadius: radio.cta,
     backgroundColor: color.verde,
   },
-  ctaTexto: { fontSize: 14, fontWeight: "600", color: color.papel },
-  descartar: { fontSize: 13, fontWeight: "500", color: color.tintaSecundaria, paddingHorizontal: 6 },
-  faltante: { textAlign: "center", fontSize: 11.5, color: color.tintaTerciaria },
-  descartado: { fontSize: 12.5, color: color.tintaSecundaria },
+  ctaTexto: { fontSize: 14, fontFamily: fuente.textoSemi, color: color.papel },
+  descartar: {
+    fontSize: 13,
+    fontFamily: fuente.textoMedio,
+    color: color.tintaSecundaria,
+    paddingHorizontal: 6,
+  },
+  faltante: {
+    textAlign: "center",
+    fontSize: 11.5,
+    fontFamily: fuente.texto,
+    color: color.tintaTerciaria,
+  },
+  descartado: { fontSize: 12.5, fontFamily: fuente.texto, color: color.tintaSecundaria },
   exito: {
     borderRadius: radio.cta,
     borderWidth: 1,
@@ -483,12 +515,19 @@ const e = StyleSheet.create({
     gap: 4,
   },
   filaExito: { flexDirection: "row", alignItems: "center", gap: 8 },
-  tituloExito: { fontSize: 13.5, fontWeight: "600", color: color.tinta },
-  detalleExito: { fontSize: 12.5, lineHeight: 19, color: color.tintaSecundaria },
+  tituloExito: { fontSize: 13.5, fontFamily: fuente.textoSemi, color: color.tinta },
+  // "Coto · $ 84.320 · te falta elegirle categoría": el <p> del gemelo web
+  // tampoco lleva .cifra, así que la línea entera queda en Rubik
+  detalleExito: {
+    fontSize: 12.5,
+    lineHeight: 19,
+    fontFamily: fuente.texto,
+    color: color.tintaSecundaria,
+  },
   enlace: {
     marginTop: 4,
     fontSize: 12.5,
-    fontWeight: "500",
+    fontFamily: fuente.textoMedio,
     color: color.verde,
     textDecorationLine: "underline",
   },
