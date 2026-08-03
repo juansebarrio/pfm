@@ -61,7 +61,9 @@ export default function RootLayout({
       <body
         className={`${rubik.variable} ${splineSansMono.variable} antialiased`}
       >
-        <div className="mx-auto min-h-dvh w-full max-w-[430px] min-[431px]:border-x min-[431px]:border-borde">
+        {/* En el teléfono (y hasta lg) la app es una columna de 430; en
+            escritorio el tope lo pone cada pantalla, no el marco */}
+        <div className="mx-auto min-h-dvh w-full max-w-[430px] min-[431px]:border-x min-[431px]:border-borde lg:max-w-none lg:border-x-0">
           {children}
         </div>
         <RegistroSW />

@@ -16,7 +16,7 @@ export default async function Registro({
   const conGoogle = process.env.NEXT_PUBLIC_GOOGLE === "true";
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center px-5 py-10">
+    <div className="flex min-h-dvh flex-col justify-center px-5 py-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       <EncabezadoAuth
         subtitulo={
           conGoogle

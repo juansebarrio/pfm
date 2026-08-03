@@ -39,7 +39,7 @@ export default async function Sugerencias() {
   }));
 
   return (
-    <div className="px-5 pt-14 pb-10">
+    <div className="px-5 pt-14 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       <header className="flex items-center gap-2.5">
         <Link href="/resumen" aria-label="Volver al resumen" className="hit-44 text-tinta">
           <ChevronLeft className="size-5" strokeWidth={1.5} aria-hidden />

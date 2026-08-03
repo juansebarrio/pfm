@@ -50,7 +50,7 @@ export default async function DetalleTarjeta({ params, searchParams }: Props) {
 
   if (tarjeta.ciclos.length === 0) {
     return (
-      <div className="px-5 pt-14 pb-10">
+      <div className="px-5 pt-14 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
         {titulo}
         <Card className="mt-4 px-3.5 py-3">
           <p className="text-[13px] text-tinta-secundaria">
@@ -114,7 +114,7 @@ export default async function DetalleTarjeta({ params, searchParams }: Props) {
   const totalAPagar = realCentavos ?? detalle.proyectadoCentavos;
 
   return (
-    <div className="px-5 pt-14 pb-10">
+    <div className="px-5 pt-14 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       {titulo}
 
       {/* Paginador de ciclo: ‹ Ciclo actual · 29 jun – 28 jul › */}

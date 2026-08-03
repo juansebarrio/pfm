@@ -143,7 +143,7 @@ export default async function Cuotas() {
   const redes = listarRedes(compras.map((c) => c.tarjetaEtiqueta));
 
   return (
-    <div className="flex min-h-dvh flex-col pb-8">
+    <div className="flex min-h-dvh flex-col pb-8 lg:mx-auto lg:w-full lg:max-w-[480px]">
       {/* Header de detalle con back (§3.17 patrón 3) */}
       <header className="flex items-center gap-2 px-5 pt-14">
         <Link

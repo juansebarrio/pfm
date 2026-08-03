@@ -189,8 +189,11 @@ export function Onboarding({
       role="dialog"
       aria-modal="true"
       aria-label="Cómo usar la app"
-      className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] flex-col bg-papel px-6 pt-[max(20px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]"
+      // el fondo cubre TODA la pantalla (en escritorio también); el contenido
+      // sigue siendo una columna de teléfono, centrada
+      className="fixed inset-0 z-50 flex flex-col items-center bg-papel"
     >
+    <div className="flex h-full w-full max-w-[430px] flex-col px-6 pt-[max(20px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
       <div className="flex justify-end">
         <button
           type="button"
@@ -255,6 +258,7 @@ export function Onboarding({
           {paso + 1} de {PASOS_ONBOARDING.length}
         </p>
       </div>
+    </div>
     </div>
   );
 }

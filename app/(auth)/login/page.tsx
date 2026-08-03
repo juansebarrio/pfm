@@ -17,7 +17,7 @@ export default async function Login({
   const sufijo = volver ? `?volver=${encodeURIComponent(volver)}` : "";
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center px-5 py-10">
+    <div className="flex min-h-dvh flex-col justify-center px-5 py-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       {/* la recuperación pedida desde la app nativa aterriza acá con #access_token */}
       <RescateRecuperacion />
       <EncabezadoAuth subtitulo="Llegá sin sobresaltos a fin de mes. Presupuesto del hogar y personal, tarjetas con ciclos reales y patrimonio, hecho para Argentina." />

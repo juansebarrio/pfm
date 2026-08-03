@@ -35,7 +35,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-borde pt-[9px] pb-[max(24px,env(safe-area-inset-bottom))] backdrop-blur-sm"
+      className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-borde pt-[9px] pb-[max(24px,env(safe-area-inset-bottom))] backdrop-blur-sm lg:hidden"
       style={{ background: "var(--tab-bar-fondo)" }}
     >
       {/* La pastilla flota ARRIBA de la barra, no dentro de una celda: es más

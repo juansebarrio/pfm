@@ -60,7 +60,7 @@ export default async function Resumen() {
   const avisosOcultos = avisos.slice(3);
 
   return (
-    <div className="px-5 pt-14">
+    <div className="px-5 pt-14 lg:pt-10">
       {/* La bienvenida, solo la primera vez (localStorage). Vive acá porque el
           Resumen es la primera pantalla después de entrar. */}
       <OnboardingAuto />
@@ -103,6 +103,11 @@ export default async function Resumen() {
         </div>
       </header>
 
+      {/* En escritorio el Resumen respira a dos columnas: el mes (caja, plan y
+          avisos) a la izquierda, los últimos movimientos a la derecha. En el
+          teléfono los divs no cambian nada: misma pila de siempre. */}
+      <div className="lg:grid lg:grid-cols-[1fr_400px] lg:items-start lg:gap-10">
+      <div>
       {/* Card principal: la CAJA del mes, como el totalizador de Movimientos —
           el balance (ingresos − gastos) protagonista y las dos cifras que lo
           componen en voz baja. Tocable → /movimientos.
@@ -258,17 +263,20 @@ export default async function Resumen() {
         </div>
       )}
 
+      </div>
+
       {/* Últimos movimientos: 3 filas, sin "ver más" (corta a propósito) */}
       {ultimos.length > 0 && (
-        <>
+        <div>
           <EncabezadoSeccion>Últimos movimientos</EncabezadoSeccion>
           <ListaMovimientosTocables
             movimientos={ultimos}
             categorias={categorias}
             medios={medios}
           />
-        </>
+        </div>
       )}
+      </div>
     </div>
   );
 }

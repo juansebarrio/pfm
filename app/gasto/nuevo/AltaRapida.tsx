@@ -220,7 +220,7 @@ export function AltaRapida({
   // cargar un gasto: en vez de un callejón mudo, se explica y se ofrece salida
   if (medios.length === 0) {
     return (
-      <div className="flex min-h-dvh flex-col px-5 pt-14">
+      <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:w-full lg:max-w-[480px]">
         {cabecera}
         <div className="flex flex-1 flex-col justify-center">
           <EstadoVacio
@@ -242,7 +242,7 @@ export function AltaRapida({
   }
 
   return (
-    <div className="flex min-h-dvh flex-col px-5 pt-14">
+    <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:w-full lg:max-w-[480px]">
       {cabecera}
 
       {/* Gasto o ingreso. Va arriba de todo porque cambia el sentido de la

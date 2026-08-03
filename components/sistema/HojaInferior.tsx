@@ -62,7 +62,7 @@ export function HojaInferior({ abierta, onCerrar, titulo, children }: Props) {
         // clic en el backdrop cierra
         if (e.target === ref.current) onCerrar();
       }}
-      className="hoja-inferior m-0 mt-auto w-full max-w-[430px] rounded-t-[18px] border-t border-borde bg-superficie p-0 text-tinta backdrop:bg-tinta/40"
+      className="hoja-inferior m-0 mx-auto mt-auto w-full max-w-[430px] rounded-t-[18px] border-t border-borde bg-superficie p-0 text-tinta backdrop:bg-tinta/40 lg:border-x"
       style={{ marginInline: "auto" }}
     >
       <div className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">

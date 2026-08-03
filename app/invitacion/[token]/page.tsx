@@ -34,7 +34,7 @@ export default async function PaginaInvitacion({
     new Date(invitacion.vence_el).getTime() > Date.now();
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center px-5 py-10">
+    <div className="flex min-h-dvh flex-col justify-center px-5 py-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       <div className="mb-6 flex flex-col items-center text-center">
         <div className="flex size-16 items-center justify-center rounded-full bg-verde-suave">
           <Mail className="size-7 text-verde" strokeWidth={1.5} aria-hidden />

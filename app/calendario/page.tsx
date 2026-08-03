@@ -33,7 +33,7 @@ export default async function PaginaCalendario({
   ]);
 
   return (
-    <div className="px-5 pt-8 pb-10">
+    <div className="px-5 pt-8 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
       <Link
         href="/resumen"
         className="hit-44 inline-flex items-center gap-1.5 text-[13px] text-tinta-secundaria"

@@ -81,7 +81,7 @@ export default async function ArmarPresupuesto({ searchParams }: Props) {
   const nombreMesPrevio = formatearMesSolo(mesPrevio);
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col lg:mx-auto lg:w-full lg:max-w-[480px]">
       <header className="px-5 pt-14">
         <Link
           href="/presupuesto"
