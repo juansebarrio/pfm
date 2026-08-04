@@ -23,42 +23,48 @@ import {
 // Las dos formas de cargar viven arriba como botones con nombre (acá hay lugar
 // para las palabras que la pastilla no tiene).
 
-const SECCIONES: { href: string; etiqueta: string; Icono: LucideIcon }[] = [
-  { href: "/resumen", etiqueta: "Resumen", Icono: House },
-  { href: "/presupuesto", etiqueta: "Presupuesto", Icono: Wallet },
-  { href: "/movimientos", etiqueta: "Movimientos", Icono: ArrowLeftRight },
-  { href: "/patrimonio", etiqueta: "Patrimonio", Icono: ChartLine },
+type ItemNav = { href: string; etiqueta: string; Icono: LucideIcon; tecla: string };
+
+const SECCIONES: ItemNav[] = [
+  { href: "/resumen", etiqueta: "Resumen", Icono: House, tecla: "r" },
+  { href: "/presupuesto", etiqueta: "Presupuesto", Icono: Wallet, tecla: "p" },
+  { href: "/movimientos", etiqueta: "Movimientos", Icono: ArrowLeftRight, tecla: "m" },
+  { href: "/patrimonio", etiqueta: "Patrimonio", Icono: ChartLine, tecla: "t" },
 ];
 
-const SECUNDARIAS: { href: string; etiqueta: string; Icono: LucideIcon }[] = [
-  { href: "/calendario", etiqueta: "Calendario", Icono: CalendarDays },
-  { href: "/asistente", etiqueta: "Asistente", Icono: Sparkles },
-  { href: "/hogar", etiqueta: "Tu hogar", Icono: UsersRound },
+const SECUNDARIAS: ItemNav[] = [
+  { href: "/calendario", etiqueta: "Calendario", Icono: CalendarDays, tecla: "c" },
+  { href: "/asistente", etiqueta: "Asistente", Icono: Sparkles, tecla: "a" },
+  { href: "/hogar", etiqueta: "Tu hogar", Icono: UsersRound, tecla: "h" },
 ];
 
 function Fila({
   href,
   etiqueta,
   Icono,
+  tecla,
   activa,
-}: {
-  href: string;
-  etiqueta: string;
-  Icono: LucideIcon;
-  activa: boolean;
-}) {
+}: ItemNav & { activa: boolean }) {
   return (
     <Link
       href={href}
       aria-current={activa ? "page" : undefined}
-      className={`flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13.5px] transition-colors ${
+      className={`group flex items-center gap-3 rounded-[10px] px-3 py-2 text-[13.5px] transition-colors ${
         activa
           ? "bg-superficie font-semibold text-verde"
           : "font-medium text-tinta-secundaria hover:bg-superficie hover:text-tinta"
       }`}
     >
       <Icono className="size-[18px]" strokeWidth={activa ? 1.8 : 1.5} aria-hidden />
-      {etiqueta}
+      <span className="flex-1">{etiqueta}</span>
+      {/* la pista del atajo asoma al pasar el mouse: quien no usa teclado no
+          tiene por qué mirarla */}
+      <kbd
+        aria-hidden
+        className="cifra rounded-[5px] border border-borde px-1.5 py-px text-[10px] text-tinta-terciaria opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        {tecla}
+      </kbd>
     </Link>
   );
 }
@@ -86,6 +92,7 @@ export function BarraLateral() {
       <div className="mt-6 flex flex-col gap-1.5">
         <Link
           href="/gasto/nuevo"
+          title="Atajo: g"
           className="flex items-center justify-center gap-2 rounded-cta bg-verde px-3 py-2.5 text-[13.5px] font-semibold text-papel hover:bg-verde-hover"
         >
           <Plus className="size-[17px]" strokeWidth={2.2} aria-hidden />

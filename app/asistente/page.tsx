@@ -24,7 +24,7 @@ export default async function Asistente() {
   // El encabezado lo arma Chat: necesita el botón de reiniciar, que es estado
   // de cliente, en la misma fila que el título.
   return (
-    <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:w-full lg:max-w-[480px]">
+    <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:w-full lg:max-w-[640px]">
       <Chat
         nombre={sesion.nombreMiembro}
         medios={medios}

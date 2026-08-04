@@ -1,3 +1,4 @@
+import { AtajosTeclado } from "@/components/sistema/AtajosTeclado";
 import { BarraLateral } from "@/components/sistema/BarraLateral";
 import { TabBar } from "@/components/sistema/TabBar";
 
@@ -14,6 +15,7 @@ export default function LayoutTabs({
       </main>
       <BarraLateral />
       <TabBar />
+      <AtajosTeclado />
     </>
   );
 }

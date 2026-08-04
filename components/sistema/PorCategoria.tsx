@@ -92,7 +92,10 @@ function Fila({
 }) {
   if (!href) return <div className={className}>{children}</div>;
   return (
-    <Link href={href} className={className}>
+    <Link
+      href={href}
+      className={`${className} transition-colors lg:hover:bg-tinta/[0.04]`}
+    >
       {children}
       <ChevronRight
         aria-hidden
