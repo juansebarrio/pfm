@@ -147,17 +147,21 @@ export function PorCategoria({
   }
 
   return (
-    <div className="mt-5">
-      <Dona porciones={porciones} totalCentavos={total} etiqueta={etiquetaTotal} />
+    // en escritorio el anillo y su lista van lado a lado: son la misma cifra
+    // en dos lenguas y leerlas juntas es el punto de la vista
+    <div className="mt-5 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-10">
+      <div className="lg:sticky lg:top-10">
+        <Dona porciones={porciones} totalCentavos={total} etiqueta={etiquetaTotal} />
 
-      {sinCategorizar > 0 && (
-        <p className="mt-3 text-center text-[11.5px] leading-[1.5] text-tinta-terciaria">
-          No entran {formatearImporte(sinCategorizar)} sin categorizar: elegiles
-          categoría y aparecen acá.
-        </p>
-      )}
+        {sinCategorizar > 0 && (
+          <p className="mt-3 text-center text-[11.5px] leading-[1.5] text-tinta-terciaria">
+            No entran {formatearImporte(sinCategorizar)} sin categorizar: elegiles
+            categoría y aparecen acá.
+          </p>
+        )}
+      </div>
 
-      <Card className="mt-7 divide-y divide-separador">
+      <Card className="mt-7 divide-y divide-separador lg:mt-0">
         {porciones.map((p) =>
           p.esOtras ? (
             <Fragment key={p.clave}>

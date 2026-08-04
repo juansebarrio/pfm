@@ -134,7 +134,9 @@ export function Filtros({
         />
       </form>
 
-      <div className="-mx-5 mt-2.5 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_24px),transparent)] [scrollbar-width:none]">
+      {/* en el teléfono los chips scrollean de costado; en escritorio envuelven
+          (el scroll horizontal escondido en una columna fija es un misterio) */}
+      <div className="-mx-5 mt-2.5 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_24px),transparent)] [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:[mask-image:none]">
         <Chip
           seleccionado={medio !== null}
           onClick={() => setHoja("medio")}

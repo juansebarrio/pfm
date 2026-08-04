@@ -114,6 +114,9 @@ export default async function PaginaMovimientos({
   }
 
   const hayFiltros = Boolean(q || ambito || medio || categoriaId || miembroId || tipo);
+  // la bandeja se dibuja (ver nota más abajo); en escritorio, si está, la
+  // lista se parte en dos columnas y la bandeja vive fija a la derecha
+  const bandejaVisible = itemsBandeja.length > 0 && !tipo && esMesActual;
   // suma bruta de lo filtrado: los importes son absolutos (el signo lo lleva
   // el tipo), así que esto no netea ingresos contra gastos — cuánto es lo visto
   const totalFiltradoCentavos = historial.reduce((suma, m) => suma + m.importeCentavos, 0);
@@ -215,8 +218,14 @@ export default async function PaginaMovimientos({
           vacio={`No cargaste gastos en ${formatearMesLargo(mes)}. Cuando cargues alguno, acá vas a ver en qué se te fue.`}
         />
       ) : (
-        <>
-      <div className="mt-4">
+        <div
+          className={
+            bandejaVisible
+              ? "lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-x-10 lg:[grid-template-areas:'filtros_bandeja'_'contador_bandeja'_'historial_bandeja'] lg:[grid-template-rows:auto_auto_1fr]"
+              : undefined
+          }
+        >
+      <div className="mt-4 lg:[grid-area:filtros]">
         <Filtros
           q={q ?? ""}
           ambito={ambito ?? null}
@@ -233,7 +242,7 @@ export default async function PaginaMovimientos({
       {/* Con filtros activos, cuánto suma lo que quedó a la vista. El
           TotalizadorMes de arriba sigue midiendo el mes completo. */}
       {hayFiltros && historial.length > 0 && (
-        <p className="mt-3 text-[11.5px] text-tinta-secundaria">
+        <p className="mt-3 text-[11.5px] text-tinta-secundaria lg:[grid-area:contador]">
           <span className="cifra">{historial.length}</span>{" "}
           {historial.length === 1 ? "movimiento" : "movimientos"} ·{" "}
           <span className="cifra">{formatearImporte(totalFiltradoCentavos)}</span>
@@ -244,8 +253,8 @@ export default async function PaginaMovimientos({
           ese tipo, incluido lo sin categorizar) y también fuera del mes en
           curso: es una lista de PENDIENTES, no un corte histórico — verla
           mientras mirás mayo haría pensar que esos movimientos son de mayo. */}
-      {itemsBandeja.length > 0 && !tipo && esMesActual && (
-        <div className="mt-4">
+      {bandejaVisible && (
+        <div className="mt-4 lg:sticky lg:top-8 lg:self-start lg:[grid-area:bandeja]">
           <Bandeja
             items={itemsBandeja}
             sugeridas={{
@@ -260,8 +269,10 @@ export default async function PaginaMovimientos({
         </div>
       )}
 
-      <Historial dias={dias} hoy={hoy} categorias={categorias} medios={medios} />
-        </>
+      <div className="lg:[grid-area:historial]">
+        <Historial dias={dias} hoy={hoy} categorias={categorias} medios={medios} />
+      </div>
+        </div>
       )}
 
       {historial.length === 0 && (
