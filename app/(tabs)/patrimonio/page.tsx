@@ -79,6 +79,10 @@ export default async function Patrimonio({ searchParams }: Props) {
     <div className="px-5 pt-14">
       {encabezado}
 
+      {/* En escritorio: el estado (total, TC, composición) fijo a la izquierda
+          y las tenencias a la derecha. En el teléfono, la pila de siempre. */}
+      <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start lg:gap-10">
+      <div className="lg:sticky lg:top-10">
       {/* Hero doble columna: total (≈ si el redondeo difiere) + sparkline 108×40 */}
       <section className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -129,11 +133,15 @@ export default async function Patrimonio({ searchParams }: Props) {
           ))}
         </div>
       </Card>
+      </div>
 
-      <EncabezadoSeccion>Tenencias</EncabezadoSeccion>
-      <ListaTenencias tenencias={patrimonio.tenencias} />
+      <div>
+        <EncabezadoSeccion>Tenencias</EncabezadoSeccion>
+        <ListaTenencias tenencias={patrimonio.tenencias} />
 
-      <BotonSnapshot />
+        <BotonSnapshot />
+      </div>
+      </div>
     </div>
   );
 }

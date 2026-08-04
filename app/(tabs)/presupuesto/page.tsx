@@ -207,8 +207,10 @@ export default async function PaginaPresupuesto({
     <div>
       {encabezado}
 
-      {/* Hero: disponible del mes + barra con marcador del día (01a) */}
-      <section className="px-5 pt-6">
+      {/* Hero: disponible del mes + barra con marcador del día (01a). En
+          escritorio se acota: una barra de avance de 900px es una ruta, no
+          un dato. */}
+      <section className="px-5 pt-6 lg:max-w-[560px]">
         <p className="text-[12px] font-medium text-tinta-secundaria">
           Disponible en {mesNombre}
         </p>
@@ -243,14 +245,17 @@ export default async function PaginaPresupuesto({
         </div>
       </section>
 
-      {/* Grupos de partidas + filas fantasma de recurrentes */}
+      {/* Grupos de partidas + filas fantasma de recurrentes. En escritorio,
+          los grupos fluyen en dos columnas (cada grupo entero: partir una
+          card de grupo al medio sería peor que el hueco que evita). */}
       <div className="px-5 pt-2">
+        <div className="lg:columns-2 lg:gap-8">
         {presupuesto.grupos.map((g) => {
           const fantasmas = sugerencias.filter((s) =>
             g.partidas.some((p) => p.categoriaId === s.categoriaId),
           );
           return (
-            <section key={g.grupo}>
+            <section key={g.grupo} className="lg:break-inside-avoid">
               <EncabezadoSeccion>{g.grupo}</EncabezadoSeccion>
               <Card className="divide-y divide-separador">
                 {g.partidas.map((p) => (
@@ -275,6 +280,7 @@ export default async function PaginaPresupuesto({
             </section>
           );
         })}
+        </div>
 
         <AgregarPartida
           mes={mes}
