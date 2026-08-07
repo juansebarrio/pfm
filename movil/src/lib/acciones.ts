@@ -704,6 +704,32 @@ export async function agregarPartida(
   const { data: presupuesto } = await consulta.maybeSingle();
   if (!presupuesto) return { ok: false, error: "Ese mes no tiene presupuesto armado" };
 
+  // La fila puede existir apagada: la categoria que se desactivo al armar el
+  // mes (o que el arrastre copio apagada) no se ve en la lista y el selector
+  // la ofrece, pero la unicidad (presupuesto, categoria) la cuenta igual.
+  // Sumar sobre una apagada es reactivarla, con la misma forma que el insert.
+  const { data: previa } = await supabase
+    .from("partidas_presupuesto")
+    .select("id, activa")
+    .eq("presupuesto_id", presupuesto.id)
+    .eq("categoria_id", datos.categoriaId)
+    .maybeSingle();
+  if (previa) {
+    if (previa.activa) return { ok: false, error: "Esa categoria ya tiene partida este mes" };
+    const { error } = await supabase
+      .from("partidas_presupuesto")
+      .update({
+        asignado_centavos: datos.asignadoCentavos,
+        activa: true,
+        fija: false,
+        rollover: false,
+        nota: null,
+      })
+      .eq("id", previa.id);
+    if (error) return { ok: false, error: "No pudimos sumar la partida. Proba de nuevo." };
+    return { ok: true };
+  }
+
   const { error } = await supabase.from("partidas_presupuesto").insert({
     presupuesto_id: presupuesto.id,
     categoria_id: datos.categoriaId,
