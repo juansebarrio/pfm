@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Zap } from "lucide-react";
 import { Card } from "@/components/sistema/Card";
 import { ListaMovimientosTocables } from "@/components/sistema/ListaMovimientosTocables";
+import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import type {
   CategoriaSimple,
   MedioDePago,
@@ -25,9 +26,14 @@ import { formatearDiaLargo } from "@/lib/dominio/fechas";
 // borrar) — el calendario es otra puerta al mismo lugar, no una vista aparte.
 //
 // Puntos: tinta = hubo gastos · verde = hubo ingresos · ámbar = vence un fijo.
+//
+// En escritorio (lg+) deja de ser una columna de teléfono: la grilla queda a
+// la izquierda y el día elegido a la derecha, sticky — elegir un día actualiza
+// al lado, sin scrollear. En el teléfono no cambia nada: sigue apilado.
 
 export function CalendarioMes({
   mes,
+  mesActual,
   hoy,
   movimientos,
   recurrentes,
@@ -35,6 +41,7 @@ export function CalendarioMes({
   medios,
 }: {
   mes: string;
+  mesActual: string;
   hoy: string;
   movimientos: MovimientoLista[];
   recurrentes: RecurrenteActivo[];
@@ -61,127 +68,133 @@ export function CalendarioMes({
   const plataDelDia = plata.get(elegido) ?? { gastosCentavos: 0, ingresosCentavos: 0 };
 
   return (
-    <div>
-      {/* etiquetas L a D */}
-      <div className="mt-5 grid grid-cols-7 text-center">
-        {DIAS_SEMANA.map((d, i) => (
-          <span key={i} className="text-[10.5px] font-medium text-tinta-terciaria">
-            {d}
-          </span>
-        ))}
-      </div>
+    <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
+      <div>
+        <NavegadorMes mes={mes} mesActual={mesActual} ruta="/calendario" otrosParametros={{}} />
 
-      {/* la grilla */}
-      <div className="mt-1.5 grid grid-cols-7 gap-1" role="grid" aria-label="Días del mes">
-        {semanas.flat().map((fecha, i) => {
-          if (fecha === null) return <div key={`v-${i}`} aria-hidden />;
-          const dia = Number(fecha.slice(8));
-          const p = plata.get(fecha);
-          const tieneFijos = fijos.has(fecha) && fecha >= hoy;
-          const esHoy = fecha === hoy;
-          const activo = fecha === elegido;
-          return (
-            <button
-              key={fecha}
-              type="button"
-              onClick={() => setElegido(fecha)}
-              aria-pressed={activo}
-              aria-label={`${dia} de ${mes.slice(5, 7)}`}
-              className={`flex aspect-square flex-col items-center justify-center rounded-[10px] border ${
-                activo
-                  ? "border-verde bg-verde-suave"
-                  : esHoy
-                    ? "border-verde/50 bg-superficie"
-                    : "border-transparent bg-superficie"
-              }`}
-            >
-              <span
-                className={`cifra text-[13px] ${
-                  esHoy ? "font-semibold text-verde" : fecha > hoy ? "text-tinta-secundaria" : "text-tinta"
+        {/* etiquetas L a D */}
+        <div className="mt-5 grid grid-cols-7 text-center">
+          {DIAS_SEMANA.map((d, i) => (
+            <span key={i} className="text-[10.5px] font-medium text-tinta-terciaria">
+              {d}
+            </span>
+          ))}
+        </div>
+
+        {/* la grilla */}
+        <div className="mt-1.5 grid grid-cols-7 gap-1" role="grid" aria-label="Días del mes">
+          {semanas.flat().map((fecha, i) => {
+            if (fecha === null) return <div key={`v-${i}`} aria-hidden />;
+            const dia = Number(fecha.slice(8));
+            const p = plata.get(fecha);
+            const tieneFijos = fijos.has(fecha) && fecha >= hoy;
+            const esHoy = fecha === hoy;
+            const activo = fecha === elegido;
+            return (
+              <button
+                key={fecha}
+                type="button"
+                onClick={() => setElegido(fecha)}
+                aria-pressed={activo}
+                aria-label={`${dia} de ${mes.slice(5, 7)}`}
+                className={`flex aspect-square flex-col items-center justify-center rounded-[10px] border ${
+                  activo
+                    ? "border-verde bg-verde-suave"
+                    : esHoy
+                      ? "border-verde/50 bg-superficie"
+                      : "border-transparent bg-superficie"
                 }`}
               >
-                {dia}
-              </span>
-              <span className="mt-0.5 flex h-1.5 items-center gap-[3px]">
-                {p && p.gastosCentavos > 0 && (
-                  <span className="size-1.5 rounded-full bg-tinta-secundaria" />
-                )}
-                {p && p.ingresosCentavos > 0 && (
-                  <span className="size-1.5 rounded-full bg-verde" />
-                )}
-                {tieneFijos && <span className="size-1.5 rounded-full bg-ambar" />}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                <span
+                  className={`cifra text-[13px] ${
+                    esHoy ? "font-semibold text-verde" : fecha > hoy ? "text-tinta-secundaria" : "text-tinta"
+                  }`}
+                >
+                  {dia}
+                </span>
+                <span className="mt-0.5 flex h-1.5 items-center gap-[3px]">
+                  {p && p.gastosCentavos > 0 && (
+                    <span className="size-1.5 rounded-full bg-tinta-secundaria" />
+                  )}
+                  {p && p.ingresosCentavos > 0 && (
+                    <span className="size-1.5 rounded-full bg-verde" />
+                  )}
+                  {tieneFijos && <span className="size-1.5 rounded-full bg-ambar" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* leyenda */}
-      <p className="mt-2.5 flex items-center justify-center gap-3 text-[10.5px] text-tinta-terciaria">
-        <span className="flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-tinta-secundaria" /> gastos
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-verde" /> ingresos
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-ambar" /> fijo por vencer
-        </span>
-      </p>
-
-      {/* el día elegido: título + su totalizador. Pasado/hoy suma lo que pasó;
-          futuro, lo que viene (los fijos sugeridos). Cero = silencio. */}
-      <div className="mt-6 mb-3 flex items-baseline justify-between gap-2">
-        <h2 className="text-[13px] font-semibold text-tinta">{formatearDiaLargo(elegido)}</h2>
-        <p className="cifra shrink-0 text-[12px] text-tinta-secundaria">
-          {esFuturo
-            ? fijosDelDia.length > 0 &&
-              `${formatearImporte(
-                fijosDelDia.reduce((s, r) => s + r.importeSugeridoCentavos, 0),
-              )} en fijos`
-            : [
-                plataDelDia.gastosCentavos > 0 &&
-                  `gastos ${formatearImporte(plataDelDia.gastosCentavos)}`,
-                plataDelDia.ingresosCentavos > 0 && (
-                  <span key="i" className="text-verde">
-                    ingresos {formatearImporte(plataDelDia.ingresosCentavos)}
-                  </span>
-                ),
-              ]
-                .filter(Boolean)
-                .flatMap((parte, i) => (i > 0 ? [" · ", parte] : [parte]))}
+        {/* leyenda */}
+        <p className="mt-2.5 flex items-center justify-center gap-3 text-[10.5px] text-tinta-terciaria">
+          <span className="flex items-center gap-1">
+            <span className="size-1.5 rounded-full bg-tinta-secundaria" /> gastos
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="size-1.5 rounded-full bg-verde" /> ingresos
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="size-1.5 rounded-full bg-ambar" /> fijo por vencer
+          </span>
         </p>
       </div>
 
-      {/* los fijos que vencen ese día (solo mirando adelante) */}
-      {fijosDelDia.length > 0 && esFuturo && (
-        <Card className="mb-2.5 divide-y divide-separador">
-          {fijosDelDia.map((r) => (
-            <div key={r.id} className="flex items-center gap-[11px] px-3.5 py-3">
-              <Zap className="size-[18px] shrink-0 text-ambar" strokeWidth={1.5} aria-hidden />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-medium text-tinta">{r.descripcion}</p>
-                <p className="cifra mt-[3px] text-[11px] text-tinta-secundaria">
-                  {formatearImporte(r.importeSugeridoCentavos)} sugerido
-                  {r.categoria ? ` · ${r.categoria}` : ""}
-                </p>
-              </div>
-            </div>
-          ))}
-        </Card>
-      )}
+      {/* el día elegido: título + su totalizador. Pasado/hoy suma lo que pasó;
+          futuro, lo que viene (los fijos sugeridos). Cero = silencio. */}
+      <div className="lg:sticky lg:top-8">
+        <div className="mt-6 mb-3 flex items-baseline justify-between gap-2 lg:mt-4">
+          <h2 className="text-[13px] font-semibold text-tinta">{formatearDiaLargo(elegido)}</h2>
+          <p className="cifra shrink-0 text-[12px] text-tinta-secundaria">
+            {esFuturo
+              ? fijosDelDia.length > 0 &&
+                `${formatearImporte(
+                  fijosDelDia.reduce((s, r) => s + r.importeSugeridoCentavos, 0),
+                )} en fijos`
+              : [
+                  plataDelDia.gastosCentavos > 0 &&
+                    `gastos ${formatearImporte(plataDelDia.gastosCentavos)}`,
+                  plataDelDia.ingresosCentavos > 0 && (
+                    <span key="i" className="text-verde">
+                      ingresos {formatearImporte(plataDelDia.ingresosCentavos)}
+                    </span>
+                  ),
+                ]
+                  .filter(Boolean)
+                  .flatMap((parte, i) => (i > 0 ? [" · ", parte] : [parte]))}
+          </p>
+        </div>
 
-      {delDia.length > 0 ? (
-        <ListaMovimientosTocables movimientos={delDia} categorias={categorias} medios={medios} />
-      ) : (
-        (fijosDelDia.length === 0 || !esFuturo) && (
-          <Card className="px-3.5 py-3.5">
-            <p className="text-[13px] text-tinta-secundaria">
-              {esFuturo ? "Nada agendado para ese día" : "Sin movimientos ese día"}
-            </p>
+        {/* los fijos que vencen ese día (solo mirando adelante) */}
+        {fijosDelDia.length > 0 && esFuturo && (
+          <Card className="mb-2.5 divide-y divide-separador">
+            {fijosDelDia.map((r) => (
+              <div key={r.id} className="flex items-center gap-[11px] px-3.5 py-3">
+                <Zap className="size-[18px] shrink-0 text-ambar" strokeWidth={1.5} aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13.5px] font-medium text-tinta">{r.descripcion}</p>
+                  <p className="cifra mt-[3px] text-[11px] text-tinta-secundaria">
+                    {formatearImporte(r.importeSugeridoCentavos)} sugerido
+                    {r.categoria ? ` · ${r.categoria}` : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
           </Card>
-        )
-      )}
+        )}
+
+        {delDia.length > 0 ? (
+          <ListaMovimientosTocables movimientos={delDia} categorias={categorias} medios={medios} />
+        ) : (
+          (fijosDelDia.length === 0 || !esFuturo) && (
+            <Card className="px-3.5 py-3.5">
+              <p className="text-[13px] text-tinta-secundaria">
+                {esFuturo ? "Nada agendado para ese día" : "Sin movimientos ese día"}
+              </p>
+            </Card>
+          )
+        )}
+      </div>
     </div>
   );
 }

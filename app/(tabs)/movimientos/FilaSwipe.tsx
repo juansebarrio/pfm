@@ -111,7 +111,7 @@ export function FilaSwipe({
         onPointerMove={alMover}
         onPointerUp={alSoltar}
         onPointerCancel={alCancelar}
-        className={`relative bg-superficie lg:hover:bg-tinta/[0.04] ${arrastre === null ? "transition-transform duration-200" : ""}`}
+        className={`relative bg-superficie lg:hover:bg-superficie-hover ${arrastre === null ? "transition-transform duration-200" : ""}`}
         style={{ transform: `translateX(${desplazamiento}px)` }}
       >
         <FilaMovimiento {...datos} />

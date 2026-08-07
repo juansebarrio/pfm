@@ -101,6 +101,10 @@
   --color-*: initial;
   --color-papel: var(--papel);
   --color-superficie: var(--superficie);
+  /* hover de fila en escritorio: el mismo 4 % de tinta pero MEZCLADO en un
+     color opaco — un hover translúcido reemplaza al fondo y transparenta lo
+     que haya detrás (el panel de borrar del swipe se veía a través) */
+  --color-superficie-hover: color-mix(in oklab, var(--tinta) 4%, var(--superficie));
   --color-tinta: var(--tinta);
   --color-tinta-secundaria: var(--tinta-secundaria);
   --color-tinta-terciaria: var(--tinta-terciaria);
@@ -240,6 +244,16 @@ dialog.hoja-inferior::backdrop {
 }
 dialog.hoja-inferior[data-visible="true"]::backdrop {
   opacity: 1;
+}
+/* En escritorio la hoja es un cajón lateral: entra desde la derecha, no
+   desde abajo. El eje del transform acompaña a las clases lg: del componente. */
+@media (min-width: 1024px) {
+  dialog.hoja-inferior {
+    transform: translateX(100%);
+  }
+  dialog.hoja-inferior[data-visible="true"] {
+    transform: translateX(0);
+  }
 }
 
 /* Target táctil mínimo de 44px sin cambiar el dibujo (mejora directa §7.1) */
