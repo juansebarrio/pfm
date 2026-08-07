@@ -15,7 +15,9 @@ import { repartir, type ItemReparto, type Porcion } from "@/lib/dominio/reparto"
 // La lista NO es redundante con el anillo: el anillo contesta "en qué se me va"
 // de un vistazo y la lista da el número exacto, que es lo que se necesita para
 // decidir. Por eso comparten el color: el tono del punto es el mismo tramo del
-// anillo, y así la lista se lee como su leyenda sin escribir "leyenda".
+// anillo, y así la lista se lee como su leyenda sin escribir "leyenda". Y por
+// eso comparten el hover (escritorio): posarse sobre una porción resalta su
+// fila, posarse sobre una fila resalta su porción — un solo estado, dos vistas.
 //
 // La fila "Otras" se puede desplegar: la bolsa puede ser la segunda porción más
 // grande del mes, y una fila muerta que dice "un quinto de tu plata, no te digo
@@ -84,18 +86,32 @@ function desplegarOtras(
 function Fila({
   href,
   className,
+  resaltada = false,
+  onResaltar,
   children,
 }: {
   href?: string;
   className: string;
+  /** la porción de esta fila está resaltada (desde el anillo o desde acá) */
+  resaltada?: boolean;
+  onResaltar?: (encima: boolean) => void;
   children: React.ReactNode;
 }) {
-  if (!href) return <div className={className}>{children}</div>;
+  const clases = `${className} transition-colors ${resaltada ? "lg:bg-superficie-hover" : ""}`;
+  const handlers = onResaltar
+    ? {
+        onMouseEnter: () => onResaltar(true),
+        onMouseLeave: () => onResaltar(false),
+      }
+    : {};
+  if (!href)
+    return (
+      <div className={clases} {...handlers}>
+        {children}
+      </div>
+    );
   return (
-    <Link
-      href={href}
-      className={`${className} transition-colors lg:hover:bg-superficie-hover`}
-    >
+    <Link href={href} className={`${clases} lg:hover:bg-superficie-hover`} {...handlers}>
       {children}
       <ChevronRight
         aria-hidden
@@ -127,6 +143,9 @@ export function PorCategoria({
 }) {
   // arranca colapsada: el desglose es para quien pregunta, no para todos
   const [otrasAbierta, setOtrasAbierta] = useState(false);
+  // la porción bajo el mouse — en el anillo o en la lista, es EL MISMO estado:
+  // resaltar de un lado resalta del otro, que es lo que los hace una sola vista
+  const [resaltada, setResaltada] = useState<string | null>(null);
 
   const porciones = repartir(items);
   const total = porciones.reduce((s, p) => s + p.centavos, 0);
@@ -154,7 +173,13 @@ export function PorCategoria({
     // en dos lenguas y leerlas juntas es el punto de la vista
     <div className="mt-5 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-10">
       <div className="lg:sticky lg:top-10">
-        <Dona porciones={porciones} totalCentavos={total} etiqueta={etiquetaTotal} />
+        <Dona
+          porciones={porciones}
+          totalCentavos={total}
+          etiqueta={etiquetaTotal}
+          resaltada={resaltada}
+          onResaltar={setResaltada}
+        />
 
         {sinCategorizar > 0 && (
           <p className="mt-3 text-center text-[11.5px] leading-[1.5] text-tinta-terciaria">
@@ -174,13 +199,20 @@ export function PorCategoria({
                 type="button"
                 onClick={() => setOtrasAbierta((v) => !v)}
                 aria-expanded={otrasAbierta}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+                onMouseEnter={() => setResaltada(p.clave)}
+                onMouseLeave={() => setResaltada(null)}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                  resaltada === p.clave ? "lg:bg-superficie-hover" : ""
+                }`}
               >
                 <span
                   aria-hidden
                   className="size-2.5 shrink-0 rounded-full"
                   style={{ background: tono(p.indice) }}
                 />
+                {/* el hueco del ícono que "Otras" no tiene: sin él, el nombre
+                    arranca 30px antes que el resto y la columna queda serruchada */}
+                <span aria-hidden className="size-[18px] shrink-0" />
                 <span className="flex min-w-0 flex-1 items-center gap-1.5">
                   <span className="truncate text-[14px] text-tinta">{p.nombre}</span>
                   <ChevronDown
@@ -204,6 +236,8 @@ export function PorCategoria({
                   <Fila
                     key={s.clave}
                     href={hrefsDeCategoria?.[s.clave]}
+                    resaltada={resaltada === p.clave}
+                    onResaltar={(encima) => setResaltada(encima ? p.clave : null)}
                     className="flex items-center gap-3 py-2.5 pl-[38px] pr-4"
                   >
                     {/* el neutro de "Otras", no un color propio: el anillo no
@@ -229,6 +263,8 @@ export function PorCategoria({
             <Fila
               key={p.clave}
               href={hrefsDeCategoria?.[p.clave]}
+              resaltada={resaltada === p.clave}
+              onResaltar={(encima) => setResaltada(encima ? p.clave : null)}
               className="flex items-center gap-3 px-4 py-3"
             >
               <span
