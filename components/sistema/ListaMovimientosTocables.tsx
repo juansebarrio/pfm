@@ -77,7 +77,7 @@ export function ListaMovimientosTocables({
             key={m.id}
             type="button"
             onClick={() => setDetalle(m)}
-            className={`w-full text-left transition-colors lg:hover:bg-tinta/[0.04] ${
+            className={`w-full text-left transition-colors lg:hover:bg-superficie-hover ${
               visiblesEnMovil !== undefined && i >= visiblesEnMovil
                 ? "hidden lg:block"
                 : "block"

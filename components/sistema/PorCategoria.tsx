@@ -94,7 +94,7 @@ function Fila({
   return (
     <Link
       href={href}
-      className={`${className} transition-colors lg:hover:bg-tinta/[0.04]`}
+      className={`${className} transition-colors lg:hover:bg-superficie-hover`}
     >
       {children}
       <ChevronRight

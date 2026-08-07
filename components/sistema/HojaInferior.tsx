@@ -6,6 +6,10 @@ import { X } from "lucide-react";
 // Hoja inferior (bottom sheet) del sistema: conciliación (06), alta de
 // tenencia y carga de TC (08). <dialog> nativo: foco atrapado y Esc gratis.
 //
+// En escritorio (lg+) la MISMA hoja es un cajón lateral que entra desde la
+// derecha, alto completo: una hoja que sube desde abajo es un gesto de
+// pulgar, no de mouse. El eje de la animación cambia en globals.css.
+//
 // La entrada y la salida están animadas: la hoja sube desde abajo y el fondo
 // hace fade (.hoja-inferior en globals.css). El ciclo lo maneja el efecto de
 // abajo: al abrir, showModal() y data-visible al frame siguiente para que la
@@ -62,12 +66,11 @@ export function HojaInferior({ abierta, onCerrar, titulo, children }: Props) {
         // clic en el backdrop cierra
         if (e.target === ref.current) onCerrar();
       }}
-      className="hoja-inferior m-0 mx-auto mt-auto w-full max-w-[430px] rounded-t-[18px] border-t border-borde bg-superficie p-0 text-tinta backdrop:bg-tinta/40 lg:border-x"
-      style={{ marginInline: "auto" }}
+      className="hoja-inferior m-0 mx-auto mt-auto w-full max-w-[430px] rounded-t-[18px] border-t border-borde bg-superficie p-0 text-tinta backdrop:bg-tinta/40 lg:mx-0 lg:mt-0 lg:ml-auto lg:h-dvh lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l"
     >
-      <div className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))]">
-        <div aria-hidden className="mx-auto h-1 w-9 rounded-full bg-tinta-muda" />
-        <div className="mt-3.5 flex items-center justify-between">
+      <div className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] lg:pt-5 lg:pb-6">
+        <div aria-hidden className="mx-auto h-1 w-9 rounded-full bg-tinta-muda lg:hidden" />
+        <div className="mt-3.5 flex items-center justify-between lg:mt-0">
           <h2 className="text-[16px] font-semibold">{titulo}</h2>
           <button
             type="button"

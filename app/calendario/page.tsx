@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { NavegadorMes } from "@/components/sistema/NavegadorMes";
 import {
   categoriasDelHogar,
   mediosDePago,
@@ -33,7 +32,7 @@ export default async function PaginaCalendario({
   ]);
 
   return (
-    <div className="px-5 pt-8 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
+    <div className="px-5 pt-8 pb-10 lg:mx-auto lg:w-full lg:max-w-[960px]">
       <Link
         href="/resumen"
         className="hit-44 inline-flex items-center gap-1.5 text-[13px] text-tinta-secundaria"
@@ -47,10 +46,9 @@ export default async function PaginaCalendario({
         Lo que pasó y lo que viene en {formatearMesLargo(mes)}
       </p>
 
-      <NavegadorMes mes={mes} mesActual={mesDe(hoy)} ruta="/calendario" otrosParametros={{}} />
-
       <CalendarioMes
         mes={mes}
+        mesActual={mesDe(hoy)}
         hoy={hoy}
         movimientos={movimientos}
         recurrentes={recurrentes}
