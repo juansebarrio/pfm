@@ -109,13 +109,15 @@ export function DetalleMovimiento({
           onCancelar={() => setEditando(false)}
         />
       ) : m ? (
-        <div>
+        // en lg la vista es columna de alto completo: el vacío del cajón queda
+        // entre el contenido y los CTAs (mt-auto), no colgando debajo de ellos
+        <div className="lg:flex lg:min-h-full lg:flex-col">
           <div className="text-center">
             <Importe
               centavos={m.importeCentavos}
               variante="card"
               conSigno={esIngreso}
-              className={esIngreso ? "text-verde" : "text-tinta"}
+              className={`${esIngreso ? "text-verde" : "text-tinta"} lg:text-[40px]`}
             />
             <p className="mt-1 text-[15px] font-medium text-tinta">{m.descripcion}</p>
           </div>
@@ -168,27 +170,29 @@ export function DetalleMovimiento({
             </p>
           )}
 
-          {editable && (
+          <div className="mt-4 lg:mt-auto lg:pt-4">
+            {editable && (
+              <button
+                type="button"
+                onClick={() => setEditando(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-cta bg-verde py-3.5 text-[14px] font-semibold text-papel"
+              >
+                <Pencil className="size-4" strokeWidth={1.8} aria-hidden />
+                {m.esCuota ? "Editar la compra" : "Editar movimiento"}
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={() => setEditando(true)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-cta bg-verde py-3.5 text-[14px] font-semibold text-papel"
+              onClick={onBorrar}
+              className={`flex w-full items-center justify-center gap-2 rounded-cta border border-rojo py-3.5 text-[14px] font-semibold text-rojo ${editable ? "mt-2.5" : ""}`}
             >
-              <Pencil className="size-4" strokeWidth={1.8} aria-hidden />
-              {m.esCuota ? "Editar la compra" : "Editar movimiento"}
+              <Trash2 className="size-4" strokeWidth={1.8} aria-hidden />
+              {m.esCuota && m.nCuotasTotal
+                ? `Borrar la compra · ${m.nCuotasTotal} cuotas`
+                : "Borrar movimiento"}
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={onBorrar}
-            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-cta border border-rojo py-3.5 text-[14px] font-semibold text-rojo"
-          >
-            <Trash2 className="size-4" strokeWidth={1.8} aria-hidden />
-            {m.esCuota && m.nCuotasTotal
-              ? `Borrar la compra · ${m.nCuotasTotal} cuotas`
-              : "Borrar movimiento"}
-          </button>
+          </div>
         </div>
       ) : null}
     </HojaInferior>
@@ -259,7 +263,8 @@ function FormularioEdicion({
   }
 
   return (
-    <div>
+    // misma columna de alto completo que el detalle: Guardar/Cancelar al fondo
+    <div className="lg:flex lg:min-h-full lg:flex-col">
       <input
         type="text"
         value={descripcion}
@@ -364,7 +369,7 @@ function FormularioEdicion({
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex items-center gap-2 lg:mt-auto lg:pt-4">
         <button
           type="button"
           disabled={!listo || pendiente}
@@ -479,7 +484,7 @@ function EditorNota({
           maxLength={200}
           placeholder="Comentario (opcional)"
           aria-label="Comentario del movimiento"
-          className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
+          className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria lg:text-[14px]"
         />
         {(cambio || confirmado) && (
           <button

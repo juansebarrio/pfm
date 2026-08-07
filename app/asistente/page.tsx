@@ -23,8 +23,13 @@ export default async function Asistente() {
 
   // El encabezado lo arma Chat: necesita el botón de reiniciar, que es estado
   // de cliente, en la misma fila que el título.
+  //
+  // En lg el alto es FIJO (h-dvh, no min-h): eso habilita el modelo de app de
+  // chat — el hilo scrollea adentro de su contenedor y el input queda anclado
+  // al borde de abajo, como en cualquier chat de escritorio. En el teléfono
+  // sigue scrolleando el documento, que es lo que el pulgar espera.
   return (
-    <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:w-full lg:max-w-[640px]">
+    <div className="flex min-h-dvh flex-col px-5 pt-14 lg:mx-auto lg:h-dvh lg:min-h-0 lg:w-full lg:max-w-[680px] lg:pt-8">
       <Chat
         nombre={sesion.nombreMiembro}
         medios={medios}

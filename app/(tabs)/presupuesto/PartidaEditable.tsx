@@ -84,9 +84,12 @@ export function PartidaEditable({
             montoTexto !== "" && montoCentavos === null ? "border-rojo" : "border-borde"
           }`}
         />
-        <p className="mt-2 text-[11.5px] text-tinta-terciaria">
-          Gastado hasta ahora: {formatearImporte(datos.gastadoCentavos)}. Cambiar el monto no
-          toca los movimientos, solo cuánto le das al sobre.
+        <p className="mt-2 text-[11.5px] text-tinta-secundaria">
+          Gastado hasta ahora:{" "}
+          <span className="cifra text-[12.5px] text-tinta">
+            {formatearImporte(datos.gastadoCentavos)}
+          </span>
+          . Cambiar el monto no toca los movimientos, solo cuánto le das al sobre.
         </p>
 
         {error && <p className="mt-2 text-[12.5px] text-rojo">{error}</p>}
