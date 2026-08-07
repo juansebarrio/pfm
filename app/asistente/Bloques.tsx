@@ -37,7 +37,7 @@ export function Bloques({
 
           case "dato":
             return (
-              <div key={i} className="rounded-cta border border-borde px-3.5 py-3">
+              <div key={i} className="rounded-cta border border-borde px-3.5 py-3 lg:max-w-[480px]">
                 <p className="text-[11.5px] text-tinta-secundaria">{b.etiqueta}</p>
                 <p className={`cifra mt-1 text-[26px] font-semibold ${TINTA_TONO[b.tono]}`}>
                   {b.valor}
@@ -47,7 +47,7 @@ export function Bloques({
 
           case "partida":
             return (
-              <div key={i} className="rounded-cta border border-borde px-3.5 py-3">
+              <div key={i} className="rounded-cta border border-borde px-3.5 py-3 lg:max-w-[480px]">
                 <div className="flex items-baseline gap-2.5">
                   <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-tinta">
                     {b.nombre}

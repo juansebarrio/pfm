@@ -68,10 +68,13 @@ export function HojaInferior({ abierta, onCerrar, titulo, children }: Props) {
       }}
       className="hoja-inferior m-0 mx-auto mt-auto w-full max-w-[430px] rounded-t-[18px] border-t border-borde bg-superficie p-0 text-tinta backdrop:bg-tinta/40 lg:mx-0 lg:mt-0 lg:ml-auto lg:h-dvh lg:max-h-none lg:rounded-none lg:border-t-0 lg:border-l"
     >
-      <div className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] lg:pt-5 lg:pb-6">
+      {/* En lg el interior es una columna de alto completo: el título y la X
+          quedan fijos y el scroll vive en el cuerpo — si el contenido usa
+          lg:mt-auto en su pie, los CTAs se pinean al fondo del cajón. */}
+      <div className="px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] lg:flex lg:h-full lg:flex-col lg:pt-5 lg:pb-6">
         <div aria-hidden className="mx-auto h-1 w-9 rounded-full bg-tinta-muda lg:hidden" />
-        <div className="mt-3.5 flex items-center justify-between lg:mt-0">
-          <h2 className="text-[16px] font-semibold">{titulo}</h2>
+        <div className="mt-3.5 flex items-center justify-between lg:mt-0 lg:shrink-0">
+          <h2 className="text-[16px] font-semibold lg:text-[17px]">{titulo}</h2>
           <button
             type="button"
             onClick={onCerrar}
@@ -81,7 +84,7 @@ export function HojaInferior({ abierta, onCerrar, titulo, children }: Props) {
             <X className="size-[22px]" strokeWidth={2} aria-hidden />
           </button>
         </div>
-        <div className="mt-4">{children}</div>
+        <div className="mt-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">{children}</div>
       </div>
     </dialog>
   );

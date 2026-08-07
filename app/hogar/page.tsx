@@ -53,7 +53,12 @@ export default async function Hogar() {
       : "");
 
   return (
-    <div className="px-5 pt-14 pb-10 lg:mx-auto lg:w-full lg:max-w-[480px]">
+    // En lg la pantalla va a 960 y en dos columnas: a la izquierda las
+    // PERSONAS (miembros, invitar, visibilidad) y a la derecha la APP y la
+    // CUENTA (navegación, onboarding, tema, sesión). En el teléfono la pila
+    // sigue este mismo orden — invitar pegado a la lista de miembros a la que
+    // refiere, como en el export (§3.31), y no a cuatro cards de distancia.
+    <div className="px-5 pt-14 pb-10 lg:mx-auto lg:w-full lg:max-w-[960px]">
       <header className="flex items-center gap-2.5">
         <Link href="/resumen" aria-label="Volver al resumen" className="hit-44 text-tinta">
           <ChevronLeft className="size-5" strokeWidth={1.5} aria-hidden />
@@ -61,182 +66,188 @@ export default async function Hogar() {
         <h1 className="text-[17px] font-semibold text-tinta">Hogar</h1>
       </header>
 
-      {/* Card del hogar: header + filas de miembros e invitaciones (§3.31) */}
-      <Card className="mt-4 divide-y divide-separador">
-        <div className="flex items-center gap-2.5 px-4 py-3.5">
-          <Users className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <div className="min-w-0">
-            <h2 className="truncate text-[16px] font-semibold text-tinta">{hogar.nombre}</h2>
-            <p className="text-[11.5px] text-tinta-secundaria">{subtitulo}</p>
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-10">
+        <div>
+          {/* Card del hogar: header + filas de miembros e invitaciones (§3.31) */}
+          <Card className="mt-4 divide-y divide-separador">
+            <div className="flex items-center gap-2.5 px-4 py-3.5">
+              <Users className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+              <div className="min-w-0">
+                <h2 className="truncate text-[16px] font-semibold text-tinta">{hogar.nombre}</h2>
+                <p className="text-[11.5px] text-tinta-secundaria">{subtitulo}</p>
+              </div>
+            </div>
+
+            {hogar.miembros.map((m) => (
+              <div key={m.userId} className="flex items-center gap-3 px-4 py-3">
+                {/* Avatar 36px (§3.30): tinta para vos, tinta-secundaria para el resto */}
+                <div
+                  aria-hidden
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-papel ${
+                    m.esUsuarioActual ? "bg-tinta" : "bg-tinta-secundaria"
+                  }`}
+                >
+                  {inicial(m.nombre)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-medium text-tinta">{m.nombre}</p>
+                  {(m.esUsuarioActual || m.descripcion) && (
+                    <p className="truncate text-[11.5px] text-tinta-secundaria">
+                      {m.esUsuarioActual ? "vos" : m.descripcion}
+                    </p>
+                  )}
+                </div>
+                <Badge variante={m.rol}>{m.rol}</Badge>
+              </div>
+            ))}
+
+            {hogar.invitacionesPendientes.map((inv) => (
+              <div key={inv.id} className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  {/* Avatar pendiente: punteado ámbar, mismo lenguaje que ESTIMADA */}
+                  <div
+                    aria-hidden
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-borde-estimada bg-fondo-estimada text-[14px] font-semibold text-ambar-texto"
+                  >
+                    {inicial(inv.email)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-medium text-tinta">{inv.email}</p>
+                    <p className="text-[11.5px] text-tinta-secundaria">
+                      {etiquetaInvitada(inv.creadoEl, hoy)}
+                    </p>
+                  </div>
+                  <Badge variante="pendiente">pendiente</Badge>
+                </div>
+                <AccionesInvitacion invitacionId={inv.id} email={inv.email} />
+              </div>
+            ))}
+          </Card>
+
+          <div className="mt-4">
+            <Invitar />
+            <p className="mt-2 text-center text-[11.5px] text-tinta-secundaria">
+              Por email. La persona elige su clave al entrar.
+            </p>
           </div>
+
+          {/* Card de visibilidad: candado + statement + badges explicados */}
+          <Card className="mt-4 px-4 py-3.5">
+            <div className="flex items-start gap-2.5">
+              <Lock className="mt-px size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+              <h2 className="text-[13.5px] leading-[1.5] font-semibold text-tinta">
+                Lo personal es tuyo. Lo compartido lo ven los adultos del hogar.
+              </h2>
+            </div>
+            <dl className="mt-3 flex flex-col gap-2">
+              <div className="flex items-start gap-2">
+                <dt className="shrink-0">
+                  <Badge variante="hogar">hogar</Badge>
+                </dt>
+                <dd className="text-[11.5px] leading-[1.5] text-tinta-secundaria">
+                  presupuesto y movimientos compartidos:{" "}
+                  {losVen(hogar.miembros.map((m) => m.nombre))}
+                </dd>
+              </div>
+              <div className="flex items-start gap-2">
+                <dt className="shrink-0">
+                  <Badge variante="personal">personal</Badge>
+                </dt>
+                <dd className="text-[11.5px] leading-[1.5] text-tinta-secundaria">
+                  tus partidas privadas: solo las ves vos
+                </dd>
+              </div>
+            </dl>
+          </Card>
         </div>
 
-        {hogar.miembros.map((m) => (
-          <div key={m.userId} className="flex items-center gap-3 px-4 py-3">
-            {/* Avatar 36px (§3.30): tinta para vos, tinta-secundaria para el resto */}
-            <div
-              aria-hidden
-              className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold text-papel ${
-                m.esUsuarioActual ? "bg-tinta" : "bg-tinta-secundaria"
-              }`}
-            >
-              {inicial(m.nombre)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-tinta">{m.nombre}</p>
-              {(m.esUsuarioActual || m.descripcion) && (
-                <p className="truncate text-[11.5px] text-tinta-secundaria">
-                  {m.esUsuarioActual ? "vos" : m.descripcion}
-                </p>
-              )}
-            </div>
-            <Badge variante={m.rol}>{m.rol}</Badge>
-          </div>
-        ))}
+        <div>
+          {/* Navegación: UNA card con separadores, calcando movil/src/app/hogar.tsx.
+              Apiladas de a una eran cuatro cards sueltas que decían "cuatro cosas
+              distintas" cuando son la misma: a dónde más se puede ir desde acá.
+              Mismo orden que el nativo. /cuotas no tiene otra entrada en la web. */}
+          <Card className="mt-4 divide-y divide-separador">
+            {/* Asistente financiero con IA — solo cuando hay API key configurada */}
+            {process.env.ANTHROPIC_API_KEY && (
+              <Link href="/asistente" className="flex items-center gap-2.5 px-4 py-3.5">
+                <Sparkles className="size-[17px] shrink-0 text-verde" strokeWidth={1.5} aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-medium text-tinta">
+                    Asistente financiero
+                  </span>
+                  <span className="block text-[11.5px] text-tinta-secundaria">
+                    Preguntale a tus números
+                  </span>
+                </div>
+                <ChevronRight
+                  className="size-4 shrink-0 text-tinta-terciaria"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+              </Link>
+            )}
 
-        {hogar.invitacionesPendientes.map((inv) => (
-          <div key={inv.id} className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              {/* Avatar pendiente: punteado ámbar, mismo lenguaje que ESTIMADA */}
-              <div
-                aria-hidden
-                className="flex size-9 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-borde-estimada bg-fondo-estimada text-[14px] font-semibold text-ambar-texto"
-              >
-                {inicial(inv.email)}
-              </div>
+            <Link href="/categorias" className="flex items-center gap-2.5 px-4 py-3.5">
+              <Tags className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-medium text-tinta">{inv.email}</p>
-                <p className="text-[11.5px] text-tinta-secundaria">
-                  {etiquetaInvitada(inv.creadoEl, hoy)}
-                </p>
+                <span className="block text-[14px] font-medium text-tinta">Categorías</span>
+                <span className="block text-[11.5px] text-tinta-secundaria">
+                  Creá las tuyas y ordenalas por grupo
+                </span>
               </div>
-              <Badge variante="pendiente">pendiente</Badge>
-            </div>
-            <AccionesInvitacion invitacionId={inv.id} email={inv.email} />
-          </div>
-        ))}
-      </Card>
+              <ChevronRight
+                className="size-4 shrink-0 text-tinta-terciaria"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            </Link>
 
-      {/* Navegación: UNA card con separadores, calcando movil/src/app/hogar.tsx.
-          Apiladas de a una eran cuatro cards sueltas que decían "cuatro cosas
-          distintas" cuando son la misma: a dónde más se puede ir desde acá.
-          Mismo orden que el nativo. /cuotas no tiene otra entrada en la web. */}
-      <Card className="mt-4 divide-y divide-separador">
-        {/* Asistente financiero con IA — solo cuando hay API key configurada */}
-        {process.env.ANTHROPIC_API_KEY && (
-          <Link href="/asistente" className="flex items-center gap-2.5 px-4 py-3.5">
-            <Sparkles className="size-[17px] shrink-0 text-verde" strokeWidth={1.5} aria-hidden />
-            <div className="min-w-0 flex-1">
-              <span className="block text-[14px] font-medium text-tinta">
-                Asistente financiero
-              </span>
-              <span className="block text-[11.5px] text-tinta-secundaria">
-                Preguntale a tus números
-              </span>
-            </div>
-            <ChevronRight
-              className="size-4 shrink-0 text-tinta-terciaria"
-              strokeWidth={1.5}
-              aria-hidden
-            />
-          </Link>
-        )}
+            <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
+              <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+              <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
+              <ChevronRight
+                className="size-4 shrink-0 text-tinta-terciaria"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            </Link>
 
-        <Link href="/categorias" className="flex items-center gap-2.5 px-4 py-3.5">
-          <Tags className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <div className="min-w-0 flex-1">
-            <span className="block text-[14px] font-medium text-tinta">Categorías</span>
-            <span className="block text-[11.5px] text-tinta-secundaria">
-              Creá las tuyas y ordenalas por grupo
-            </span>
-          </div>
-          <ChevronRight
-            className="size-4 shrink-0 text-tinta-terciaria"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-        </Link>
+            <Link href="/cuotas" className="flex items-center gap-2.5 px-4 py-3.5">
+              <CreditCard className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
+              <span className="flex-1 text-[14px] font-medium text-tinta">Compras en cuotas</span>
+              <ChevronRight
+                className="size-4 shrink-0 text-tinta-terciaria"
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            </Link>
+          </Card>
 
-        <Link href="/cuentas" className="flex items-center gap-2.5 px-4 py-3.5">
-          <Wallet className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <span className="flex-1 text-[14px] font-medium text-tinta">Cuentas y tarjetas</span>
-          <ChevronRight
-            className="size-4 shrink-0 text-tinta-terciaria"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-        </Link>
+          {/* Cierra el grupo, pero con card propia: abre el recorrido en vez de
+              navegar y por eso vive en su client component */}
+          <BotonOnboarding />
 
-        <Link href="/cuotas" className="flex items-center gap-2.5 px-4 py-3.5">
-          <CreditCard className="size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <span className="flex-1 text-[14px] font-medium text-tinta">Compras en cuotas</span>
-          <ChevronRight
-            className="size-4 shrink-0 text-tinta-terciaria"
-            strokeWidth={1.5}
-            aria-hidden
-          />
-        </Link>
-      </Card>
+          {/* Tema claro/oscuro/auto persistido (tanda 8) */}
+          <CambiadorTema />
 
-      {/* Cierra el grupo, pero con card propia: abre el recorrido en vez de
-          navegar y por eso vive en su client component */}
-      <BotonOnboarding />
+          <p className="mt-6 text-center">
+            <Link
+              href="/privacidad"
+              className="hit-44 inline-block text-[12.5px] text-tinta-secundaria underline underline-offset-2"
+            >
+              Cómo cuidamos tus datos
+            </Link>
+          </p>
 
-      {/* Tema claro/oscuro/auto persistido (tanda 8) */}
-      <CambiadorTema />
+          <form action={cerrarSesion} className="mt-2 text-center">
+            <button type="submit" className="hit-44 text-[13px] font-medium text-rojo">
+              Cerrar sesión
+            </button>
+          </form>
 
-      <div className="mt-4">
-        <Invitar />
-        <p className="mt-2 text-center text-[11.5px] text-tinta-secundaria">
-          Por email. La persona elige su clave al entrar.
-        </p>
-      </div>
-
-      {/* Card de visibilidad: candado + statement + badges explicados */}
-      <Card className="mt-4 px-4 py-3.5">
-        <div className="flex items-start gap-2.5">
-          <Lock className="mt-px size-[17px] shrink-0 text-tinta" strokeWidth={1.5} aria-hidden />
-          <h2 className="text-[13.5px] leading-[1.5] font-semibold text-tinta">
-            Lo personal es tuyo. Lo compartido lo ven los adultos del hogar.
-          </h2>
+          <BorrarCuenta soloMiembro={nMiembros === 1} />
         </div>
-        <dl className="mt-3 flex flex-col gap-2">
-          <div className="flex items-start gap-2">
-            <dt className="shrink-0">
-              <Badge variante="hogar">hogar</Badge>
-            </dt>
-            <dd className="text-[11.5px] leading-[1.5] text-tinta-secundaria">
-              presupuesto y movimientos compartidos:{" "}
-              {losVen(hogar.miembros.map((m) => m.nombre))}
-            </dd>
-          </div>
-          <div className="flex items-start gap-2">
-            <dt className="shrink-0">
-              <Badge variante="personal">personal</Badge>
-            </dt>
-            <dd className="text-[11.5px] leading-[1.5] text-tinta-secundaria">
-              tus partidas privadas: solo las ves vos
-            </dd>
-          </div>
-        </dl>
-      </Card>
-
-      <p className="mt-6 text-center">
-        <Link
-          href="/privacidad"
-          className="hit-44 inline-block text-[12.5px] text-tinta-secundaria underline underline-offset-2"
-        >
-          Cómo cuidamos tus datos
-        </Link>
-      </p>
-
-      <form action={cerrarSesion} className="mt-2 text-center">
-        <button type="submit" className="hit-44 text-[13px] font-medium text-rojo">
-          Cerrar sesión
-        </button>
-      </form>
-
-      <BorrarCuenta soloMiembro={nMiembros === 1} />
+      </div>
     </div>
   );
 }

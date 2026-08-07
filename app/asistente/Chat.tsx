@@ -208,9 +208,27 @@ export function Chat({
   const aOfrecer = propuestas.length > 0 ? propuestas : REPREGUNTAS_BASE;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div
+      className="flex min-h-0 flex-1 flex-col"
+      // gesto nativo de escritorio: arrastrar el ticket o el screenshot
+      // encima del chat lo adjunta, igual que elegirlo con el botón
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+      }}
+      onDrop={(e) => {
+        const archivo = e.dataTransfer.files?.[0];
+        if (!archivo || pensando) return;
+        e.preventDefault();
+        void adjuntar(archivo);
+      }}
+    >
       <header className="flex items-center gap-2.5 pb-4">
-        <Link href="/resumen" aria-label="Volver al resumen" className="hit-44 text-tinta">
+        {/* en escritorio la sidebar ya navega: el chevron es del teléfono */}
+        <Link
+          href="/resumen"
+          aria-label="Volver al resumen"
+          className="hit-44 text-tinta lg:hidden"
+        >
           <ChevronLeft className="size-5" strokeWidth={1.5} aria-hidden />
         </Link>
         <div className="flex-1">
@@ -233,7 +251,9 @@ export function Chat({
         )}
       </header>
 
-      <div className="flex flex-1 flex-col gap-[18px] pb-4">
+      {/* en lg el hilo scrollea ACÁ adentro (el alto lo fija la página): la
+          scrollbar queda al lado del texto y no en el borde del viewport */}
+      <div className="flex flex-1 flex-col gap-[18px] pb-4 lg:min-h-0 lg:overflow-y-auto">
         {turnos.map((t, i) => (
           <div key={i} className="flex flex-col gap-2.5">
             {/* la pregunta va como encabezado tenue, no como burbuja: lo que
@@ -282,10 +302,12 @@ export function Chat({
       {/* Input pegado abajo. La franja es sticky pero sigue EN FLUJO (es el
           último hijo de la columna), así que reserva su propio alto: el pb-4
           del hilo alcanza para que el último mensaje no quede abajo de ella. */}
-      <div className="sticky bottom-0 -mx-5 mt-auto bg-papel px-5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 -mx-5 mt-auto bg-papel px-5 pt-2 pb-[max(16px,env(safe-area-inset-bottom))] lg:static lg:border-t lg:border-borde lg:pt-3 lg:pb-4">
         {/* repreguntas, arriba de todo: una sola fila con scroll horizontal —
-            así el alto de la franja no depende de cuántas ni de qué largo son */}
-        <div className="-mx-5 mb-2 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_24px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            así el alto de la franja no depende de cuántas ni de qué largo son.
+            Con mouse ese carrusel es inoperable: en lg envuelven y se ven
+            todas (el reflow lejos del puntero no molesta como bajo el pulgar) */}
+        <div className="-mx-5 mb-2 flex gap-2 overflow-x-auto px-5 py-1 [mask-image:linear-gradient(to_right,#000_calc(100%_-_24px),transparent)] [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 lg:[mask-image:none] [&::-webkit-scrollbar]:hidden">
           {aOfrecer.map((s) => (
             <button
               key={s}
@@ -353,12 +375,14 @@ export function Chat({
             }}
             className="hidden"
           />
+          {/* en escritorio no hay cámara: capture se ignora y este botón abre
+              el mismo diálogo que el de galería — queda solo en el teléfono */}
           <button
             type="button"
             onClick={() => camaraRef.current?.click()}
             disabled={pensando || adjunta !== null}
             aria-label="Sacarle una foto al comprobante"
-            className="flex size-11 shrink-0 items-center justify-center rounded-cta border border-borde bg-superficie text-tinta disabled:opacity-40"
+            className="flex size-11 shrink-0 items-center justify-center rounded-cta border border-borde bg-superficie text-tinta disabled:opacity-40 lg:hidden"
           >
             <Camera className="size-5" strokeWidth={1.6} aria-hidden />
           </button>
@@ -375,10 +399,19 @@ export function Chat({
             type="text"
             value={borrador}
             onChange={(e) => setBorrador(e.target.value)}
+            onPaste={(e) => {
+              // Ctrl+V con un screenshot en el portapapeles = adjuntarlo
+              const imagen = Array.from(e.clipboardData.files).find((f) =>
+                f.type.startsWith("image/"),
+              );
+              if (!imagen || pensando) return;
+              e.preventDefault();
+              void adjuntar(imagen);
+            }}
             maxLength={2000}
             placeholder={adjunta ? "Algo que aclarar (opcional)…" : "Preguntá o mandá un ticket…"}
             aria-label="Tu pregunta"
-            className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria"
+            className="h-11 min-w-0 flex-1 rounded-cta border border-borde bg-superficie px-3.5 text-[16px] text-tinta placeholder:text-tinta-terciaria lg:text-[14px]"
           />
           <button
             type="submit"
@@ -391,7 +424,9 @@ export function Chat({
         </form>
         <p className="mt-1.5 text-center text-[10.5px] leading-[1.4] text-tinta-terciaria">
           Orientación general con IA — no es asesoramiento financiero profesional.
-          <br />
+          {/* a 680 las dos oraciones entran en una línea: el corte es del teléfono */}
+          <br className="lg:hidden" />
+          <span className="hidden lg:inline"> · </span>
           Las fotos se leen y se descartan: no se guardan.
         </p>
       </div>

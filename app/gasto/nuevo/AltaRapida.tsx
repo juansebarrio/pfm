@@ -437,7 +437,7 @@ export function AltaRapida({
             type="date"
             value={fecha}
             onChange={(e) => e.target.value && setFecha(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-right text-[14px] text-tinta [color-scheme:dark]"
+            className="min-w-0 flex-1 bg-transparent text-right text-[14px] text-tinta"
           />
         </div>
 

@@ -133,7 +133,7 @@ export function Comprobante({
 
   if (estado.fase === "cargado") {
     return (
-      <div className="rounded-cta border border-verde bg-verde-suave px-3.5 py-3">
+      <div className="rounded-cta border border-verde bg-verde-suave px-3.5 py-3 lg:max-w-[480px]">
         <div className="flex items-center gap-2">
           {estado.aBandeja ? (
             <Inbox className="size-[17px] shrink-0 text-verde" strokeWidth={1.8} aria-hidden />
@@ -162,7 +162,7 @@ export function Comprobante({
   const cargando = estado.fase === "cargando";
 
   return (
-    <div className="rounded-card border border-borde p-3.5">
+    <div className="rounded-card border border-borde p-3.5 lg:max-w-[480px]">
       <p className="text-[11.5px] tracking-[0.04em] text-tinta-secundaria uppercase">
         Lo que leí del comprobante
       </p>

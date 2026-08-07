@@ -11,6 +11,10 @@
  */
 :root,
 [data-tema="oscuro"] {
+  /* sin esto el navegador dibuja los controles nativos (el calendarito del
+     input date, selects, scrollbars) en esquema claro: ícono oscuro sobre
+     fondo oscuro, invisible */
+  color-scheme: dark;
   --papel: #141312;
   --superficie: #1e1c1a;
   --tinta: #f2efe9;
@@ -56,6 +60,7 @@
 
 /* Claro: solo cuando el usuario lo elige (debe ir DESPUÉS del bloque oscuro). */
 [data-tema="claro"] {
+  color-scheme: light;
   --papel: #f7f5f1;
   --superficie: #ffffff;
   --tinta: #1a1917;
@@ -254,6 +259,15 @@ dialog.hoja-inferior[data-visible="true"]::backdrop {
   dialog.hoja-inferior[data-visible="true"] {
     transform: translateX(0);
   }
+}
+
+/* Los input date con text-right (fila Fecha del detalle, alta rápida): WebKit
+   ignora text-align en el contenido interno del control salvo por estas
+   pseudo-clases — sin esto la fecha no rebotea contra la misma vertical que
+   los demás datos de la fila. */
+input[type="date"]::-webkit-date-and-time-value,
+input[type="date"]::-webkit-datetime-edit {
+  text-align: inherit;
 }
 
 /* Target táctil mínimo de 44px sin cambiar el dibujo (mejora directa §7.1) */
