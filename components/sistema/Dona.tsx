@@ -10,6 +10,12 @@ import { formatearImporte } from "@/lib/dominio/dinero";
 //
 // El total va en el centro, que es donde el ojo cae primero y donde el número
 // contesta la pregunta que trajo al usuario ("¿cuánto gasté?").
+//
+// En escritorio el anillo dialoga con su lista: pasar el mouse por una porción
+// la resalta (las demás bajan de opacidad) y el centro pasa a decir ESA
+// categoría con su monto y su porcentaje; `resaltada`/`onResaltar` conectan el
+// mismo estado con las filas de la lista, en las dos direcciones. El viewBox es
+// fijo y el tamaño lo pone CSS: 200 en el teléfono, más aire en lg.
 
 const TAMANO = 200;
 const GROSOR = 25;
@@ -49,21 +55,26 @@ export function Dona({
   porciones,
   totalCentavos,
   etiqueta = "Gastado",
+  resaltada = null,
+  onResaltar,
 }: {
   porciones: Porcion[];
   totalCentavos: number;
   /** "Gastado" en Movimientos, "Asignado" en Presupuesto */
   etiqueta?: string;
+  /** clave de la porción resaltada (desde el anillo o desde la lista) */
+  resaltada?: string | null;
+  onResaltar?: (clave: string | null) => void;
 }) {
   const tramos = arcos(porciones);
+  const porcionResaltada = porciones.find((p) => p.clave === resaltada) ?? null;
 
   return (
     <div className="flex justify-center">
       <div className="relative">
         <svg
           viewBox={`0 0 ${TAMANO} ${TAMANO}`}
-          width={TAMANO}
-          height={TAMANO}
+          className="h-auto w-[200px] lg:w-[320px]"
           role="img"
           aria-label={`${etiqueta} por categoría, total ${formatearImporte(totalCentavos)}`}
         >
@@ -81,24 +92,46 @@ export function Dona({
             // una porción de 1° no puede perder 1,4° o desaparecería
             const ancho = t.hasta - t.desde;
             const hueco = ancho > HUECO_GRADOS * 2 ? HUECO_GRADOS : 0;
+            const clave = porciones[i].clave;
+            const esLaResaltada = resaltada === clave;
             return (
               <path
-                key={porciones[i].clave}
+                key={clave}
                 d={arco(t.desde, t.hasta - hueco)}
                 fill="none"
                 stroke={tono(porciones[i].indice)}
-                strokeWidth={GROSOR}
+                strokeWidth={esLaResaltada ? GROSOR + 3 : GROSOR}
+                className="transition-opacity duration-150"
+                opacity={resaltada !== null && !esLaResaltada ? 0.3 : 1}
+                onMouseEnter={onResaltar ? () => onResaltar(clave) : undefined}
+                onMouseLeave={onResaltar ? () => onResaltar(null) : undefined}
               />
             );
           })}
         </svg>
 
-        {/* el total, centrado sobre el anillo */}
+        {/* el centro: el total — o la porción resaltada, con monto y porcentaje */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[10.5px] text-tinta-secundaria">{etiqueta}</p>
-          <p className="cifra text-[19px] font-semibold text-tinta">
-            {formatearImporte(totalCentavos)}
-          </p>
+          {porcionResaltada ? (
+            <>
+              <p className="max-w-[120px] truncate text-[10.5px] text-tinta-secundaria lg:max-w-[190px] lg:text-[12px]">
+                {porcionResaltada.nombre}
+              </p>
+              <p className="cifra text-[19px] font-semibold text-tinta lg:text-[24px]">
+                {formatearImporte(porcionResaltada.centavos)}
+              </p>
+              <p className="cifra text-[11px] text-tinta-terciaria lg:text-[12.5px]">
+                {porcionResaltada.porcentaje} %
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[10.5px] text-tinta-secundaria lg:text-[12px]">{etiqueta}</p>
+              <p className="cifra text-[19px] font-semibold text-tinta lg:text-[24px]">
+                {formatearImporte(totalCentavos)}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
